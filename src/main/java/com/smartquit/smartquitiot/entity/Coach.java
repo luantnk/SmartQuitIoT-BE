@@ -6,13 +6,13 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "member")
+@Table(name = "coach")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Member {
+public class Coach {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +22,6 @@ public class Member {
     String firstName;
     String lastName;
     String avatarUrl;
-    boolean isFirstLogin = true;
-    boolean isUsedFreeTrial = false;
     @OneToOne(cascade = CascadeType.ALL)
     Account account;
 

@@ -32,7 +32,7 @@ public class SecurityConfig {
     private CustomJwtDecoder customJwtDecoder;
 
     private static final List<Map.Entry<String, HttpMethod>> SECURED_URLS = List.of(
-            Map.entry("/api/users/p", HttpMethod.GET)
+            Map.entry("/auth", HttpMethod.GET)
     );
 
     @Bean
