@@ -22,7 +22,16 @@ public class Coach {
     String firstName;
     String lastName;
     String avatarUrl;
+    String certificateUrl;
+    String bio;
+    String gender;
+    int ratingCount = 0;
+    double ratingAvg = 0.0;
+    int experienceYears;
+    String specializations;
+
     @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "account_id")
     Account account;
 
 

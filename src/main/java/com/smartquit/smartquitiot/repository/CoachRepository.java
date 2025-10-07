@@ -1,6 +1,11 @@
 package com.smartquit.smartquitiot.repository;
 
+import com.smartquit.smartquitiot.entity.Coach;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CoachRepository {
+import java.util.Optional;
+
+public interface CoachRepository extends JpaRepository<Coach, Integer> {
+
+    Optional<Coach> findByEmail(String name);
 }

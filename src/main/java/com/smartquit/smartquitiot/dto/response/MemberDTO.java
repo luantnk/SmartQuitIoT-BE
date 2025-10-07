@@ -1,0 +1,27 @@
+package com.smartquit.smartquitiot.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDate;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class MemberDTO {
+
+    int id;
+    String email;
+    String firstName;
+    String lastName;
+    String avatarUrl;
+    String gender;
+    LocalDate dob;
+    int age;
+    boolean isUsedFreeTrial;
+    AccountDTO account;
+}

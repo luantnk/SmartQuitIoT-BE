@@ -9,15 +9,14 @@ import com.smartquit.smartquitiot.dto.request.AuthenticationRequest;
 import com.smartquit.smartquitiot.dto.request.RefreshTokenRequest;
 import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
 import com.smartquit.smartquitiot.entity.Account;
+import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
@@ -49,9 +48,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     protected Long refreshTokenDuration;
 
     @Override
-    public AuthenticationResponse login(AuthenticationRequest request) {
+    public AuthenticationResponse login(AuthenticationRequest request, boolean isSystem) {
         Account account = accountRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Username not found"));
+
+        if(!isSystem && !account.getRole().name().equals(Role.MEMBER.name())){
+            throw new RuntimeException("Invalid account");
+        }else if(isSystem && account.getRole().name().equals(Role.MEMBER.name())){
+            throw new RuntimeException("Invalid account");
+        }
+
+        if(!account.isActive()){
+            throw new RuntimeException("Account is not active");
+        }else if(account.isBanned()){
+            throw new  RuntimeException("Account is Banned");
+        }
 
         return AuthenticationResponse.builder()
                 .accessToken(generateAccessToken(account))

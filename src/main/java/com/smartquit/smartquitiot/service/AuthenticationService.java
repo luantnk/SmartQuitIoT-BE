@@ -9,6 +9,6 @@ import java.text.ParseException;
 
 public interface AuthenticationService {
 
-    AuthenticationResponse login(AuthenticationRequest request);
+    AuthenticationResponse login(AuthenticationRequest request, boolean isSystem);
     AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws ParseException, JOSEException;
 }
