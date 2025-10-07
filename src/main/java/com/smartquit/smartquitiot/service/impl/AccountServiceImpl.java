@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.core.Local;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +72,7 @@ public class AccountServiceImpl implements AccountService {
         return memberMapper.toMemberDTO(member);
     }
 
+    @Transactional
     @Override
     public CoachDTO registerCoach(CoachAccountRequest request) {
 
@@ -100,6 +102,13 @@ public class AccountServiceImpl implements AccountService {
         coachRepository.save(coach);
 
         return coachMapper.toCoachDTO(coach);
+    }
+
+    @Override
+    public Account getAuthenticatedAccount() {
+        String accountIdRaw = SecurityContextHolder.getContext().getAuthentication().getName();
+        int accountId = Integer.parseInt(accountIdRaw);
+        return accountRepository.findById(accountId).orElseThrow(() -> new RuntimeException("Account not found"));
     }
 
     private String getDefaultAvatar(String firstName, String lastName){

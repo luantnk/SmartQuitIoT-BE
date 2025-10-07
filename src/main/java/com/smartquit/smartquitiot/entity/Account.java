@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.smartquit.smartquitiot.enums.AccountType;
 import com.smartquit.smartquitiot.enums.Role;
 import jakarta.persistence.*;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Account {
 
     @Id
@@ -36,11 +38,12 @@ public class Account {
     @CreationTimestamp
     LocalDateTime createdAt;
 
-
-    @OneToOne(mappedBy = "account", optional = false)
+    @JsonIgnore
+    @OneToOne(mappedBy = "account", optional = false, cascade = CascadeType.MERGE)
     Member member;
 
-    @OneToOne(mappedBy = "account", optional = false)
+    @JsonIgnore
+    @OneToOne(mappedBy = "account", optional = false, cascade = CascadeType.MERGE)
     Coach coach;
 
 }

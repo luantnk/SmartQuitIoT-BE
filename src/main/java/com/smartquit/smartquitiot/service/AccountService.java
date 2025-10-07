@@ -4,10 +4,13 @@ import com.smartquit.smartquitiot.dto.request.CoachAccountRequest;
 import com.smartquit.smartquitiot.dto.request.MemberAccountRequest;
 import com.smartquit.smartquitiot.dto.response.CoachDTO;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.entity.Account;
 
 public interface AccountService {
 
     MemberDTO registerMember(MemberAccountRequest request);
 
     CoachDTO registerCoach(CoachAccountRequest request);
+
+    Account getAuthenticatedAccount();
 }
