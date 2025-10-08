@@ -1,0 +1,8 @@
+package com.smartquit.smartquitiot.repository;
+
+
+import com.smartquit.smartquitiot.entity.QuitPlan;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface QuitPlanRepository extends JpaRepository<QuitPlan,Integer> {
+}
