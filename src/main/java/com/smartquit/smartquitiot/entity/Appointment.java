@@ -5,30 +5,30 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Entity
-@Table(name = "phase_detail")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PhaseDetail {
+public class Appointment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
     String name;
+
     LocalDate date;
-    int dayIndex;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "phase_id")
-    Phase phase;
+    Member member;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    List<ReminderQueue> reminderQueue;
+    @ManyToOne(fetch = FetchType.LAZY)
+    Coach coach;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    List<PhaseDetailMission> phaseDetailMissions;
+    @ManyToOne(fetch = FetchType.LAZY)
+    Slot slot;
+
+
 }

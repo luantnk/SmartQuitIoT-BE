@@ -1,14 +1,16 @@
 package com.smartquit.smartquitiot.entity;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.smartquit.smartquitiot.enums.ReminderQueueStatus;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -16,28 +18,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ReminderQueue {
+public class ReminderTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-
-    @Column(columnDefinition = "TEXT")
-    String content;
+    String ruleName;
 
     @Type(JsonType.class)
-    @Column(name = "payload_json", columnDefinition = "JSON", nullable = false)
-    JsonNode payload;
+    @Column(name = "rule_condition_json", columnDefinition = "JSON", nullable = false)
+    JsonNode ruleCondition;
 
-    @Enumerated(EnumType.STRING)
-    ReminderQueueStatus status;
+    @CreationTimestamp
+    LocalDateTime createdAt;
+    @UpdateTimestamp
+    LocalDateTime updatedAt;
 
-    LocalDateTime scheduledAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    ReminderTemplate reminderTemplate;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    PhaseDetail phaseDetail;
+    @OneToMany(mappedBy = "reminderTemplate")
+    List<ReminderQueue> reminderQueues;
 
 }

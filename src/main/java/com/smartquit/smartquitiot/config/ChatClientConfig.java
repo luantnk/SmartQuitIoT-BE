@@ -1,4 +1,4 @@
-package com.smartquit.smartquitiot.client;
+package com.smartquit.smartquitiot.config;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
