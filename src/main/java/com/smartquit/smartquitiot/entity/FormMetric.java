@@ -22,31 +22,19 @@ public class FormMetric {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-
     int smokeAvgPerDay;
-
     int numberOfYearsOfSmoking;
-
-    int moneyPerPackage;
-
     int cigarettesPerPackage;
-
     int minutesAfterWakingToSmoke;
-
     boolean smokingInForbiddenPlaces = false;
-
     boolean cigaretteHateToGiveUp = false;
-
     boolean morningSmokingFrequency = false;
-
     boolean smokeWhenSick = false;
-
-    int estimateMoneySaved;
-
-    List<String> interests;
-
-    @Column(precision = 5, scale = 2)
+    BigDecimal moneyPerPackage;
+    BigDecimal estimatedMoneySavedOnPlan;
     BigDecimal amountOfNicotinePerCigarettes;
+    BigDecimal estimatedNicotineIntakePerDay;
+    List<String> interests;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
