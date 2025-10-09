@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -32,7 +33,7 @@ import java.util.UUID;
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AccountRepository accountRepository;
-    private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -49,17 +50,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse login(AuthenticationRequest request, boolean isSystem) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsernameOrEmail(), request.getPassword())
-            );
-        } catch (AuthenticationException e) {
+        Account account = accountRepository.findByUsernameOrEmail(request.getUsernameOrEmail(), request.getUsernameOrEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid username/email or password"));
+        if(!passwordEncoder.matches(request.getPassword(), account.getPassword())){
             throw new RuntimeException("Invalid username/email or password");
         }
-
-
-        Account account = findAccountByUsernameOrEmail(request.getUsernameOrEmail());
-
         if (!isSystem && account.getRole() != Role.MEMBER) {
             throw new RuntimeException("Access denied for this account type.");
         } else if (isSystem && account.getRole() == Role.MEMBER) {
@@ -79,16 +74,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
-    private Account findAccountByUsernameOrEmail(String usernameOrEmail) {
-        if (usernameOrEmail.contains("@")) {
-            return accountRepository.findByMemberEmail(usernameOrEmail)
-                    .orElseThrow(() -> new RuntimeException("Account for email not found: " + usernameOrEmail));
-        } else {
-            return accountRepository.findByUsername(usernameOrEmail)
-                    .orElseThrow(() -> new RuntimeException("Account for username not found: " + usernameOrEmail));
-        }
-    }
-
     @Override
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) throws ParseException, JOSEException {
         SignedJWT signedJWT = verifyAndParseToken(request.getRefreshToken(), refreshTokenKey);
@@ -96,8 +81,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (claims.getExpirationTime().before(new Date())) {
             throw new RuntimeException("Refresh token has expired");
         }
-        String accountId = claims.getSubject();
-        Account account = accountRepository.findById(Integer.parseInt(accountId))
+        String subject = claims.getSubject(); //Token's subject is account email
+
+        Account account = accountRepository.findByEmail(subject)
                 .orElseThrow(() -> new RuntimeException("Account not found for this token"));
         String newAccessToken = generateAccessToken(account);
         return AuthenticationResponse.builder()
@@ -109,7 +95,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private String generateAccessToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject(String.valueOf(account.getId()))
+                .subject(account.getEmail())
                 .issuer("SmartQuitIoT")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.MINUTES).toEpochMilli()))
@@ -122,7 +108,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private String generateRefreshToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject(String.valueOf(account.getId()))
+                .subject(account.getEmail())
                 .issuer("SmartQuitIoT")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(refreshTokenDuration, ChronoUnit.DAYS).toEpochMilli()))

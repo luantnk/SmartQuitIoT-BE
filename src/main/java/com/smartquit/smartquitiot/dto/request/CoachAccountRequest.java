@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.dto.request;
 
+import com.smartquit.smartquitiot.enums.Gender;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,10 +13,11 @@ public class CoachAccountRequest {
 
     String username;
     String password;
+    String confirmPassword;
     String email;
     String firstName;
     String lastName;
-    String gender;
+    Gender gender;
     String certificateUrl;
     int experienceYears;
     String specializations;

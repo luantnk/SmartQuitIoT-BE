@@ -11,6 +11,7 @@ public class AccountMapper {
         AccountDTO accountDTO = new AccountDTO();
         accountDTO.setId(account.getId());
         accountDTO.setUsername(account.getUsername());
+        accountDTO.setEmail(account.getEmail());
         accountDTO.setRole(account.getRole().name());
         accountDTO.setAccountType(account.getAccountType().name());
         accountDTO.setBanned(account.isBanned());

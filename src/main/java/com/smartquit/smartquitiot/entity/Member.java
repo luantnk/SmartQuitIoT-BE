@@ -24,9 +24,6 @@ public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-    @Email(message = "Email is invalid", regexp = "^[A-Za-z0-9+_.-]+@(.+)$")
-    @Column(name = "email",unique = true, columnDefinition = "VARCHAR(255) COLLATE utf8mb4_unicode_ci")
-    String email;
     @NotEmpty(message = "FirstName is required")
     String firstName;
     @NotEmpty(message = "LastName is required")
@@ -34,9 +31,8 @@ public class Member {
     String avatarUrl;
     @Enumerated(EnumType.STRING)
     Gender gender;
-//    @DobConstraint(min = 18, message = "Member must greater than 18")
+    @DobConstraint(min = 14, message = "Member must greater than 14 years old")
     LocalDate dob;
-    int age;
     boolean isUsedFreeTrial = false;
     @UpdateTimestamp
     LocalDateTime modifiedAt;

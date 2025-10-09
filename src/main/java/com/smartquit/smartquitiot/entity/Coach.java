@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.smartquit.smartquitiot.enums.Gender;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
@@ -17,14 +18,13 @@ public class Coach {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-    @Email
-    String email;
     String firstName;
     String lastName;
     String avatarUrl;
     String certificateUrl;
     String bio;
-    String gender;
+    @Enumerated(EnumType.STRING)
+    Gender gender;
     int ratingCount = 0;
     double ratingAvg = 0.0;
     int experienceYears;

@@ -50,7 +50,7 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("Password and confirm password do not match");
         }
 
-        if (memberRepository.findByEmail(request.getEmail()).isPresent()){
+        if (accountRepository.findByEmail(request.getEmail()).isPresent()){
             throw new RuntimeException("Email already exists");
         }else if(accountRepository.findByUsername(request.getUsername()).isPresent()){
             throw new RuntimeException("Username already exists");
@@ -60,17 +60,16 @@ public class AccountServiceImpl implements AccountService {
         account.setUsername(request.getUsername());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setAccountType(AccountType.SYSTEM);
+        account.setEmail(request.getEmail());
         account.setRole(Role.MEMBER);
+        accountRepository.save(account);
 
         Member member = new Member();
-        member.setEmail(request.getEmail());
         member.setFirstName(request.getFirstName());
         member.setLastName(request.getLastName());
         member.setGender(request.getGender());
         member.setDob(request.getDob());
-//        member.setAvatarUrl(getDefaultAvatar(request.getFirstName(), request.getLastName()));
-        member.setAvatarUrl(request.getAvatarUrl());
-        member.setAge(calculateAge(request.getDob()));
+        member.setAvatarUrl(getDefaultAvatar(request.getFirstName(), request.getLastName()));
         member.setAccount(account);
         memberRepository.save(member);
 
@@ -83,19 +82,22 @@ public class AccountServiceImpl implements AccountService {
 
         if(accountRepository.findByUsername(request.getUsername()).isPresent()){
             throw new RuntimeException("Coach username already exists");
-        }else if(coachRepository.findByEmail(request.getEmail()).isPresent()){
+        }else if(accountRepository.findByEmail(request.getEmail()).isPresent()){
             throw new RuntimeException("Coach email already exists");
+        }else if(!request.getPassword().equals(request.getConfirmPassword())){
+            throw new RuntimeException("Password and confirm password do not match");
         }
 
         Account  account = new Account();
         account.setUsername(request.getUsername());
+        account.setEmail(request.getEmail());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         account.setAccountType(AccountType.SYSTEM);
         account.setFirstLogin(false);
         account.setRole(Role.COACH);
+        accountRepository.save(account);
 
         Coach coach = new Coach();
-        coach.setEmail(request.getEmail());
         coach.setFirstName(request.getFirstName());
         coach.setLastName(request.getLastName());
         coach.setGender(request.getGender());
@@ -111,9 +113,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account getAuthenticatedAccount() {
-        String accountIdRaw = SecurityContextHolder.getContext().getAuthentication().getName();
-        int accountId = Integer.parseInt(accountIdRaw);
-        return accountRepository.findById(accountId).orElseThrow(() -> new RuntimeException("Account not found"));
+        String subject = SecurityContextHolder.getContext().getAuthentication().getName();//Subject is account email
+        return accountRepository.findByEmail(subject).orElseThrow(() -> new RuntimeException("Account not found"));
     }
 
     private String getDefaultAvatar(String firstName, String lastName){
@@ -121,7 +122,4 @@ public class AccountServiceImpl implements AccountService {
         return defaultAvatar;
     }
 
-    private int calculateAge(LocalDate dob){
-        return Period.between(dob, LocalDate.now()).getYears();
-    }
 }

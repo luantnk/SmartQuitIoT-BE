@@ -44,8 +44,10 @@ public class SecurityConfig {
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
     private static final List<Map.Entry<String, HttpMethod>> SECURED_URLS = List.of(
-            Map.entry("/account/coach/create", HttpMethod.POST),
-            Map.entry("/account/p", HttpMethod.GET)
+            Map.entry("/accounts/coach/create", HttpMethod.POST),
+            Map.entry("/accounts/p", HttpMethod.GET),
+            Map.entry("/members/p", HttpMethod.GET),
+            Map.entry("/coaches/p", HttpMethod.GET)
     );
 
     private final AccountRepository accountRepository;
@@ -101,40 +103,8 @@ public class SecurityConfig {
         return new CorsFilter(source);
     }
 
-
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return usernameOrEmail -> {
-            Account account;
-            if (usernameOrEmail.contains("@")) {
-                account = accountRepository.findByMemberEmail(usernameOrEmail)
-                        .orElseThrow(() -> new UsernameNotFoundException("Email not found: " + usernameOrEmail));
-            } else {
-                account = accountRepository.findByUsername(usernameOrEmail)
-                        .orElseThrow(() -> new UsernameNotFoundException("Username not found: " + usernameOrEmail));
-            }
-
-            return new User(
-                    account.getUsername(),
-                    account.getPassword(),
-                    Collections.singleton(new SimpleGrantedAuthority("ROLE_" + account.getRole().name()))
-            );
-        };
-    }
-
-
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService());
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
     }
 }

@@ -15,11 +15,10 @@ public class MemberAccountRequest {
 
     String username;
     String password;
+    String confirmPassword;
     String email;
     String firstName;
     String lastName;
     Gender gender;
-    String avatarUrl;
-    String confirmPassword;
     LocalDate dob;
 }
