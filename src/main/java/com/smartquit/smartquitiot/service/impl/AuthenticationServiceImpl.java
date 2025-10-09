@@ -71,6 +71,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .isFirstLogin(account.isFirstLogin())
                 .build();
     }
 
@@ -100,7 +101,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.MINUTES).toEpochMilli()))
                 .claim("scope", account.getRole().name())
-                .claim("isFirstLogin", account.isFirstLogin())
                 .build();
         return createSignedJWT(header, claimsSet, secretKey);
     }
