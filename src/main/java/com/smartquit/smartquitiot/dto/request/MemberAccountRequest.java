@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.dto.request;
 
+import com.smartquit.smartquitiot.enums.Gender;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -17,6 +18,8 @@ public class MemberAccountRequest {
     String email;
     String firstName;
     String lastName;
-    String gender;
+    Gender gender;
+    String avatarUrl;
+    String confirmPassword;
     LocalDate dob;
 }

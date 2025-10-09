@@ -46,7 +46,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public MemberDTO registerMember(MemberAccountRequest request) {
 
-        if(memberRepository.findByEmail(request.getEmail()).isPresent()){
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("Password and confirm password do not match");
+        }
+
+        if (memberRepository.findByEmail(request.getEmail()).isPresent()){
             throw new RuntimeException("Email already exists");
         }else if(accountRepository.findByUsername(request.getUsername()).isPresent()){
             throw new RuntimeException("Username already exists");
@@ -64,7 +68,8 @@ public class AccountServiceImpl implements AccountService {
         member.setLastName(request.getLastName());
         member.setGender(request.getGender());
         member.setDob(request.getDob());
-        member.setAvatarUrl(getDefaultAvatar(request.getFirstName(), request.getLastName()));
+//        member.setAvatarUrl(getDefaultAvatar(request.getFirstName(), request.getLastName()));
+        member.setAvatarUrl(request.getAvatarUrl());
         member.setAge(calculateAge(request.getDob()));
         member.setAccount(account);
         memberRepository.save(member);

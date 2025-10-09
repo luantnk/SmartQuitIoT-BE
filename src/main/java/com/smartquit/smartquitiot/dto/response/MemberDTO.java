@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.smartquit.smartquitiot.enums.Gender;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,7 +20,7 @@ public class MemberDTO {
     String firstName;
     String lastName;
     String avatarUrl;
-    String gender;
+    Gender gender;
     LocalDate dob;
     int age;
     boolean isUsedFreeTrial;

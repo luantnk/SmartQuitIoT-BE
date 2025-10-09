@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.smartquit.smartquitiot.enums.Gender;
 import com.smartquit.smartquitiot.validator.DobConstraint;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -31,8 +32,9 @@ public class Member {
     @NotEmpty(message = "LastName is required")
     String lastName;
     String avatarUrl;
-    String gender;
-    @DobConstraint(min = 18, message = "Member must greater than 18")
+    @Enumerated(EnumType.STRING)
+    Gender gender;
+//    @DobConstraint(min = 18, message = "Member must greater than 18")
     LocalDate dob;
     int age;
     boolean isUsedFreeTrial = false;
