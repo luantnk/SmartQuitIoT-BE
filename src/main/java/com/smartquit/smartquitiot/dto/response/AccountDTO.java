@@ -16,6 +16,7 @@ public class AccountDTO {
 
     int id;
     String username;
+    String email;
     String role;
     String accountType;
     boolean isActive;

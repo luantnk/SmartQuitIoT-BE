@@ -31,8 +31,10 @@ public class AppInitialConfig {
             if (accountRepository.findByRole(Role.ADMIN).isEmpty()) {
                 Account account = new Account();
                 account.setUsername("admin");
+                account.setEmail("admin@smartquit.io.vn");
                 account.setPassword(passwordEncoder.encode("admin"));
                 account.setRole(Role.ADMIN);
+                account.setFirstLogin(false);
                 account.setAccountType(AccountType.SYSTEM);
                 accountRepository.save(account);
                 log.info("Admin account has been created");

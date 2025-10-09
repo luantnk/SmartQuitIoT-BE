@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.smartquit.smartquitiot.enums.AccountType;
 import com.smartquit.smartquitiot.enums.Role;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,7 +13,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "account")
+@Table(name = "accounts")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -30,6 +31,9 @@ public class Account {
     String password;
     @Enumerated(EnumType.STRING)
     Role role;
+    @Email(message = "Email is invalid", regexp = "^[A-Za-z0-9+_.-]+@(.+)$")
+    @Column(name = "email",unique = true, columnDefinition = "VARCHAR(255) COLLATE utf8mb4_unicode_ci")
+    String email;
     @Enumerated(EnumType.STRING)
     AccountType accountType;
     boolean isActive = true;

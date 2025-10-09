@@ -15,11 +15,10 @@ public class CoachMapper {
 
         CoachDTO coachDTO = new CoachDTO();
         coachDTO.setId(coach.getId());
-        coachDTO.setEmail(coach.getEmail());
         coachDTO.setFirstName(coach.getFirstName());
         coachDTO.setLastName(coach.getLastName());
         coachDTO.setAvatarUrl(coach.getAvatarUrl());
-        coachDTO.setGender(coach.getGender());
+        coachDTO.setGender(coach.getGender().name());
         coachDTO.setRatingCount(coach.getRatingCount());
         coachDTO.setRatingAvg(coach.getRatingAvg());
         coachDTO.setBio(coach.getBio());

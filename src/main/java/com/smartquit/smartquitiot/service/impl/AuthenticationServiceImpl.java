@@ -14,10 +14,11 @@ import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -29,11 +30,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
+
     @NonFinal
     @Value("${jwt.signerKey}")
     protected String secretKey;
@@ -49,109 +50,91 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse login(AuthenticationRequest request, boolean isSystem) {
-        Account account = accountRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Username not found"));
-
-        if(!isSystem && !account.getRole().name().equals(Role.MEMBER.name())){
-            throw new RuntimeException("Invalid account");
-        }else if(isSystem && account.getRole().name().equals(Role.MEMBER.name())){
-            throw new RuntimeException("Invalid account");
+        Account account = accountRepository.findByUsernameOrEmail(request.getUsernameOrEmail(), request.getUsernameOrEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid username/email or password"));
+        if(!passwordEncoder.matches(request.getPassword(), account.getPassword())){
+            throw new RuntimeException("Invalid username/email or password");
         }
-
-        if(!account.isActive()){
+        if (!isSystem && account.getRole() != Role.MEMBER) {
+            throw new RuntimeException("Access denied for this account type.");
+        } else if (isSystem && account.getRole() == Role.MEMBER) {
+            throw new RuntimeException("Member accounts cannot access system resources.");
+        }
+        if (!account.isActive()) {
             throw new RuntimeException("Account is not active");
-        }else if(account.isBanned()){
-            throw new  RuntimeException("Account is Banned");
+        } else if (account.isBanned()) {
+            throw new RuntimeException("Account is banned");
         }
 
+        String accessToken = generateAccessToken(account);
+        String refreshToken = generateRefreshToken(account);
         return AuthenticationResponse.builder()
-                .accessToken(generateAccessToken(account))
-                .refreshToken(generateRefreshToken(account))
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .isFirstLogin(account.isFirstLogin())
+                .build();
+    }
+
+    @Override
+    public AuthenticationResponse refreshToken(RefreshTokenRequest request) throws ParseException, JOSEException {
+        SignedJWT signedJWT = verifyAndParseToken(request.getRefreshToken(), refreshTokenKey);
+        JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+        if (claims.getExpirationTime().before(new Date())) {
+            throw new RuntimeException("Refresh token has expired");
+        }
+        String subject = claims.getSubject(); //Token's subject is account email
+
+        Account account = accountRepository.findByEmail(subject)
+                .orElseThrow(() -> new RuntimeException("Account not found for this token"));
+        String newAccessToken = generateAccessToken(account);
+        return AuthenticationResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(request.getRefreshToken())
                 .build();
     }
 
     private String generateAccessToken(Account account) {
-
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(String.valueOf(account.getId()))
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject(account.getEmail())
                 .issuer("SmartQuitIoT")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.MINUTES).toEpochMilli()))
-                .claim("scope", account.getRole())
+                .claim("scope", account.getRole().name())
                 .build();
-
-        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
-
-        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
-        try{
-            jwsObject.sign(new MACSigner(secretKey.getBytes(StandardCharsets.UTF_8)));
-            return jwsObject.serialize();
-        }catch (JOSEException e){
-            throw new RuntimeException(e);
-        }
+        return createSignedJWT(header, claimsSet, secretKey);
     }
 
     private String generateRefreshToken(Account account) {
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(String.valueOf(account.getId()))
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .subject(account.getEmail())
                 .issuer("SmartQuitIoT")
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(refreshTokenDuration, ChronoUnit.DAYS).toEpochMilli()))
-                .jwtID(String.valueOf(UUID.randomUUID()).substring(0, 8))
+                .jwtID(UUID.randomUUID().toString())
                 .build();
+        return createSignedJWT(header, claimsSet, refreshTokenKey);
+    }
 
-        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
-
-        JWSObject jwsObject = new JWSObject(jwsHeader, payload);
-        try{
-            jwsObject.sign(new MACSigner(refreshTokenKey.getBytes(StandardCharsets.UTF_8)));
+    private String createSignedJWT(JWSHeader header, JWTClaimsSet claimsSet, String key) {
+        Payload payload = new Payload(claimsSet.toJSONObject());
+        JWSObject jwsObject = new JWSObject(header, payload);
+        try {
+            jwsObject.sign(new MACSigner(key.getBytes(StandardCharsets.UTF_8)));
             return jwsObject.serialize();
-        }catch (JOSEException e){
-            throw new RuntimeException(e);
+        } catch (JOSEException e) {
+            throw new RuntimeException("Error creating token", e);
         }
     }
 
-    @Override
-    public AuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws ParseException, JOSEException {
+    private SignedJWT verifyAndParseToken(String token, String key) throws ParseException, JOSEException {
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        JWSVerifier verifier = new MACVerifier(key.getBytes(StandardCharsets.UTF_8));
 
-        String accountIdFromSubject = getSubjectFromRefreshToken(refreshTokenRequest.getRefreshToken());
-        Date expDate = getExpireDateRefreshToken(refreshTokenRequest.getRefreshToken());
-        if(expDate.before(new Date())) {
-            throw new JwtException("Refresh token expired");
+        if (!signedJWT.verify(verifier)) {
+            throw new RuntimeException("Invalid token signature");
         }
-        Account account = accountRepository.findById(Integer.parseInt(accountIdFromSubject))
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-        return AuthenticationResponse.builder()
-                .accessToken(generateAccessToken(account))
-                .refreshToken(generateRefreshToken(account))
-                .build();
-    }
-
-    private String getSubjectFromRefreshToken(String refreshToken) throws ParseException, JOSEException {
-        SignedJWT signedJWT = SignedJWT.parse(refreshToken);
-        JWSVerifier jwsVerifier = new MACVerifier(refreshTokenKey.getBytes());
-
-        boolean verified = signedJWT.verify(jwsVerifier);
-
-        if(!verified){
-            throw new JwtException("Invalid refresh token");
-        }
-        var id = signedJWT.getJWTClaimsSet().getSubject();
-        return id.toString();
-    }
-
-    private Date getExpireDateRefreshToken(String refreshToken) throws ParseException, JOSEException {
-        SignedJWT signedJWT = SignedJWT.parse(refreshToken);
-        JWSVerifier jwsVerifier = new MACVerifier(refreshTokenKey.getBytes());
-
-        boolean verified = signedJWT.verify(jwsVerifier);
-        Date expTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-
-        if(!verified){
-            throw new JwtException("Invalid refresh token");
-        }
-        return expTime;
+        return signedJWT;
     }
 }
