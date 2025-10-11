@@ -1,5 +1,8 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.response.CoachDTO;
+import com.smartquit.smartquitiot.dto.response.CoachSummaryDTO;
+import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.entity.Coach;
 import com.smartquit.smartquitiot.service.CoachService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 @RestController
 @RequestMapping("/coaches")
@@ -24,5 +28,14 @@ public class CoachController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<Coach> getAuthenticatedCoach(){
         return ResponseEntity.ok(coachService.getAuthenticatedCoach());
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get all coaches (admin)", description = "Returns full list of CoachDTO, no filtering/paging")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse<List<CoachSummaryDTO>>>    getAllCoaches() {
+        List<CoachSummaryDTO> coaches = coachService.getCoachList();
+        return ResponseEntity.ok(GlobalResponse.ok(coaches));
     }
 }
