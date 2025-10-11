@@ -34,7 +34,7 @@ public class CoachController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get all coaches (admin)", description = "Returns full list of CoachDTO, no filtering/paging")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<GlobalResponse<List<CoachSummaryDTO>>>    getAllCoaches() {
+    public ResponseEntity<GlobalResponse<List<CoachSummaryDTO>>> getAllCoaches() {
         List<CoachSummaryDTO> coaches = coachService.getCoachList();
         return ResponseEntity.ok(GlobalResponse.ok(coaches));
     }

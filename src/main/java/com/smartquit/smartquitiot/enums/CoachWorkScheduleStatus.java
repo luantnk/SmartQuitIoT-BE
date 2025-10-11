@@ -1,5 +1,5 @@
 package com.smartquit.smartquitiot.enums;
 
 public enum CoachWorkScheduleStatus {
-    PENDING, IN_PROGRESS, COMPLETED
+    AVAILABLE,PENDING,IN_PROGRESS,COMPLETED
 }
