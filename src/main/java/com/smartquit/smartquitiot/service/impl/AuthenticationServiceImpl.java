@@ -1,5 +1,9 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -12,8 +16,10 @@ import com.smartquit.smartquitiot.dto.request.VerifyOtpRequest;
 import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
 import com.smartquit.smartquitiot.dto.response.VerifyOtpResponse;
 import com.smartquit.smartquitiot.entity.Account;
+import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.repository.AccountRepository;
+import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.service.AuthenticationService;
 import com.smartquit.smartquitiot.service.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +31,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
@@ -42,6 +51,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final MemberRepository memberRepository;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -55,6 +65,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     @Value("${jwt.refreshableDuration}")
     protected Long refreshTokenDuration;
+
+    @NonFinal
+    @Value("${google.client-id}")
+    private String googleClientId;
 
     private static final long OTP_VALID_DURATION_MINUTES = 5;
     private static final long RESET_TOKEN_VALID_DURATION_MINUTES = 10;
@@ -104,6 +118,60 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+
+    @Override
+    public AuthenticationResponse loginWithGoogle(String idTokenString) throws GeneralSecurityException, IOException {
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+
+        GoogleIdToken idToken = verifier.verify(idTokenString);
+        if (idToken == null) {
+            throw new IllegalArgumentException("Invalid ID Token");
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+        String firstName = (String) payload.get("given_name");
+        String lastName = (String) payload.get("family_name");
+        String pictureUrl = (String) payload.get("picture");
+
+        Account account = accountRepository.findByEmail(email)
+                .orElseGet(() -> createNewGoogleAccount(email, firstName, lastName, pictureUrl));
+
+        if (!account.isActive()) {
+            throw new RuntimeException("Account is not active");
+        }
+        if (account.isBanned()) {
+            throw new RuntimeException("Account is banned");
+        }
+
+        String accessToken = generateAccessToken(account);
+        String refreshToken = generateRefreshToken(account);
+
+        return AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .isFirstLogin(account.isFirstLogin())
+                .build();
+    }
+    private Account createNewGoogleAccount(String email, String firstName, String lastName, String pictureUrl) {
+        Member member = new Member();
+        member.setFirstName(firstName);
+        member.setLastName(lastName);
+        member.setAvatarUrl(pictureUrl);
+        Member savedMember = memberRepository.save(member);
+        Account newAccount = new Account();
+        newAccount.setEmail(email);
+        newAccount.setUsername(email);
+        newAccount.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        newAccount.setRole(Role.MEMBER);
+        newAccount.setActive(true);
+        newAccount.setBanned(false);
+        newAccount.setMember(savedMember);
+        newAccount.setFirstLogin(true);
+        return accountRepository.save(newAccount);
+    }
     @Override
     public void forgotPassword(String email) {
         Account account = accountRepository.findByEmail(email)

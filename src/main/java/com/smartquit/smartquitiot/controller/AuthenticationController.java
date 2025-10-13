@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 
 @RestController
@@ -60,6 +62,13 @@ public class AuthenticationController {
     public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authenticationService.resetPassword(request);
         return ResponseEntity.ok(new MessageResponse("Your password has been reset successfully."));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthenticationResponse> googleLogin(@RequestBody GoogleLoginRequest request)
+            throws GeneralSecurityException, IOException {
+        AuthenticationResponse response = authenticationService.loginWithGoogle(request.getIdToken());
+        return ResponseEntity.ok(response);
     }
 
 }
