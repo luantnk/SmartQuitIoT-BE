@@ -26,6 +26,6 @@ public class News {
     @CreationTimestamp
     LocalDateTime createdAt;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy ="news")
     List<NewsMedia> newsMedia;
 }
