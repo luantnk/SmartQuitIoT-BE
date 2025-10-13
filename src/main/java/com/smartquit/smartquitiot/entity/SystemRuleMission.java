@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.smartquit.smartquitiot.enums.Operator;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -20,6 +21,8 @@ public class SystemRuleMission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
     String field;
+    @Enumerated(EnumType.STRING)
+    Operator operator;
     double value;
     @CreationTimestamp
     LocalDateTime createdAt;

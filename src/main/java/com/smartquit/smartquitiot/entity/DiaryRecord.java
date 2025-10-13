@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,7 @@ public class DiaryRecord {
     int moodLevel;
     int confidenceLevel;
     int anxietyLevel;
+    BigDecimal estimatedNicotineIntake; // new attribute, new metric, can use for showing dashboard
     @CreationTimestamp
     LocalDateTime createdAt;
     @UpdateTimestamp

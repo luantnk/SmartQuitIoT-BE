@@ -26,9 +26,9 @@ public class PhaseDetail {
     @JoinColumn(name = "phase_id")
     Phase phase;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy ="phaseDetail" )
     List<ReminderQueue> reminderQueue;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "phaseDetail")
     List<PhaseDetailMission> phaseDetailMissions;
 }

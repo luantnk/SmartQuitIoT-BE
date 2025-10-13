@@ -1,10 +1,13 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.MissionStatus;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +34,10 @@ public class Mission {
     int exp;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
+
+    @Column(name = "condition_json", columnDefinition = "JSON")
+    @Type(JsonType.class)
+    private JsonNode condition;
 
     @ManyToOne(fetch = FetchType.LAZY)
     MissionType missionType;
