@@ -1,9 +1,13 @@
 package com.smartquit.smartquitiot.mapper;
 
 import com.smartquit.smartquitiot.dto.response.CoachDTO;
+import com.smartquit.smartquitiot.dto.response.CoachSummaryDTO;
 import com.smartquit.smartquitiot.entity.Coach;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -26,5 +30,24 @@ public class CoachMapper {
         coachDTO.setAccount(accountMapper.toAccountDTO(coach.getAccount()));
 
         return coachDTO;
+    }
+    public List<CoachDTO> toCoachDTO(List<Coach> coachList) {
+        return coachList.stream()
+                .map(this::toCoachDTO)
+                .collect(Collectors.toList());
+    }
+    public CoachSummaryDTO toCoachSummaryDTO(Coach coach) {
+        CoachSummaryDTO coachSummaryDTO =  new CoachSummaryDTO();
+        coachSummaryDTO.setId(coach.getId());
+        coachSummaryDTO.setFirstName(coach.getFirstName());
+        coachSummaryDTO.setLastName(coach.getLastName());
+        coachSummaryDTO.setAvatarUrl(coach.getAvatarUrl());
+        coachSummaryDTO.setRatingAvg(coach.getRatingAvg());
+        return coachSummaryDTO;
+    }
+    public List<CoachSummaryDTO> toCoachSummaryDTO(List<Coach> coachList) {
+        return coachList.stream()
+                .map(this::toCoachSummaryDTO)
+                .collect(Collectors.toList());
     }
 }

@@ -101,6 +101,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.MINUTES).toEpochMilli()))
                 .claim("scope", account.getRole().name())
+                .claim("username", account.getUsername())
                 .build();
         return createSignedJWT(header, claimsSet, secretKey);
     }
