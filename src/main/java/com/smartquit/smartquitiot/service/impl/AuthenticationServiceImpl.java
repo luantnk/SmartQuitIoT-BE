@@ -7,11 +7,13 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.smartquit.smartquitiot.dto.request.AuthenticationRequest;
 import com.smartquit.smartquitiot.dto.request.RefreshTokenRequest;
+import com.smartquit.smartquitiot.dto.request.ResetPasswordRequest;
 import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.service.AuthenticationService;
+import com.smartquit.smartquitiot.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +25,12 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -34,6 +39,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -48,6 +54,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${jwt.refreshableDuration}")
     protected Long refreshTokenDuration;
 
+    private static final long OTP_VALID_DURATION_MINUTES = 5;
     @Override
     public AuthenticationResponse login(AuthenticationRequest request, boolean isSystem) {
         Account account = accountRepository.findByUsernameOrEmail(request.getUsernameOrEmail(), request.getUsernameOrEmail())
@@ -92,6 +99,43 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .refreshToken(request.getRefreshToken())
                 .build();
     }
+
+    @Override
+    public void forgotPassword(String email) {
+        Account account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        account.setOtp(otp);
+        account.setOtpGeneratedTime(LocalDateTime.now());
+        accountRepository.save(account);
+        String subject = "[SmartQuit] Your Password Reset OTP";
+        String username = account.getMember().getFirstName();
+        emailService.sendHtmlOtpEmail(email, subject, username, otp);
+    }
+
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        Account account = accountRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+
+        if (account.getOtp() == null || !account.getOtp().equals(request.getOtp())) {
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        LocalDateTime otpGeneratedTime = account.getOtpGeneratedTime();
+        long minutesElapsed = Duration.between(otpGeneratedTime, LocalDateTime.now()).toMinutes();
+        if (minutesElapsed > OTP_VALID_DURATION_MINUTES) {
+            throw new RuntimeException("OTP has expired. Please request a new one.");
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        account.setOtp(null);
+        account.setOtpGeneratedTime(null);
+        accountRepository.save(account);
+    }
+
 
     private String generateAccessToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);

@@ -42,6 +42,12 @@ public class Account {
     @CreationTimestamp
     LocalDateTime createdAt;
 
+    @Column(name = "otp")
+    private String otp;
+
+    @Column(name = "otp_generated_time")
+    private LocalDateTime otpGeneratedTime;
+
     @JsonIgnore
     @OneToOne(mappedBy = "account", optional = false, cascade = CascadeType.MERGE)
     Member member;

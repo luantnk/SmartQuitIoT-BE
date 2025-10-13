@@ -1,31 +1,19 @@
 package com.smartquit.smartquitiot.dto.request;
 
-import com.smartquit.smartquitiot.enums.Gender;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.time.LocalDate;
-
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class MemberAccountRequest {
-
-    String username;
+public class ResetPasswordRequest {
+    private String email;
+    private String otp;
     @Size(min = 8, message = "Password must be at least 8 characters long")
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
             message = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
     )
-    String password;
-    String confirmPassword;
-    String email;
-    String firstName;
-    String lastName;
-    Gender gender;
-    LocalDate dob;
+    private String newPassword;
 }
