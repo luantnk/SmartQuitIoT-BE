@@ -8,6 +8,7 @@ import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.service.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class AccountController {
 
     @PostMapping("/register")
     @Operation(summary = "This endpoint for register new member account")
-    public ResponseEntity<MemberDTO> registerMemberAccount(@RequestBody MemberAccountRequest request){
+    public ResponseEntity<MemberDTO> registerMemberAccount(@RequestBody @Valid MemberAccountRequest request){
         return new ResponseEntity<>(accountService.registerMember(request), HttpStatus.CREATED);
     }
 
@@ -31,7 +32,7 @@ public class AccountController {
     @Operation(summary = "This endpoint for create new coach account")
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CoachDTO> createCoachAccount(@RequestBody CoachAccountRequest request){
+    public ResponseEntity<CoachDTO> createCoachAccount(@RequestBody @Valid CoachAccountRequest request){
         return new ResponseEntity<>(accountService.registerCoach(request), HttpStatus.CREATED);
     }
 

@@ -3,10 +3,14 @@ package com.smartquit.smartquitiot.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartquit.smartquitiot.entity.Account;
+import com.smartquit.smartquitiot.entity.MembershipPackage;
 import com.smartquit.smartquitiot.entity.SystemPhaseCondition;
 import com.smartquit.smartquitiot.enums.AccountType;
+import com.smartquit.smartquitiot.enums.DurationUnit;
+import com.smartquit.smartquitiot.enums.MembershipPackageType;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.repository.AccountRepository;
+import com.smartquit.smartquitiot.repository.MembershipPackageRepository;
 import com.smartquit.smartquitiot.repository.SystemPhaseConditionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +18,9 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -24,6 +31,7 @@ public class AppInitialConfig {
     private final AccountRepository accountRepository;
     private final SystemPhaseConditionRepository systemPhaseConditionRepository;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final MembershipPackageRepository membershipPackageRepository;
 
     @Bean
     ApplicationRunner applicationRunner() {
@@ -42,6 +50,7 @@ public class AppInitialConfig {
             if (systemPhaseConditionRepository.count() == 0) {
                 initSystemPhaseCondition();
             }
+            initMembershipPackages();
         };
     }
 
@@ -201,4 +210,53 @@ public class AppInitialConfig {
      }
     """
     };
+
+    private void initMembershipPackages(){
+        if(membershipPackageRepository.count() == 0){
+            //generate free trial package
+            MembershipPackage freeTrialPackage = new MembershipPackage();
+            freeTrialPackage.setName("Free Trial");
+            freeTrialPackage.setDescription("Free Trial Package");
+            freeTrialPackage.setPrice(0.0);
+            freeTrialPackage.setType(MembershipPackageType.TRIAL);
+            freeTrialPackage.setDuration(7);
+            freeTrialPackage.setDurationUnit(DurationUnit.DAY);
+            List<String> freeTrialFeatures = new ArrayList<>();
+            freeTrialFeatures.add("Smart Quit Plan, Missions");
+            freeTrialFeatures.add("Metrics Tracking");
+            freeTrialPackage.setFeatures(freeTrialFeatures);
+            membershipPackageRepository.save(freeTrialPackage);
+            //generate standard package
+            MembershipPackage standardPackage = new MembershipPackage();
+            standardPackage.setName("Standard");
+            standardPackage.setDescription("Standard Package");
+            standardPackage.setPrice(79000.0);
+            standardPackage.setType(MembershipPackageType.STANDARD);
+            standardPackage.setDuration(1);
+            standardPackage.setDurationUnit(DurationUnit.MONTH);
+            List<String> standardFeatures = new ArrayList<>();
+            standardFeatures.add("Smart Quit Plan, Missions");
+            standardFeatures.add("Metrics Tracking");
+            standardPackage.setFeatures(standardFeatures);
+            membershipPackageRepository.save(standardPackage);
+            //generate premium package
+            MembershipPackage premiumPackage = new MembershipPackage();
+            premiumPackage.setName("Premium");
+            premiumPackage.setDescription("Premium Package");
+            premiumPackage.setPrice(100000.0);
+            premiumPackage.setType(MembershipPackageType.PREMIUM);
+            premiumPackage.setDuration(1);
+            premiumPackage.setDurationUnit(DurationUnit.MONTH);
+            List<String> premiumFeatures = new ArrayList<>();
+            premiumFeatures.add("Smart Quit Plan, Missions");
+            premiumFeatures.add("Metrics Tracking");
+            premiumFeatures.add("Guides by Coach");
+            premiumFeatures.add("AI Personalize Chat");
+            premiumPackage.setFeatures(premiumFeatures);
+            membershipPackageRepository.save(premiumPackage);
+
+            log.info("Initialized Membership Package");
+        }
+
+    }
 }

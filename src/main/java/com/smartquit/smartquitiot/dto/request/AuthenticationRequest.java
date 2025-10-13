@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.dto.request;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,7 +11,9 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthenticationRequest {
 
+    @NotEmpty(message = "Invalid username/email or password")
     String usernameOrEmail;
+    @NotEmpty(message = "Invalid username/email or password")
     String password;
 
 }
