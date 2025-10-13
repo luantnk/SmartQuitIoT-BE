@@ -33,6 +33,7 @@ public class QuitPlan {
     QuitPlanStatus status;
 
     LocalDate startDate;
+    LocalDate endDate;
 
     int ftndScore;
 

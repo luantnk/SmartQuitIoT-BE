@@ -1,6 +1,5 @@
 package com.smartquit.smartquitiot.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smartquit.smartquitiot.enums.MetricType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,26 +12,31 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Metric {
+public class HealthRecovery {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
 
-    double avg_craving_level;
-    double avg_mood;
-    double avg_anxiety;
-    double avg_confident_level;
-    int streaks;
-    int relapse_count_in_phase;
-    //......
+    @Column(unique = true)
+    String name;
+    String value;
+    String description;
+    String unit;
+    LocalDateTime timeTriggered;
+    int duration;
+    int defaultDuration;
 
     @CreationTimestamp
     LocalDateTime createdAt;
     @UpdateTimestamp
     LocalDateTime updatedAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    Member member;
 }
+

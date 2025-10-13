@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smartquit.smartquitiot.enums.Gender;
 import com.smartquit.smartquitiot.validator.DobConstraint;
 import jakarta.persistence.*;
@@ -11,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "member")
@@ -41,4 +43,13 @@ public class Member {
     @JoinColumn(name = "account_id")
     Account account;
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "member")
+    List<Notification> notifications;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "member")
+    List<HealthRecovery> healthRecoveries;
+
+    @OneToOne(cascade = CascadeType.ALL,fetch =  FetchType.LAZY)
+    @JoinColumn(name = "metric_id")
+    Metric metric;
 }
