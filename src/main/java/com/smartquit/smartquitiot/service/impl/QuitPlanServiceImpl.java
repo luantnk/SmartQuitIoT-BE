@@ -1,7 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseDTO;
@@ -9,9 +8,12 @@ import com.smartquit.smartquitiot.dto.response.PhaseResponse;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
+import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.repository.SystemPhaseConditionRepository;
+import com.smartquit.smartquitiot.service.AccountService;
+import com.smartquit.smartquitiot.service.PhaseDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
@@ -26,60 +28,68 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class QuitPlanService {
+public class QuitPlanServiceImpl {
     private final QuitPlanRepository quitPlanRepository;
     private final ChatClient chatClient;
     private final SystemPhaseConditionRepository systemPhaseConditionRepository;
     private final PhaseRepository phaseRepository;
     private final ObjectMapper objectMapper;
-    private final AccountServiceImpl accountServiceImpl;
-
-
+    private final AccountService accountService;
+    private final AccountRepository accountRepository;
+    private final PhaseDetailService phaseDetailService;
 
     @Transactional
     public void createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req) {
+        Account account = accountService.getAuthenticatedAccount();
         int ftndScore = calculateFTNDScore(req);
-        Account account = accountServiceImpl.getAuthenticatedAccount();
-        //get response from ai
-        PhaseResponse phaseResponse = generatePhases(req, ftndScore, account);
+       if(account.isFirstLogin()){
+           //get response from ai
+           PhaseResponse phaseResponse = generatePhases(req, ftndScore, account);
 
-        // save quit plan
-        QuitPlan quitPlan = new QuitPlan();
-        quitPlan.setName(req.getQuitPlanName());
-        quitPlan.setFtndScore(ftndScore);
-        quitPlan.setMemberId(account.getMember().getId());
-        quitPlan.setStartDate(req.getStartDate());
-        quitPlan.setStatus(QuitPlanStatus.CREATED);
-        quitPlan.setUseNRT(req.isUseNRT());
-        //from metric
-        FormMetric formMetric = new FormMetric();
-        formMetric.setSmokeAvgPerDay(req.getSmokeAvgPerDay());
-        formMetric.setNumberOfYearsOfSmoking(req.getNumberOfYearsOfSmoking());
-        formMetric.setCigarettesPerPackage(req.getCigarettesPerPackage());
-        formMetric.setMinutesAfterWakingToSmoke(req.getMinutesAfterWakingToSmoke());
-        formMetric.setSmokingInForbiddenPlaces(req.isSmokingInForbiddenPlaces());
-        formMetric.setCigaretteHateToGiveUp(req.isCigaretteHateToGiveUp());
-        formMetric.setMorningSmokingFrequency(req.isMorningSmokingFrequency());
-        formMetric.setSmokeWhenSick(req.isSmokeWhenSick());
-        formMetric.setMoneyPerPackage(req.getMoneyPerPackage());
-        formMetric.setEstimatedMoneySavedOnPlan(calculateMoneySavedOnPlan(req.getStartDate(),
-                phaseResponse.getEndDateOfQuitPlan(), req.getCigarettesPerPackage(),
-                req.getMoneyPerPackage(), req.getSmokeAvgPerDay()));
-        formMetric.setAmountOfNicotinePerCigarettes(req.getAmountOfNicotinePerCigarettes());
-        formMetric.setEstimatedNicotineIntakePerDay(calculateNicotineIntakePerDay(req.getAmountOfNicotinePerCigarettes(),req.getSmokeAvgPerDay()));
-        formMetric.setInterests(req.getInterests());
+           // save quit plan
+           QuitPlan quitPlan = new QuitPlan();
+           quitPlan.setName(req.getQuitPlanName());
+           quitPlan.setFtndScore(ftndScore);
+           quitPlan.setMemberId(account.getMember().getId());
+           quitPlan.setStartDate(req.getStartDate());
+           quitPlan.setStatus(QuitPlanStatus.CREATED);
+           quitPlan.setUseNRT(req.isUseNRT());
+           //from metric
+           FormMetric formMetric = new FormMetric();
+           formMetric.setSmokeAvgPerDay(req.getSmokeAvgPerDay());
+           formMetric.setNumberOfYearsOfSmoking(req.getNumberOfYearsOfSmoking());
+           formMetric.setCigarettesPerPackage(req.getCigarettesPerPackage());
+           formMetric.setMinutesAfterWakingToSmoke(req.getMinutesAfterWakingToSmoke());
+           formMetric.setSmokingInForbiddenPlaces(req.isSmokingInForbiddenPlaces());
+           formMetric.setCigaretteHateToGiveUp(req.isCigaretteHateToGiveUp());
+           formMetric.setMorningSmokingFrequency(req.isMorningSmokingFrequency());
+           formMetric.setSmokeWhenSick(req.isSmokeWhenSick());
+           formMetric.setMoneyPerPackage(req.getMoneyPerPackage());
+           formMetric.setEstimatedMoneySavedOnPlan(calculateMoneySavedOnPlan(req.getStartDate(),
+                   phaseResponse.getEndDateOfQuitPlan(), req.getCigarettesPerPackage(),
+                   req.getMoneyPerPackage(), req.getSmokeAvgPerDay()));
+           formMetric.setAmountOfNicotinePerCigarettes(req.getAmountOfNicotinePerCigarettes());
+           formMetric.setEstimatedNicotineIntakePerDay(calculateNicotineIntakePerDay(req.getAmountOfNicotinePerCigarettes(),req.getSmokeAvgPerDay()));
+           formMetric.setInterests(req.getInterests());
+           formMetric.setTriggered(req.getTriggered());
+           quitPlan.setFormMetric(formMetric);
+           //save quit plan and form metric
+           quitPlanRepository.save(quitPlan);
+           // set account is first login ve false
+           account.setFirstLogin(false);
+           accountRepository.save(account);
+           //save phase and system phase condition
+           savePhasesAndSystemPhaseCondition(phaseResponse,quitPlan);
 
-        quitPlan.setFormMetric(formMetric);
-        //save quit plan and form metric
-        quitPlanRepository.save(quitPlan);
-        // CÒN THIẾU SET IS FIRST LOGIN vể FALSE DO CHƯA UPDATE CODE MỚI ------------------------------------------------------
+           //tao phase detail, loc mission va gen mission
+           phaseDetailService.generateInitialPhaseDetails(quitPlan);
 
-        //save phase and system phase condition
-        savePhasesAndSystemPhaseCondition(phaseResponse,quitPlan);
-        //
+
+       }else {
+           throw new RuntimeException("isFirstLogin is FALSE in createQuitPlanInFirstLogin function ");
+       }
     }
 
-    // save Form Metric(estimatedNicotineIntake,estimatedMoneySaved,ftnd ), save quitplan
 
     private PhaseResponse generatePhases(CreateQuitPlanInFirstLoginRequest req, int ftndScore, Account account) {
         //rules

@@ -28,5 +28,6 @@ public class CreateQuitPlanInFirstLoginRequest {
     boolean morningSmokingFrequency;
     boolean smokeWhenSick;
     List<String> interests;
+    List<String> triggered; //After Meal, Gaming, Party, Coffee, Stress, null
     BigDecimal amountOfNicotinePerCigarettes;
 }

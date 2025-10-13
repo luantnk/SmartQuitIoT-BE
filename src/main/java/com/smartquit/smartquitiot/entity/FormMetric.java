@@ -35,7 +35,7 @@ public class FormMetric {
     BigDecimal amountOfNicotinePerCigarettes;
     BigDecimal estimatedNicotineIntakePerDay;
     List<String> interests;
-
+    List<String> triggered; //After Meal, Gaming, Party, Coffee, Stress, null
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     LocalDateTime createdAt;

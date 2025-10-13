@@ -26,6 +26,7 @@ public class Phase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
 
+    @Column(unique = true)
     String name;
     LocalDate startDate;
     LocalDate endDate;
