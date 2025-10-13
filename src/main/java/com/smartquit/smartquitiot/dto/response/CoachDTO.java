@@ -19,6 +19,8 @@ public class CoachDTO {
     String avatarUrl;
     String gender;
     String certificateUrl;
+    int experienceYears;
+    String specializations;
     String bio;
     int ratingCount;
     double ratingAvg;

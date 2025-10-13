@@ -6,6 +6,7 @@ import com.smartquit.smartquitiot.dto.request.RefreshTokenRequest;
 import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
 import com.smartquit.smartquitiot.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,13 +25,13 @@ public class AuthenticationController {
 
     @PostMapping("/member")
     @Operation(summary = "This endpoint for MEMBER login")
-    public ResponseEntity<AuthenticationResponse> memberLogin(@RequestBody AuthenticationRequest request){
+    public ResponseEntity<AuthenticationResponse> memberLogin(@RequestBody @Valid AuthenticationRequest request){
         return ResponseEntity.ok(authenticationService.login(request, false));
     }
 
     @PostMapping("/system")
     @Operation(summary = "This endpoint for COACH and ADMIN login")
-    public ResponseEntity<AuthenticationResponse> systemLogin(@RequestBody AuthenticationRequest request){
+    public ResponseEntity<AuthenticationResponse> systemLogin(@RequestBody @Valid AuthenticationRequest request){
         return ResponseEntity.ok(authenticationService.login(request, true));
     }
 

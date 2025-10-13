@@ -25,6 +25,8 @@ public class CoachMapper {
         coachDTO.setGender(coach.getGender().name());
         coachDTO.setRatingCount(coach.getRatingCount());
         coachDTO.setRatingAvg(coach.getRatingAvg());
+        coachDTO.setExperienceYears(coach.getExperienceYears());
+        coachDTO.setSpecializations(coach.getSpecializations());
         coachDTO.setBio(coach.getBio());
         coachDTO.setCertificateUrl(coach.getCertificateUrl());
         coachDTO.setAccount(accountMapper.toAccountDTO(coach.getAccount()));
