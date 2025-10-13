@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -12,14 +13,15 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MembershipPackageDTO {
+public class MembershipSubscriptionDTO {
 
     Integer id;
-    String name;
-    String description;
-    Long price;
-    String type;
-    Integer duration;
-    String durationUnit;
-    List<String> features;
+    LocalDate startDate;
+    LocalDate endDate;
+    String status;
+    LocalDateTime createdAt;
+    Long orderCode;
+    Long totalAmount;
+    Integer membershipPackageId;
+
 }

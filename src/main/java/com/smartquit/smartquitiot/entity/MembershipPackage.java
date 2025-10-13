@@ -21,7 +21,7 @@ public class MembershipPackage {
     int id;
     String name;
     String description;
-    double price;
+    long price;
     @Enumerated(EnumType.STRING)
     MembershipPackageType type;
     int duration;

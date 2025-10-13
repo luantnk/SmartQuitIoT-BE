@@ -26,7 +26,6 @@ public class MemberAccountRequest {
     String firstName;
     @NotEmpty(message = "Lastname can not empty")
     String lastName;
-    @NotEmpty(message = "Gender can not empty")
     Gender gender;
     LocalDate dob;
 }

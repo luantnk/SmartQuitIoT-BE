@@ -9,5 +9,6 @@ import java.util.List;
 public interface    CoachService {
 
     Coach getAuthenticatedCoach();
+    CoachDTO getAuthenticatedCoachProfile();
     List<CoachSummaryDTO> getCoachList();
 }

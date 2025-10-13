@@ -47,7 +47,8 @@ public class SecurityConfig {
             Map.entry("/accounts/coach/create", HttpMethod.POST),
             Map.entry("/accounts/p", HttpMethod.GET),
             Map.entry("/members/p", HttpMethod.GET),
-            Map.entry("/coaches/p", HttpMethod.GET)
+            Map.entry("/coaches/p", HttpMethod.GET),
+            Map.entry("/membership-packages/create-payment-link", HttpMethod.POST)
     );
 
     private final AccountRepository accountRepository;

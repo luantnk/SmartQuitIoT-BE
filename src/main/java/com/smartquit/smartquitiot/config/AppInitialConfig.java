@@ -217,7 +217,7 @@ public class AppInitialConfig {
             MembershipPackage freeTrialPackage = new MembershipPackage();
             freeTrialPackage.setName("Free Trial");
             freeTrialPackage.setDescription("Free Trial Package");
-            freeTrialPackage.setPrice(0.0);
+            freeTrialPackage.setPrice(0L);
             freeTrialPackage.setType(MembershipPackageType.TRIAL);
             freeTrialPackage.setDuration(7);
             freeTrialPackage.setDurationUnit(DurationUnit.DAY);
@@ -230,7 +230,7 @@ public class AppInitialConfig {
             MembershipPackage standardPackage = new MembershipPackage();
             standardPackage.setName("Standard");
             standardPackage.setDescription("Standard Package");
-            standardPackage.setPrice(79000.0);
+            standardPackage.setPrice(79000L);
             standardPackage.setType(MembershipPackageType.STANDARD);
             standardPackage.setDuration(1);
             standardPackage.setDurationUnit(DurationUnit.MONTH);
@@ -243,7 +243,7 @@ public class AppInitialConfig {
             MembershipPackage premiumPackage = new MembershipPackage();
             premiumPackage.setName("Premium");
             premiumPackage.setDescription("Premium Package");
-            premiumPackage.setPrice(100000.0);
+            premiumPackage.setPrice(100000L);
             premiumPackage.setType(MembershipPackageType.PREMIUM);
             premiumPackage.setDuration(1);
             premiumPackage.setDurationUnit(DurationUnit.MONTH);

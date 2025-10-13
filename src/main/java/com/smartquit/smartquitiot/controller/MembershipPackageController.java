@@ -1,15 +1,15 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.request.MembershipPaymentRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class MembershipPackageController {
     }
 
     @GetMapping("/plans/{membershipPackageId}")
-    @Operation(summary = "Get all membership package plans by Id", description = "Only Standard and Premium package has more plan")
+    @Operation(summary = "Get all membership package plans by Id", description = "Chỉ có gói Standard và Premium có plan 1 tháng với 12 tháng")
     public ResponseEntity<?> getMembershipPackagePlans(@PathVariable int membershipPackageId) {
         return ResponseEntity.ok(membershipPackageService.getMembershipPackagesPlanByMembershipPackageId(membershipPackageId));
     }
@@ -44,4 +44,15 @@ public class MembershipPackageController {
 //
 //        return new ResponseEntity<>(null, HttpStatus.CREATED);
 //    }
+
+    //Create payment link if package is free trial will not return payment url
+    @PostMapping("/create-payment-link")
+    @Operation(summary = "Create membership payment link",
+            description = "Mobile gửi membershipPackageId, duration về, nếu id của gói free trial sẽ không tạo payment link")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<?> createMembershipPaymentLink(@RequestBody MembershipPaymentRequest request){
+        return new ResponseEntity<>(membershipPackageService
+                .createMembershipPackagePayment(request.getMembershipPackageId(), request.getDuration()),
+                HttpStatus.CREATED);
+    }
 }
