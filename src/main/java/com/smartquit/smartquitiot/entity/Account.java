@@ -55,7 +55,7 @@ public class Account {
     private LocalDateTime resetTokenExpiryTime;
 
     @JsonIgnore
-    @OneToOne(mappedBy = "account", optional = false, cascade = CascadeType.MERGE)
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     Member member;
 
     @JsonIgnore

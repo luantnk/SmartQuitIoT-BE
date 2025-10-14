@@ -17,6 +17,7 @@ import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
 import com.smartquit.smartquitiot.dto.response.VerifyOtpResponse;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Member;
+import com.smartquit.smartquitiot.enums.AccountType;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.repository.MemberRepository;
@@ -39,10 +40,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -124,43 +122,42 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                 .setAudience(Collections.singletonList(googleClientId))
                 .build();
-
         GoogleIdToken idToken = verifier.verify(idTokenString);
         if (idToken == null) {
             throw new IllegalArgumentException("Invalid ID Token");
         }
-
         GoogleIdToken.Payload payload = idToken.getPayload();
         String email = payload.getEmail();
+        boolean emailVerified = Boolean.TRUE.equals(payload.getEmailVerified());
         String firstName = (String) payload.get("given_name");
         String lastName = (String) payload.get("family_name");
         String pictureUrl = (String) payload.get("picture");
-
-        Account account = accountRepository.findByEmail(email)
-                .orElseGet(() -> createNewGoogleAccount(email, firstName, lastName, pictureUrl));
-
+        if (!emailVerified) {
+            throw new RuntimeException("Google email not verified");
+        }
+        Optional<Account> existingUser = accountRepository.findByEmail(email);
+        Account account;
+        account = existingUser.orElseGet(() -> createNewGoogleAccount(email, firstName, lastName, pictureUrl));
         if (!account.isActive()) {
             throw new RuntimeException("Account is not active");
         }
         if (account.isBanned()) {
             throw new RuntimeException("Account is banned");
         }
-
         String accessToken = generateAccessToken(account);
         String refreshToken = generateRefreshToken(account);
-
         return AuthenticationResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .isFirstLogin(account.isFirstLogin())
                 .build();
     }
+
     private Account createNewGoogleAccount(String email, String firstName, String lastName, String pictureUrl) {
-        Member member = new Member();
-        member.setFirstName(firstName);
-        member.setLastName(lastName);
-        member.setAvatarUrl(pictureUrl);
-        Member savedMember = memberRepository.save(member);
+        Member newMember = new Member();
+        newMember.setFirstName(firstName);
+        newMember.setLastName(lastName);
+        newMember.setAvatarUrl(pictureUrl);
         Account newAccount = new Account();
         newAccount.setEmail(email);
         newAccount.setUsername(email);
@@ -168,8 +165,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         newAccount.setRole(Role.MEMBER);
         newAccount.setActive(true);
         newAccount.setBanned(false);
-        newAccount.setMember(savedMember);
         newAccount.setFirstLogin(true);
+        newAccount.setAccountType(AccountType.GOOGLE);
+        newAccount.setMember(newMember);
+        newMember.setAccount(newAccount);
         return accountRepository.save(newAccount);
     }
     @Override
