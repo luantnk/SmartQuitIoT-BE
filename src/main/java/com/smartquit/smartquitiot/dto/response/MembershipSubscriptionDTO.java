@@ -22,6 +22,6 @@ public class MembershipSubscriptionDTO {
     LocalDateTime createdAt;
     Long orderCode;
     Long totalAmount;
-    Integer membershipPackageId;
+    MembershipPackageDTO membershipPackage;
 
 }

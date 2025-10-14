@@ -3,6 +3,8 @@ package com.smartquit.smartquitiot.controller;
 import com.smartquit.smartquitiot.dto.request.MembershipPaymentRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
+import com.smartquit.smartquitiot.dto.response.MembershipSubscriptionDTO;
+import com.smartquit.smartquitiot.entity.MembershipSubscription;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -48,11 +50,19 @@ public class MembershipPackageController {
     //Create payment link if package is free trial will not return payment url
     @PostMapping("/create-payment-link")
     @Operation(summary = "Create membership payment link",
-            description = "Mobile gửi membershipPackageId, duration về, nếu id của gói free trial sẽ không tạo payment link")
+            description = "Mobile gửi membershipPackageId, duration về, nếu id của gói free trial sẽ không tạo payment link mà sẽ tạo MembershipSubscription với gói Free Trial luôn.")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<?> createMembershipPaymentLink(@RequestBody MembershipPaymentRequest request){
         return new ResponseEntity<>(membershipPackageService
                 .createMembershipPackagePayment(request.getMembershipPackageId(), request.getDuration()),
                 HttpStatus.CREATED);
+    }
+
+    @GetMapping("/current")
+    @Operation(summary = "Get current membership package",
+            description = "Api này trả về gói membership đang hữu dụng hiện tại")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse<MembershipSubscriptionDTO>> getCurrentMembershipSubscription(){
+        return ResponseEntity.ok(GlobalResponse.ok("Get current membership package success", membershipPackageService.getMyMembershipSubscription()));
     }
 }
