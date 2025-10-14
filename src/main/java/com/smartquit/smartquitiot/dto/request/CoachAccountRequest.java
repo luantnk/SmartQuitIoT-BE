@@ -24,7 +24,6 @@ public class CoachAccountRequest {
     String firstName;
     @NotEmpty(message = "Lastname can not empty")
     String lastName;
-    @NotEmpty(message = "Gender can not empty")
     Gender gender;
     String certificateUrl;
     @Positive

@@ -1,11 +1,15 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.response.SlotDTO;
 import com.smartquit.smartquitiot.entity.Slot;
+import com.smartquit.smartquitiot.mapper.SlotMapper;
 import com.smartquit.smartquitiot.repository.SlotRepository;
 import com.smartquit.smartquitiot.service.SlotService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -18,6 +22,7 @@ import java.util.Optional;
 public class SlotServiceImpl implements SlotService {
 
     private final SlotRepository slotRepository;
+    private final SlotMapper slotMapper;
 
     @Override
     @Transactional
@@ -58,5 +63,12 @@ public class SlotServiceImpl implements SlotService {
     @Override
     public List<Slot> listAll() {
         return slotRepository.findAll();
+    }
+
+    @Override
+    public Page<SlotDTO> listAllSlots(int page, int size) {
+        PageRequest  pageRequest = PageRequest.of(page, size);
+        Page<Slot> slots = slotRepository.findAll(pageRequest);
+        return slots.map(slotMapper::toSlotDTO);
     }
 }
