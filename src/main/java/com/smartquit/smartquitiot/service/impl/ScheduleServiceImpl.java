@@ -4,6 +4,7 @@ import com.smartquit.smartquitiot.dto.request.ScheduleAssignRequest;
 import com.smartquit.smartquitiot.entity.Coach;
 import com.smartquit.smartquitiot.entity.CoachWorkSchedule;
 import com.smartquit.smartquitiot.entity.Slot;
+import com.smartquit.smartquitiot.enums.CoachWorkScheduleStatus;
 import com.smartquit.smartquitiot.repository.CoachRepository;
 import com.smartquit.smartquitiot.repository.CoachWorkScheduleRepository;
 import com.smartquit.smartquitiot.service.ScheduleService;
@@ -68,6 +69,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                         schedule.setCoach(coach);
                         schedule.setDate(date);
                         schedule.setSlot(slot);
+                        schedule.setStatus(CoachWorkScheduleStatus.AVAILABLE);
                         newSchedules.add(schedule);
                     }
                 }
