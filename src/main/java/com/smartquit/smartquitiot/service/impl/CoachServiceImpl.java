@@ -8,7 +8,13 @@
     import com.smartquit.smartquitiot.repository.CoachRepository;
     import com.smartquit.smartquitiot.service.AccountService;
     import com.smartquit.smartquitiot.service.CoachService;
+    import com.smartquit.smartquitiot.specifications.CoachSpecification;
     import lombok.RequiredArgsConstructor;
+    import org.springframework.data.domain.Page;
+    import org.springframework.data.domain.PageRequest;
+    import org.springframework.data.domain.Pageable;
+    import org.springframework.data.domain.Sort;
+    import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
 
     import java.util.List;
@@ -37,5 +43,13 @@
         public List<CoachSummaryDTO> getCoachList() {
             List<Coach> coachList = coachRepository.findAllByAccountIsActiveTrueAndAccountIsBannedFalse();
             return coachMapper.toCoachSummaryDTO(coachList);
+        }
+
+        @Override
+        public Page<CoachDTO> getAllCoaches(int page, int size, String searchString, Sort.Direction sortBy) {
+            Specification<Coach> spec = Specification.allOf(CoachSpecification.hasSearchString(searchString));
+            Pageable pageable = PageRequest.of(page, size,sortBy, "id");
+            Page<Coach> coaches = coachRepository.findAll(spec, pageable);
+            return coaches.map(coachMapper::toCoachDTO);
         }
     }
