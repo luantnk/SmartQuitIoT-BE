@@ -1,5 +1,9 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -7,11 +11,18 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.smartquit.smartquitiot.dto.request.AuthenticationRequest;
 import com.smartquit.smartquitiot.dto.request.RefreshTokenRequest;
+import com.smartquit.smartquitiot.dto.request.ResetPasswordRequest;
+import com.smartquit.smartquitiot.dto.request.VerifyOtpRequest;
 import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
+import com.smartquit.smartquitiot.dto.response.VerifyOtpResponse;
 import com.smartquit.smartquitiot.entity.Account;
+import com.smartquit.smartquitiot.entity.Member;
+import com.smartquit.smartquitiot.enums.AccountType;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.repository.AccountRepository;
+import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.service.AuthenticationService;
+import com.smartquit.smartquitiot.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +32,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +48,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final MemberRepository memberRepository;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -47,6 +63,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     @Value("${jwt.refreshableDuration}")
     protected Long refreshTokenDuration;
+
+    @NonFinal
+    @Value("${google.client-id}")
+    private String googleClientId;
+
+    private static final long OTP_VALID_DURATION_MINUTES = 5;
+    private static final long RESET_TOKEN_VALID_DURATION_MINUTES = 10;
 
     @Override
     public AuthenticationResponse login(AuthenticationRequest request, boolean isSystem) {
@@ -91,6 +114,108 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .accessToken(newAccessToken)
                 .refreshToken(request.getRefreshToken())
                 .build();
+    }
+
+
+    @Override
+    public AuthenticationResponse loginWithGoogle(String idTokenString) throws GeneralSecurityException, IOException {
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+        GoogleIdToken idToken = verifier.verify(idTokenString);
+        if (idToken == null) {
+            throw new IllegalArgumentException("Invalid ID Token");
+        }
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+        boolean emailVerified = Boolean.TRUE.equals(payload.getEmailVerified());
+        String firstName = (String) payload.get("given_name");
+        String lastName = (String) payload.get("family_name");
+        String pictureUrl = (String) payload.get("picture");
+        if (!emailVerified) {
+            throw new RuntimeException("Google email not verified");
+        }
+        Optional<Account> existingUser = accountRepository.findByEmail(email);
+        Account account;
+        account = existingUser.orElseGet(() -> createNewGoogleAccount(email, firstName, lastName, pictureUrl));
+        if (!account.isActive()) {
+            throw new RuntimeException("Account is not active");
+        }
+        if (account.isBanned()) {
+            throw new RuntimeException("Account is banned");
+        }
+        String accessToken = generateAccessToken(account);
+        String refreshToken = generateRefreshToken(account);
+        return AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .isFirstLogin(account.isFirstLogin())
+                .build();
+    }
+
+    private Account createNewGoogleAccount(String email, String firstName, String lastName, String pictureUrl) {
+        Member newMember = new Member();
+        newMember.setFirstName(firstName);
+        newMember.setLastName(lastName);
+        newMember.setAvatarUrl(pictureUrl);
+        Account newAccount = new Account();
+        newAccount.setEmail(email);
+        newAccount.setUsername(email);
+        newAccount.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        newAccount.setRole(Role.MEMBER);
+        newAccount.setActive(true);
+        newAccount.setBanned(false);
+        newAccount.setFirstLogin(true);
+        newAccount.setAccountType(AccountType.GOOGLE);
+        newAccount.setMember(newMember);
+        newMember.setAccount(newAccount);
+        return accountRepository.save(newAccount);
+    }
+    @Override
+    public void forgotPassword(String email) {
+        Account account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        account.setOtp(otp);
+        account.setOtpGeneratedTime(LocalDateTime.now());
+        accountRepository.save(account);
+        String subject = "[SmartQuit] Your Password Reset OTP";
+        String username = account.getMember().getFirstName();
+        emailService.sendHtmlOtpEmail(email, subject, username, otp);
+    }
+
+    @Override
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest request) {
+        Account account = accountRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid OTP or email."));
+        if (account.getOtp() == null || !account.getOtp().equals(request.getOtp())) {
+            throw new IllegalArgumentException("Invalid OTP. Please try again with another OTP!");
+        }
+        if (Duration.between(account.getOtpGeneratedTime(), LocalDateTime.now()).toMinutes() > OTP_VALID_DURATION_MINUTES) {
+            throw new IllegalArgumentException("OTP has expired. Please request a new one.");
+        }
+        String token = UUID.randomUUID().toString();
+        account.setResetToken(token);
+        account.setResetTokenExpiryTime(LocalDateTime.now().plusMinutes(RESET_TOKEN_VALID_DURATION_MINUTES));
+        account.setOtp(null);
+        account.setOtpGeneratedTime(null);
+        accountRepository.save(account);
+        return new VerifyOtpResponse(token);
+    }
+
+
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        Account account = accountRepository.findByResetToken(request.getResetToken())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token."));
+        if (!Duration.between(account.getResetTokenExpiryTime(), LocalDateTime.now()).isNegative()) {
+            throw new IllegalArgumentException("Invalid or expired reset token.");
+        }
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        account.setResetToken(null);
+        account.setResetTokenExpiryTime(null);
+        accountRepository.save(account);
     }
 
     private String generateAccessToken(Account account) {
