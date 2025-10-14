@@ -109,11 +109,11 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
         }else{
             long orderCode =  System.currentTimeMillis() / 1000;
 //            Smart Quit Mobile App
-//            String returnUrl = "smartquit://payment/success";
-//            String cancelUrl = "smartquit://payment/failed";
+            String returnUrl = "smartquit://payment/success";
+            String cancelUrl = "smartquit://payment/failed";
 
-            String returnUrl = "http://localhost:5173/payment/success";
-            String cancelUrl = "http://localhost:5173/payment/failed";
+//            String returnUrl = "http://localhost:5173/payment/success";
+//            String cancelUrl = "http://localhost:5173/payment/failed";
 
             long totalAmount = membershipPackage.getPrice();
             if(duration == 12){
