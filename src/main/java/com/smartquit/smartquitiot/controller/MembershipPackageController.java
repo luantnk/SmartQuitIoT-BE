@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.MembershipPaymentRequest;
+import com.smartquit.smartquitiot.dto.request.PaymentProcessRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.dto.response.MembershipSubscriptionDTO;
@@ -12,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.payos.PayOS;
+import vn.payos.model.v2.paymentRequests.PaymentLink;
+import vn.payos.model.v2.paymentRequests.invoices.InvoicesInfo;
 
 import java.util.List;
 
@@ -21,6 +25,7 @@ import java.util.List;
 public class MembershipPackageController {
 
     private final MembershipPackageService membershipPackageService;
+    private final PayOS payOS;
 
     @GetMapping
     @Operation(summary = "Get all membership package")
@@ -58,11 +63,10 @@ public class MembershipPackageController {
                 HttpStatus.CREATED);
     }
 
-    @GetMapping("/current")
-    @Operation(summary = "Get current membership package",
-            description = "Api này trả về gói membership đang hữu dụng hiện tại")
+    @PostMapping("/process")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<GlobalResponse<MembershipSubscriptionDTO>> getCurrentMembershipSubscription(){
-        return ResponseEntity.ok(GlobalResponse.ok("Get current membership package success", membershipPackageService.getMyMembershipSubscription()));
+    public ResponseEntity<GlobalResponse<MembershipSubscriptionDTO>> processMembershipPayment(@RequestBody PaymentProcessRequest request){
+        return ResponseEntity.ok(GlobalResponse.created("Membership payment success", membershipPackageService.processMembershipPackagePayment(request)));
     }
+
 }

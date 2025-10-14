@@ -1,5 +1,10 @@
 package com.smartquit.smartquitiot.enums;
 
 public enum PaymentStatus {
-    SUCCESS
+    SUCCESS,
+    PENDING,
+    COMPLETED,
+    FAILED,
+    PAID,
+    CANCELLED
 }

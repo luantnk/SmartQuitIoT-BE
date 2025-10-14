@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service;
 
+import com.smartquit.smartquitiot.dto.request.PaymentProcessRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.dto.response.MembershipPackagePlan;
@@ -14,5 +15,5 @@ public interface MembershipPackageService {
 
     GlobalResponse<?> createMembershipPackagePayment(int membershipPackageId, int duration);
 
-    MembershipSubscriptionDTO getMyMembershipSubscription();
+    MembershipSubscriptionDTO processMembershipPackagePayment(PaymentProcessRequest request);
 }

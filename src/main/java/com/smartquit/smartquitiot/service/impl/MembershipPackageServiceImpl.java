@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.request.PaymentProcessRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.dto.response.MembershipPackagePlan;
@@ -7,24 +8,24 @@ import com.smartquit.smartquitiot.dto.response.MembershipSubscriptionDTO;
 import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.entity.MembershipPackage;
 import com.smartquit.smartquitiot.entity.MembershipSubscription;
+import com.smartquit.smartquitiot.entity.Payment;
 import com.smartquit.smartquitiot.enums.MembershipPackageType;
 import com.smartquit.smartquitiot.enums.MembershipSubscriptionStatus;
+import com.smartquit.smartquitiot.enums.PaymentStatus;
 import com.smartquit.smartquitiot.mapper.MembershipPackageMapper;
 import com.smartquit.smartquitiot.mapper.MembershipSubscriptionMapper;
 import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.repository.MembershipPackageRepository;
 import com.smartquit.smartquitiot.repository.MembershipSubscriptionRepository;
+import com.smartquit.smartquitiot.repository.PaymentRepository;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.payos.PayOS;
-import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
-import vn.payos.model.v2.paymentRequests.CreatePaymentLinkResponse;
-import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
+import vn.payos.model.v2.paymentRequests.*;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -44,6 +45,7 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
     private final MemberRepository memberRepository;
     private final PayOS payOS;
     private final MembershipSubscriptionMapper membershipSubscriptionMapper;
+    private final PaymentRepository paymentRepository;
 
     @Override
     public List<MembershipPackageDTO> getMembershipPackages() {
@@ -106,8 +108,12 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
             return GlobalResponse.created("Free Trial subscription created", membershipSubscriptionMapper.toMembershipSubscriptionDTO(subscription));
         }else{
             long orderCode =  System.currentTimeMillis() / 1000;
-            String returnUrl = "smartquit://payment/success";
-            String cancelUrl = "smartquit://payment/failed";
+//            Smart Quit Mobile App
+//            String returnUrl = "smartquit://payment/success";
+//            String cancelUrl = "smartquit://payment/failed";
+
+            String returnUrl = "http://localhost:5173/payment/success";
+            String cancelUrl = "http://localhost:5173/payment/failed";
 
             long totalAmount = membershipPackage.getPrice();
             if(duration == 12){
@@ -167,10 +173,39 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
     }
 
     @Override
-    public MembershipSubscriptionDTO getMyMembershipSubscription() {
+    public MembershipSubscriptionDTO processMembershipPackagePayment(PaymentProcessRequest request) {
         Member member = memberService.getAuthenticatedMember();
-        MembershipSubscription currentSubscription = membershipSubscriptionRepository
-                .findTopByMemberIdAndStatusOrderByCreatedAtDesc(member.getId(), MembershipSubscriptionStatus.AVAILABLE).orElse(null);
-        return membershipSubscriptionMapper.toMembershipSubscriptionDTO(currentSubscription);
+        MembershipSubscription pendingSubscription = membershipSubscriptionRepository.findByOrderCode(request.getOrderCode())
+                .orElseThrow(() -> new RuntimeException("Membership Package not found"));
+        if(!pendingSubscription.getStatus().equals(MembershipSubscriptionStatus.PENDING)){
+            throw new RuntimeException("Invalid pending subscription");
+        }
+        if(!request.getCancel() && request.getStatus().equals(PaymentStatus.PAID)){
+            PaymentLink paymentLink = payOS.paymentRequests().get(request.getId());
+            if(!paymentLink.getStatus().equals(PaymentLinkStatus.PAID)){
+                throw new RuntimeException("Invalid Payment");
+            }
+            //inactive old subscription
+            Optional<MembershipSubscription> oldSubscription = membershipSubscriptionRepository
+                    .findTopByMemberIdAndStatusOrderByCreatedAtDesc(member.getId(), MembershipSubscriptionStatus.AVAILABLE);
+            if(oldSubscription.isPresent()){
+                MembershipSubscription subscription = oldSubscription.get();
+                subscription.setStatus(MembershipSubscriptionStatus.UNAVAILABLE);
+                membershipSubscriptionRepository.save(subscription);
+            }
+
+            pendingSubscription.setStatus(MembershipSubscriptionStatus.AVAILABLE);
+            membershipSubscriptionRepository.save(pendingSubscription);
+
+            Payment payment = new Payment();
+            payment.setAmount(pendingSubscription.getTotalAmount());
+            payment.setOrderCode(request.getOrderCode());
+            payment.setPaymentLinkId(request.getId());
+            payment.setStatus(PaymentStatus.SUCCESS);
+            payment.setSubscription(pendingSubscription);
+
+            paymentRepository.save(payment);
+        }
+        return membershipSubscriptionMapper.toMembershipSubscriptionDTO(pendingSubscription);
     }
 }
