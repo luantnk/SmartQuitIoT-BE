@@ -13,9 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import vn.payos.PayOS;
-import vn.payos.model.v2.paymentRequests.PaymentLink;
-import vn.payos.model.v2.paymentRequests.invoices.InvoicesInfo;
+
 
 import java.util.List;
 
@@ -25,7 +23,7 @@ import java.util.List;
 public class MembershipPackageController {
 
     private final MembershipPackageService membershipPackageService;
-    private final PayOS payOS;
+
 
     @GetMapping
     @Operation(summary = "Get all membership package")
