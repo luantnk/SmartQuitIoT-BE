@@ -19,10 +19,11 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-    String orderId;
+    long orderCode;
+    String paymentLinkId;
     @CreationTimestamp
     LocalDateTime createdAt;
-    double amount;
+    long amount;
     PaymentStatus status = PaymentStatus.SUCCESS;
 
     @OneToOne

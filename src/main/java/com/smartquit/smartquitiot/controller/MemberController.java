@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.service.MemberService;
@@ -23,7 +24,7 @@ public class MemberController {
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "This endpoint for get authenticated member")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<Member> getAuthenticatedMember(){
-        return ResponseEntity.ok(memberService.getAuthenticatedMember());
+    public ResponseEntity<MemberDTO> getAuthenticatedMember(){
+        return ResponseEntity.ok(memberService.getAuthenticatedMemberProfile());
     }
 }

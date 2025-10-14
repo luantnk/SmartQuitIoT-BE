@@ -24,7 +24,7 @@ public class AccountController {
 
     @PostMapping("/register")
     @Operation(summary = "This endpoint for register new member account")
-    public ResponseEntity<MemberDTO> registerMemberAccount(@Valid @RequestBody MemberAccountRequest request){
+    public ResponseEntity<MemberDTO> registerMemberAccount(@RequestBody @Valid MemberAccountRequest request){
         return new ResponseEntity<>(accountService.registerMember(request), HttpStatus.CREATED);
     }
 
@@ -32,7 +32,7 @@ public class AccountController {
     @Operation(summary = "This endpoint for create new coach account")
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CoachDTO> createCoachAccount(@RequestBody CoachAccountRequest request){
+    public ResponseEntity<CoachDTO> createCoachAccount(@RequestBody @Valid CoachAccountRequest request){
         return new ResponseEntity<>(accountService.registerCoach(request), HttpStatus.CREATED);
     }
 

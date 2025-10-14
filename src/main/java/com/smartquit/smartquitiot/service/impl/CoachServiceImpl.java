@@ -28,6 +28,12 @@
         }
 
         @Override
+        public CoachDTO getAuthenticatedCoachProfile() {
+            Coach coach = getAuthenticatedCoach();
+            return coachMapper.toCoachDTO(coach);
+        }
+
+        @Override
         public List<CoachSummaryDTO> getCoachList() {
             List<Coach> coachList = coachRepository.findAllByAccountIsActiveTrueAndAccountIsBannedFalse();
             return coachMapper.toCoachSummaryDTO(coachList);

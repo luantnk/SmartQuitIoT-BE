@@ -4,8 +4,10 @@ import com.smartquit.smartquitiot.enums.MembershipSubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -22,6 +24,10 @@ public class MembershipSubscription {
     MembershipSubscriptionStatus status;
     LocalDate startDate;
     LocalDate endDate;
+    long orderCode;
+    long totalAmount;
+    @CreationTimestamp
+    LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     Member member;

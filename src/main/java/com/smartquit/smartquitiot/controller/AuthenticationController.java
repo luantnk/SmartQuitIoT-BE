@@ -28,13 +28,13 @@ public class AuthenticationController {
 
     @PostMapping("/member")
     @Operation(summary = "This endpoint for MEMBER login")
-    public ResponseEntity<AuthenticationResponse> memberLogin(@RequestBody AuthenticationRequest request){
+    public ResponseEntity<AuthenticationResponse> memberLogin(@RequestBody @Valid AuthenticationRequest request){
         return ResponseEntity.ok(authenticationService.login(request, false));
     }
 
     @PostMapping("/system")
     @Operation(summary = "This endpoint for COACH and ADMIN login")
-    public ResponseEntity<AuthenticationResponse> systemLogin(@RequestBody AuthenticationRequest request){
+    public ResponseEntity<AuthenticationResponse> systemLogin(@RequestBody @Valid AuthenticationRequest request){
         return ResponseEntity.ok(authenticationService.login(request, true));
     }
 

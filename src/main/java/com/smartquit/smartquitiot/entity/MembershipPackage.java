@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -19,11 +21,12 @@ public class MembershipPackage {
     int id;
     String name;
     String description;
-    double price;
+    long price;
     @Enumerated(EnumType.STRING)
     MembershipPackageType type;
     int duration;
     @Enumerated(EnumType.STRING)
     DurationUnit durationUnit;
+    List<String> features;
 
 }

@@ -47,11 +47,11 @@ public class SecurityConfig {
             Map.entry("/accounts/coach/create", HttpMethod.POST),
             Map.entry("/accounts/p", HttpMethod.GET),
             Map.entry("/members/p", HttpMethod.GET),
-            Map.entry("/coaches/p", HttpMethod.GET)
+            Map.entry("/coaches/p", HttpMethod.GET),
+            Map.entry("/membership-packages/create-payment-link", HttpMethod.POST),
+            Map.entry("/membership-packages/process", HttpMethod.POST),
+            Map.entry("/membership-subscriptions/current", HttpMethod.GET)
     );
-
-    private final AccountRepository accountRepository;
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
