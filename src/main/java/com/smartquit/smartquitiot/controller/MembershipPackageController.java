@@ -5,7 +5,6 @@ import com.smartquit.smartquitiot.dto.request.PaymentProcessRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.dto.response.MembershipSubscriptionDTO;
-import com.smartquit.smartquitiot.entity.MembershipSubscription;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -13,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 
@@ -23,7 +21,6 @@ import java.util.List;
 public class MembershipPackageController {
 
     private final MembershipPackageService membershipPackageService;
-
 
     @GetMapping
     @Operation(summary = "Get all membership package")
@@ -63,6 +60,7 @@ public class MembershipPackageController {
 
     @PostMapping("/process")
     @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Process Payment", description = "Mobile gửi body gồm các trường như bên dưới để BE xác thực thanh toán , xử lí gói membership")
     public ResponseEntity<GlobalResponse<MembershipSubscriptionDTO>> processMembershipPayment(@RequestBody PaymentProcessRequest request){
         return ResponseEntity.ok(GlobalResponse.created("Membership payment success", membershipPackageService.processMembershipPackagePayment(request)));
     }
