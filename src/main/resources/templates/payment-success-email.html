@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 30px;">
+<div style="max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 30px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <img src="cid:logoImage" alt="SmartQuit Logo" style="width: 120px; height: auto;" />
+    </div>
+
+    <h2 style="color: #00D09E; text-align: center;">🎉 Payment Successful!</h2>
+
+    <p>Dear <b th:text="${name}">Customer</b>,</p>
+
+    <p>We’re excited to inform you that your payment for the membership plan
+        <b th:text="${packageName}"></b> has been successfully processed.</p>
+
+    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 8px 0;">Order Code:</td>
+            <td style="padding: 8px 0; font-weight: bold;" th:text="${orderCode}"></td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0;">Amount Paid:</td>
+            <td style="padding: 8px 0; font-weight: bold;" th:text="${amount + ' VND'}"></td>
+        </tr>
+    </table>
+
+    <p>Thank you for choosing <b>SmartQuit</b>. Your membership is now active — enjoy your premium benefits!</p>
+
+    <p style="margin-top: 30px;">Best regards,<br/>
+        <b>The SmartQuit Team</b></p>
+
+    <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #888;">
+        <p>© 2025 SmartQuit. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

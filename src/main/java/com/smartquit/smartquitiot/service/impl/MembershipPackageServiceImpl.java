@@ -18,6 +18,7 @@ import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.repository.MembershipPackageRepository;
 import com.smartquit.smartquitiot.repository.MembershipSubscriptionRepository;
 import com.smartquit.smartquitiot.repository.PaymentRepository;
+import com.smartquit.smartquitiot.service.EmailService;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
     private final MembershipPackageRepository membershipPackageRepository;
     private final MembershipPackageMapper membershipPackageMapper;
     private final MemberService memberService;
+    private final EmailService emailService;
     private final MembershipSubscriptionRepository membershipSubscriptionRepository;
     private final MemberRepository memberRepository;
     private final PayOS payOS;
@@ -205,6 +207,25 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
             payment.setSubscription(pendingSubscription);
 
             paymentRepository.save(payment);
+
+            emailService.sendPaymentSuccessEmail(
+                    member.getAccount().getEmail(),
+                    member.getAccount().getUsername(),
+                    pendingSubscription.getMembershipPackage().getName(),
+                    pendingSubscription.getTotalAmount(),
+                    request.getOrderCode()
+            );
+
+        } else {
+            pendingSubscription.setStatus(MembershipSubscriptionStatus.CANCELLED);
+            membershipSubscriptionRepository.save(pendingSubscription);
+
+            emailService.sendPaymentCancelEmail(
+                    member.getAccount().getEmail(),
+                    member.getAccount().getUsername(),
+                    pendingSubscription.getMembershipPackage().getName(),
+                    request.getOrderCode()
+            );
         }
         return membershipSubscriptionMapper.toMembershipSubscriptionDTO(pendingSubscription);
     }
