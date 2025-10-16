@@ -34,7 +34,10 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     Account account;
 
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true) // khi xóa bài post các con (media) xóa theo
     List<PostMedia> media;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Comment> comments;
 
 }

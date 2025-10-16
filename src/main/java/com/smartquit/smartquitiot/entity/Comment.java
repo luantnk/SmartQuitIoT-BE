@@ -33,6 +33,14 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     Comment parent;
 
-    @OneToMany(mappedBy = "comment")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false)
+    Post post;
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
     List<CommentMedia> commentMedia;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Comment> replies;
+
 }
