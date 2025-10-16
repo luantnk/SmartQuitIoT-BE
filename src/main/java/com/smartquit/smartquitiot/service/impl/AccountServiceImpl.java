@@ -1,9 +1,9 @@
 package com.smartquit.smartquitiot.service.impl;
 
-import com.smartquit.smartquitiot.dto.request.CoachAccountRequest;
-import com.smartquit.smartquitiot.dto.request.MemberAccountRequest;
+import com.smartquit.smartquitiot.dto.request.*;
 import com.smartquit.smartquitiot.dto.response.CoachDTO;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.dto.response.VerifyOtpResponse;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Coach;
 import com.smartquit.smartquitiot.entity.Member;
@@ -15,18 +15,19 @@ import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.repository.CoachRepository;
 import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.service.AccountService;
+import com.smartquit.smartquitiot.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cglib.core.Local;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Random;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -38,9 +39,13 @@ public class AccountServiceImpl implements AccountService {
     private final MemberMapper memberMapper;
     private final CoachRepository coachRepository;
     private final CoachMapper coachMapper;
+    private final EmailService emailService;
     @NonFinal
     @Value("${smartquit.default.avatar.url}")
     private String defaultAvatar;
+
+    private static final long OTP_VALID_DURATION_MINUTES = 5;
+    private static final long RESET_TOKEN_VALID_DURATION_MINUTES = 10;
 
     @Transactional
     @Override
@@ -122,4 +127,64 @@ public class AccountServiceImpl implements AccountService {
         return defaultAvatar;
     }
 
+    @Override
+    public void updatePassword(ChangePasswordRequest request) {
+        Account account = getAuthenticatedAccount();
+        String oldPassword = request.getOldPassword();
+        String newPassword = request.getNewPassword();
+        String newPasswordConfirm = request.getNewPasswordConfirm();
+        if(!passwordEncoder.matches(oldPassword, account.getPassword())){
+            throw new RuntimeException("Incorrect old password");
+        }
+        if(!newPassword.equals(newPasswordConfirm)){
+            throw new RuntimeException("Incorrect confirm password");
+        }
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+        Account account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not found"));
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        account.setOtp(otp);
+        account.setOtpGeneratedTime(LocalDateTime.now());
+        accountRepository.save(account);
+        String subject = "[SmartQuit] Your Password Reset OTP";
+        String username = account.getMember().getFirstName();
+        emailService.sendHtmlOtpEmail(email, subject, username, otp);
+    }
+
+    @Override
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest request) {
+        Account account = accountRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid OTP or email."));
+        if (account.getOtp() == null || !account.getOtp().equals(request.getOtp())) {
+            throw new IllegalArgumentException("Invalid OTP. Please try again with another OTP!");
+        }
+        if (Duration.between(account.getOtpGeneratedTime(), LocalDateTime.now()).toMinutes() > OTP_VALID_DURATION_MINUTES) {
+            throw new IllegalArgumentException("OTP has expired. Please request a new one.");
+        }
+        String token = UUID.randomUUID().toString();
+        account.setResetToken(token);
+        account.setResetTokenExpiryTime(LocalDateTime.now().plusMinutes(RESET_TOKEN_VALID_DURATION_MINUTES));
+        account.setOtp(null);
+        account.setOtpGeneratedTime(null);
+        accountRepository.save(account);
+        return new VerifyOtpResponse(token);
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        Account account = accountRepository.findByResetToken(request.getResetToken())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token."));
+        if (!Duration.between(account.getResetTokenExpiryTime(), LocalDateTime.now()).isNegative()) {
+            throw new IllegalArgumentException("Invalid or expired reset token.");
+        }
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        account.setResetToken(null);
+        account.setResetTokenExpiryTime(null);
+        accountRepository.save(account);
+    }
 }
