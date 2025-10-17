@@ -27,7 +27,22 @@ public class CreateQuitPlanInFirstLoginRequest {
     boolean cigaretteHateToGiveUp;
     boolean morningSmokingFrequency;
     boolean smokeWhenSick;
-    List<String> interests;
-    List<String> triggered; //After Meal, Gaming, Party, Coffee, Stress, null
+    List<String> interests; // la select option lay trong Interest category
     BigDecimal amountOfNicotinePerCigarettes;
+ //   List<String> triggered;  cai nay se dem vao lam mission
+ //const TRIGGERS = [
+    //  "Morning",
+    //  "After Meal",
+    //  "Gaming",
+    //  "Party",
+    //  "Coffee",
+    //  "Stress",
+    //  "Boredom",
+    //  "Driving",
+    //  "Sadness",
+    //  "Work"
+    //]; -- do khong luu vao 1 bang cu the nen tren UI se luu cac cai nay de cho nguoi ta chon  khi thuc hien nhiem vu
+
+
+
 }

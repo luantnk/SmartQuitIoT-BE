@@ -14,12 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PhaseDTO {
-    private int id;
-    private String name;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private int durationDay;
-    private String reason;
-    List<PhaseDetailResponseDTO> details;
+public class PhaseDetailResponseDTO {
+    int id;
+    String name;
+    LocalDate date;
+    int dayIndex;
+    List<PhaseDetailMissionResponseDTO> missions;
 }

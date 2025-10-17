@@ -50,7 +50,10 @@ public class SecurityConfig {
             Map.entry("/coaches/p", HttpMethod.GET),
             Map.entry("/membership-packages/create-payment-link", HttpMethod.POST),
             Map.entry("/membership-packages/process", HttpMethod.POST),
-            Map.entry("/membership-subscriptions/current", HttpMethod.GET)
+            Map.entry("/membership-subscriptions/current", HttpMethod.GET),
+            Map.entry("/interest-category/all", HttpMethod.GET),
+            Map.entry("/quit-plan/create-in-first-login", HttpMethod.POST),
+            Map.entry("/quit-plan", HttpMethod.GET)
     );
 
     @Bean
@@ -104,8 +107,8 @@ public class SecurityConfig {
         return new CorsFilter(source);
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+//    @Bean
+//    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+//        return config.getAuthenticationManager();
+//    }
 }

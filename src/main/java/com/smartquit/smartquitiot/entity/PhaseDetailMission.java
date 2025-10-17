@@ -16,7 +16,9 @@ public class PhaseDetailMission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-
+    String code;
+    String name;
+    String description;
     @Enumerated(EnumType.STRING)
     PhaseDetailMissionStatus  status = PhaseDetailMissionStatus.INCOMPLETED;
 

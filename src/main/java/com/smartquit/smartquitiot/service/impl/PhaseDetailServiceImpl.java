@@ -1,12 +1,15 @@
 package com.smartquit.smartquitiot.service.impl;
 
-import com.smartquit.smartquitiot.entity.Phase;
-import com.smartquit.smartquitiot.entity.PhaseDetail;
-import com.smartquit.smartquitiot.entity.QuitPlan;
+import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
+import com.smartquit.smartquitiot.dto.response.PhaseDetailMissionPlanToolDTO;
+import com.smartquit.smartquitiot.dto.response.PhaseDetailPlanToolDTO;
+import com.smartquit.smartquitiot.entity.*;
+import com.smartquit.smartquitiot.repository.MissionRepository;
 import com.smartquit.smartquitiot.repository.PhaseDetailRepository;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
 import com.smartquit.smartquitiot.service.PhaseDetailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +20,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PhaseDetailServiceImpl implements PhaseDetailService {
     private final PhaseRepository phaseRepository;
     private final PhaseDetailRepository phaseDetailRepository;
@@ -25,18 +29,15 @@ public class PhaseDetailServiceImpl implements PhaseDetailService {
     //sinh phase detail cho 1 phase bat ky, xoa cu tao moi
     @Override
     @Transactional
-    public void generatePhaseDetailsForPhase(Phase phase) {
+    public List<PhaseDetail> generatePhaseDetailsForPhase(Phase phase) {
         LocalDate start = phase.getStartDate();
         LocalDate end = phase.getEndDate();
 
         if (start == null || end == null) {
             throw new IllegalStateException("Phase " + phase.getName() + " dont have startDate or endDate");
         }
-
-        long days = ChronoUnit.DAYS.between(start, end) + 1;
-
-        // delete old if you have
-        phaseDetailRepository.deleteByPhaseId(phase.getId());
+        // delete old
+        //phaseDetailRepository.deleteByPhaseId(phase.getId());
 
         // create new each day
         List<PhaseDetail> details = new ArrayList<>();
@@ -48,21 +49,23 @@ public class PhaseDetailServiceImpl implements PhaseDetailService {
             detail.setPhase(phase);
             detail.setDate(current);
             detail.setDayIndex(dayIndex);
+            detail.setName("Day " +dayIndex);
             details.add(detail);
             current = current.plusDays(1);
             dayIndex++;
         }
 
-        phaseDetailRepository.saveAll(details);
+        return phaseDetailRepository.saveAll(details);
     }
 
     @Override
     @Transactional
-    public void generateInitialPhaseDetails(QuitPlan quitPlan) {
-        Phase prepPhase = phaseRepository
-                .findByQuitPlan_IdAndName(quitPlan.getId(), "Preparation")
+    public List<PhaseDetail> generateInitialPhaseDetails(QuitPlan quitPlan, String phaseName) {
+        Phase phase = phaseRepository
+                .findByQuitPlan_IdAndName(quitPlan.getId(), phaseName)
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy phase Preparation"));
 
-        generatePhaseDetailsForPhase(prepPhase);
+        return generatePhaseDetailsForPhase(phase);
     }
+
 }

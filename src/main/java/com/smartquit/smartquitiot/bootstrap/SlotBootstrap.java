@@ -36,7 +36,7 @@ public class SlotBootstrap {
             LocalTime start = LocalTime.parse(startStr);
             LocalTime end = LocalTime.parse(endStr);
             slotService.findOrCreateRange(start, end, slotMinutes);
-            log.info("Seeded slots {}-{} every {}m", start, end, slotMinutes);
+         //   log.info("Seeded slots {}-{} every {}m", start, end, slotMinutes);
         } catch (Exception e) {
             log.error("Failed to seed slots", e);
         }

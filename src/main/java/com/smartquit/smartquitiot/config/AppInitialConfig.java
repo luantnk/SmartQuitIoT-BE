@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.time.LocalDate;
+
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
@@ -23,11 +25,14 @@ public class AppInitialConfig {
     private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;
     private final SystemPhaseConditionRepository systemPhaseConditionRepository;
-    private final PostRepository postRepository;
-    private final CommentRepository commentRepository;
-
     private final ObjectMapper mapper = new ObjectMapper();
     private final MembershipPackageRepository membershipPackageRepository;
+    private final MemberRepository memberRepository;
+    private final MissionTypeRepository missionTypeRepository;
+    private final InterestCategoryRepository interestCategoryRepository;
+
+
+
 
     @Bean
     ApplicationRunner applicationRunner() {
@@ -43,80 +48,82 @@ public class AppInitialConfig {
                 accountRepository.save(account);
                 log.info("Admin account has been created");
             }
+            if (accountRepository.findByRole(Role.MEMBER).isEmpty()) {
+                Account account2 = new Account();
+                account2.setUsername("member1");
+                account2.setEmail("member1@smartquit.io.vn");
+                account2.setPassword(passwordEncoder.encode("member1"));
+                account2.setRole(Role.MEMBER);
+                account2.setFirstLogin(true);
+                account2.setAccountType(AccountType.SYSTEM);
+                Member member = new Member();
+                member.setFirstName("mem");
+                member.setLastName("mem");
+                member.setAvatarUrl("https://cdn.smartquit.io.vn/avatars/member1.png");
+                member.setGender(Gender.MALE);
+                member.setDob(LocalDate.of(2001, 5, 12));
+                account2.setMember(member);
+                member.setAccount(account2);
+                account2.setMember(member);
+                memberRepository.save(member);
+                log.info("Member1 account has been created");
+            }
+
+            log.info("member1 account has been created");
             if (systemPhaseConditionRepository.count() == 0) {
                 initSystemPhaseCondition();
             }
             initMembershipPackages();
+            if (missionTypeRepository.count() == 0) {
+                initMissionTypes();
+            }
+            if (interestCategoryRepository.count() == 0) {
+                initInterestCategories();
+            }
+
         };
     }
+    private void initInterestCategories() {
+        String[][] interestCategories = {
+                {"All Interests", "Universal category suitable for any user regardless of their interests — missions here apply to everyone."},
+                {"Sports and Exercise", "Activities that improve fitness, strength, and overall physical health."},
+                {"Art and Creativity", "Expressing creativity through drawing, painting, crafting, or other artistic activities."},
+                {"Cooking and Food", "Exploring new recipes, enjoying healthy meals, and discovering culinary experiences."},
+                {"Reading, Learning and Writing", "Gaining knowledge, practicing writing skills, and enjoying books or educational content."},
+                {"Music and Entertainment", "Listening to music, playing instruments, or engaging with entertainment to relax and recharge."},
+                {"Nature and Outdoor Activities", "Connecting with nature through outdoor walks, gardening, hiking, or spending time in fresh air."}
+        };
 
-//    @Bean
-//    ApplicationRunner initDemoPostsWithComments() {
-//        return args -> {
-//            if (postRepository.count() == 0) {
-//                // Lấy admin account để gắn post và comment
-//                Account admin = accountRepository.findByUsername("admin")
-//                        .orElseThrow(() -> new RuntimeException("Admin account not found"));
-//
-//                for (int i = 1; i <= 3; i++) {
-//                    Post post = new Post();
-//                    post.setTitle("Demo Post " + i);
-//                    post.setDescription("This is a description for demo post " + i);
-//                    post.setContent("Full content of demo post " + i + ". Lorem ipsum dolor sit amet...");
-//                    post.setThumbnail("https://via.placeholder.com/150");
-//                    post.setAccount(admin);
-//
-//                    // thêm media demo
-//                    PostMedia media1 = new PostMedia();
-//                    media1.setMediaUrl("https://via.placeholder.com/600");
-//                    media1.setMediaType(MediaType.IMAGE);
-//                    media1.setPost(post);
-//
-//                    PostMedia media2 = new PostMedia();
-//                    media2.setMediaUrl("https://via.placeholder.com/800");
-//                    media2.setMediaType(MediaType.IMAGE);
-//                    media2.setPost(post);
-//
-//                    post.setMedia(List.of(media1, media2));
-//
-//                    postRepository.save(post);
-//
-//                    // Thêm comment cha
-//                    Comment comment1 = new Comment();
-//                    comment1.setContent("This is a comment 1 for post " + i);
-//                    comment1.setAccount(admin);
-//                    comment1.setPost(post);
-//
-//                    // Comment con (reply)
-//                    Comment reply1 = new Comment();
-//                    reply1.setContent("This is a reply to comment 1");
-//                    reply1.setAccount(admin);
-//                    reply1.setParent(comment1);
-//                    reply1.setPost(post);
-//
-//                    // Comment cha 2
-//                    Comment comment2 = new Comment();
-//                    comment2.setContent("This is a comment 2 for post " + i);
-//                    comment2.setAccount(admin);
-//                    comment2.setPost(post);
-//
-//                    comment1.setReplies(List.of(reply1));
-//                    post.setComments(List.of(comment1, comment2));
-//
-//                    // Save comments manually
-//                    commentRepository.save(comment1);
-//                    commentRepository.save(reply1);
-//                    commentRepository.save(comment2);
-//
-//                    postRepository.save(post);
-//                }
-//
-//                log.info("Demo posts with comments have been created!");
-//            }
-//        };
-//    }
+        for (String[] data : interestCategories) {
+            InterestCategory category = new InterestCategory();
+            category.setName(data[0]);
+            category.setDescription(data[1]);
+            interestCategoryRepository.save(category);
+        //    log.info("Interest Category '{}' has been initialized.", data[0]);
+        }
+
+     log.info("All interest categories initialized successfully!");
+    }
 
 
+    private void initMissionTypes() {
+        String[][] missionTypeData = {
+                {"Health Improvement", "Missions focused on building healthier habits, strengthening the body, and reducing the damage caused by smoking."},
+                {"Coping", "Missions that provide strategies to manage cravings, stress, and emotional triggers without cigarettes."},
+                {"Support", "Missions that encourage connecting with friends, family, or the community for encouragement and accountability."},
+                {"Planning", "Missions that help users create, adjust, and follow a structured quit plan for long-term success."},
+                {"Awareness", "Missions that increase knowledge about smoking risks and the benefits of quitting, empowering users with better decisions."},
+                {"NRT", "Missions that provide Nicotine Replacement Therapy."}
+        };
+
+        for (String[] data : missionTypeData) {
+            MissionType type = new MissionType();
+            type.setName(data[0]);
+            type.setDescription(data[1]);
+            missionTypeRepository.save(type);
+          //  log.info("MissionType '{}' has been initialized.", data[0]);
+        }
+    }
     private void initSystemPhaseCondition() {
         for (int i = 0; i < jsonPhaseConditionStrings.length; i++) {
             try {

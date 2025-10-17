@@ -25,7 +25,8 @@ public class QuitPlan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
 
-    int memberId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    Member member;
 
     String name;
 

@@ -1,10 +1,12 @@
-package com.smartquit.smartquitiot.entity;
+package com.smartquit.smartquitiot.dto.response;
 
-
+import com.smartquit.smartquitiot.entity.QuitPlan;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -13,16 +15,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class FormMetric {
+@NoArgsConstructor
+public class FormMetricDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
     int smokeAvgPerDay;
     int numberOfYearsOfSmoking;
@@ -36,26 +34,6 @@ public class FormMetric {
     BigDecimal estimatedMoneySavedOnPlan;
     BigDecimal amountOfNicotinePerCigarettes;
     BigDecimal estimatedNicotineIntakePerDay;
-   // String reason;
-
-    @Column(name = "interests", columnDefinition = "json")
-    @Type(JsonType.class)
     List<String> interests;
-
-    @Column(name = "triggered", columnDefinition = "json")
-    @Type(JsonType.class)
     List<String> triggered;// xem o create quit plan request
-
-    @CreationTimestamp
-    @Column(nullable = false, updatable = false)
-    LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(nullable = false)
-    LocalDateTime updatedAt;
-
-    @OneToOne(mappedBy = "formMetric")
-    QuitPlan quitPlan;
-
-
 }
