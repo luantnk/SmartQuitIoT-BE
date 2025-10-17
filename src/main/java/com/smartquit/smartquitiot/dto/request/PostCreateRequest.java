@@ -26,7 +26,7 @@ public class PostCreateRequest {
 
     List<PostMediaRequest> media;
 
-    Integer accountId;
+//    Integer accountId;
 
     @Data
     @NoArgsConstructor

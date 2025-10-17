@@ -70,6 +70,7 @@ public class PostMapper {
         return dto;
     }
 
+
     private static PostDetailDTO.CommentDTO toCommentDTO(Comment comment) {
         PostDetailDTO.CommentDTO dto = new PostDetailDTO.CommentDTO();
         dto.setId(comment.getId());

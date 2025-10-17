@@ -9,6 +9,7 @@ import com.smartquit.smartquitiot.entity.Comment;
 import com.smartquit.smartquitiot.entity.Post;
 import com.smartquit.smartquitiot.entity.PostMedia;
 import com.smartquit.smartquitiot.enums.MediaType;
+import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.mapper.PostMapper;
 import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.repository.CommentRepository;
@@ -36,6 +37,7 @@ public class PostServiceImpl implements PostService {
     private final AccountRepository accountRepository;
     private final PostMediaRepository postMediaRepository;
     private final CommentRepository commentRepository;
+    private final AccountServiceImpl accountService;
 
     @Override
     public List<PostSummaryDTO> getLatestPosts(int limit) {
@@ -106,26 +108,16 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public PostDetailDTO createPost(PostCreateRequest request) {
 
-//        System.out.println("Received request to create post: " + request.toString());
-
         if (!StringUtils.hasText(request.getTitle()) || !StringUtils.hasText(request.getContent())) {
             throw new IllegalArgumentException("Title and content must not be empty");
         }
-
-        if (request.getAccountId() == null) {
-            throw new IllegalArgumentException("Account ID is required");
-        }
-
-        Account account = accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new RuntimeException("Account not found: " + request.getAccountId()));
-
+        Account current = accountService.getAuthenticatedAccount();
         Post post = new Post();
         post.setTitle(request.getTitle());
         post.setDescription(request.getDescription());
         post.setContent(request.getContent());
         post.setThumbnail(request.getThumbnail());
-        post.setAccount(account);
-
+        post.setAccount(current);
         Post savedPost = postRepository.save(post);
 
         // handle media
@@ -157,17 +149,12 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        if (request.getAccountId() == null) {
-            throw new IllegalArgumentException("Account ID is required for update");
-        }
+        Account current = accountService.getAuthenticatedAccount();
 
-        Account account = accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + request.getAccountId()));
-//
-//        if (post.getAccount().getId() != account.getId() &&
-//                (account.getRole() == null || !account.getRole().name().equals("ADMIN"))) {
+//        if (post.getAccount().getId() != current.getId() && current.getRole() != Role.ADMIN) {
 //            throw new RuntimeException("You do not have permission to edit this post");
 //        }
+
 
         if (StringUtils.hasText(request.getTitle())) {
             post.setTitle(request.getTitle());
@@ -185,9 +172,8 @@ public class PostServiceImpl implements PostService {
         post.setUpdatedAt(LocalDateTime.now());
 
         if (request.getMedia() != null) {
-            // Xóa media cũ
+            post.getMedia().clear();
             postMediaRepository.deleteAll(post.getMedia());
-
             List<PostMedia> newMediaList = request.getMedia().stream()
                     .filter(m -> StringUtils.hasText(m.getMediaUrl()))
                     .map(m -> {
@@ -202,13 +188,12 @@ public class PostServiceImpl implements PostService {
                         return media;
                     })
                     .collect(Collectors.toList());
-
+            post.getMedia().addAll(newMediaList);
             postMediaRepository.saveAll(newMediaList);
-            post.setMedia(newMediaList);
+//            post.setMedia(newMediaList);
         }
 
         Post updatedPost = postRepository.save(post);
-
         return PostMapper.toDTO(updatedPost);
     }
 

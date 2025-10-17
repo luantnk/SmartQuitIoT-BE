@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.core.Local;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -113,9 +114,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account getAuthenticatedAccount() {
-        String subject = SecurityContextHolder.getContext().getAuthentication().getName();//Subject is account email
-        return accountRepository.findByEmail(subject).orElseThrow(() -> new RuntimeException("Account not found"));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new RuntimeException("No authenticated user found");
+        }
+        String subject = auth.getName();
+        return accountRepository.findByUsernameOrEmail(subject, subject)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
     }
+
 
     private String getDefaultAvatar(String firstName, String lastName){
         defaultAvatar += firstName+ "+" + lastName;

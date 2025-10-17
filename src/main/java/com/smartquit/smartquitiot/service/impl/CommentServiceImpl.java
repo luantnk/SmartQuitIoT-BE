@@ -1,11 +1,13 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.request.CommentCreateRequest;
+import com.smartquit.smartquitiot.dto.request.CommentUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.PostDetailDTO;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MediaType;
 import com.smartquit.smartquitiot.mapper.CommentMapper;
 import com.smartquit.smartquitiot.repository.*;
+import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -25,6 +27,7 @@ public class CommentServiceImpl implements CommentService {
     private final AccountRepository accountRepository;
     private final CommentRepository commentRepository;
     private final CommentMediaRepository commentMediaRepository;
+    private final AccountService accountService;
 
     @Override
     @Transactional
@@ -36,10 +39,7 @@ public class CommentServiceImpl implements CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Account account = accountRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Account not found: " + auth.getName()));
-
+        Account account = accountService.getAuthenticatedAccount();
         Comment parent = null;
         if (request.getParentId() != null) {
             parent = commentRepository.findById(request.getParentId())
@@ -65,8 +65,11 @@ public class CommentServiceImpl implements CommentService {
                 CommentMedia cm = new CommentMedia();
                 cm.setComment(saved);
                 cm.setMediaUrl(mr.getMediaUrl());
-                try { cm.setMediaType(MediaType.valueOf(mr.getMediaType())); }
-                catch (Exception e){ cm.setMediaType(MediaType.IMAGE);}
+                try {
+                    cm.setMediaType(MediaType.valueOf(mr.getMediaType()));
+                } catch (Exception e) {
+                    cm.setMediaType(MediaType.IMAGE);
+                }
                 mediaList.add(cm);
             }
             commentMediaRepository.saveAll(mediaList);
@@ -75,4 +78,91 @@ public class CommentServiceImpl implements CommentService {
 
         return CommentMapper.toDTO(saved);
     }
+
+    @Override
+    @Transactional
+    public PostDetailDTO.CommentDTO updateComment(Integer commentId, CommentUpdateRequest request) {
+        if (!StringUtils.hasText(request.getContent()) && (request.getMedia() == null || request.getMedia().isEmpty())) {
+            throw new IllegalArgumentException("Nothing to update");
+        }
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found: " + commentId));
+
+        Account current = accountService.getAuthenticatedAccount();
+        if (comment.getAccount().getId() != current.getId()) {
+            throw new RuntimeException("You are not allowed to update this comment");
+        }
+
+
+        if (StringUtils.hasText(request.getContent())) {
+            comment.setContent(request.getContent());
+        }
+
+        if (request.getMedia() != null) {
+            comment.getCommentMedia().clear();
+
+//            commentMediaRepository.deleteAll(comment.getCommentMedia());
+
+            List<CommentMedia> mediaList = new ArrayList<>();
+            for (CommentCreateRequest.CommentMediaRequest mr : request.getMedia()) {
+                if (!StringUtils.hasText(mr.getMediaUrl())) continue;
+                CommentMedia cm = new CommentMedia();
+                cm.setComment(comment);
+                cm.setMediaUrl(mr.getMediaUrl());
+                try {
+                    cm.setMediaType(MediaType.valueOf(mr.getMediaType()));
+                } catch (Exception e) {
+                    cm.setMediaType(MediaType.IMAGE);
+                }
+                mediaList.add(cm);
+            }
+            comment.getCommentMedia().addAll(mediaList);
+            commentMediaRepository.saveAll(mediaList);
+        }
+        Comment updated = commentRepository.save(comment);
+        return CommentMapper.toDTO(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteComment(Integer commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
+        Account current = accountService.getAuthenticatedAccount();
+        if (comment.getAccount().getId() != current.getId()) {
+            throw new RuntimeException("You are not allowed to delete this comment");
+        }
+        commentRepository.delete(comment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostDetailDTO.CommentDTO> getCommentsByPostId(Integer postId) {
+        List<Comment> rootComments = commentRepository.findRootCommentsByPostId(postId);
+        for (Comment c : rootComments) {
+            loadRepliesRecursively(c);
+        }
+        List<PostDetailDTO.CommentDTO> commentDTOs = new ArrayList<>();
+        for (Comment c : rootComments) {
+            commentDTOs.add(CommentMapper.toDTO(c));
+        }
+        return commentDTOs;
+    }
+
+
+    private void loadRepliesRecursively(Comment parent) {
+        List<Comment> replies = commentRepository.findRepliesByParentId(parent.getId());
+        parent.setReplies(replies);
+
+        for (Comment reply : replies) {
+            loadRepliesRecursively(reply);
+        }
+    }
+
+
+
+
+
+
 }
