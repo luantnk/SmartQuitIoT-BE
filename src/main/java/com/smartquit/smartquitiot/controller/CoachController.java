@@ -26,13 +26,13 @@ public class CoachController {
     @PreAuthorize("hasRole('COACH')")
     @Operation(summary = "This endpoint for get authenticated coach")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<Coach> getAuthenticatedCoach(){
-        return ResponseEntity.ok(coachService.getAuthenticatedCoach());
+    public ResponseEntity<CoachDTO> getAuthenticatedCoach(){
+        return ResponseEntity.ok(coachService.getAuthenticatedCoachProfile());
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Get all coaches (admin)", description = "Returns full list of CoachDTO, no filtering/paging")
+    @Operation(summary = "Get all coaches (admin)", description = "Returns full list of CoachSummaryDTO, no filtering/paging")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<GlobalResponse<List<CoachSummaryDTO>>> getAllCoaches() {
         List<CoachSummaryDTO> coaches = coachService.getCoachList();

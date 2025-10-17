@@ -38,9 +38,25 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(Map.of("message", ex.getMessage()), HttpStatus.UNAUTHORIZED);
     }
 
+    // ✅ Hợp nhất và sửa cú pháp hàm này
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        return new ResponseEntity<>(Map.of("message", ex.getMessage()), HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        List<String> errors = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(err -> {
+                    Object rejected = err.getRejectedValue();
+                    if ("FutureOrPresent".equals(err.getCode())) {
+                        return String.format("Ngày %s không hợp lệ — chỉ được chọn hôm nay hoặc tương lai", rejected);
+                    }
+                    return err.getDefaultMessage();
+                })
+                .toList();
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("success", false);
+        body.put("message", errors.isEmpty() ? "Yêu cầu không hợp lệ" : errors.getFirst());
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -55,16 +71,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, Object>> handleConstraintViolationException(ConstraintViolationException ex) {
-
-        // Collect all messages into a List<String>
         List<String> messages = ex.getConstraintViolations()
                 .stream()
                 .map(ConstraintViolation::getMessage)
                 .toList();
 
         Map<String, Object> errorResponse = new HashMap<>();
-
-        errorResponse.put("messages", messages.getFirst());
+        errorResponse.put("success", false);
+        errorResponse.put("message", messages.isEmpty() ? "Dữ liệu không hợp lệ" : messages.getFirst());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

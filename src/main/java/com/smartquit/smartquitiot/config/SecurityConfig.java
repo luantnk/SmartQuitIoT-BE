@@ -48,13 +48,13 @@ public class SecurityConfig {
             Map.entry("/accounts/p", HttpMethod.GET),
             Map.entry("/members/p", HttpMethod.GET),
             Map.entry("/coaches/p", HttpMethod.GET),
+            Map.entry("/membership-packages/create-payment-link", HttpMethod.POST),
+            Map.entry("/membership-packages/process", HttpMethod.POST),
+            Map.entry("/membership-subscriptions/current", HttpMethod.GET),
             Map.entry("/interest-category/all", HttpMethod.GET),
             Map.entry("/quit-plan/create-in-first-login", HttpMethod.POST),
             Map.entry("/quit-plan", HttpMethod.GET)
     );
-
-    private final AccountRepository accountRepository;
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
