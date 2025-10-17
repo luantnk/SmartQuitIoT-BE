@@ -23,6 +23,7 @@ public class PostDetailDTO {
     private List<PostMediaDTO> media;
     private List<CommentDTO> comments;
 
+    // ================= AccountDTO =================
     @Getter @Setter
     @NoArgsConstructor
     @AllArgsConstructor
@@ -33,8 +34,15 @@ public class PostDetailDTO {
         private String email;
         private String lastName;
         private String avatarUrl;
+
+        // 👇 thêm constructor tiện lợi 2 tham số
+        public AccountDTO(Integer id, String username) {
+            this.id = id;
+            this.username = username;
+        }
     }
 
+    // ================= PostMediaDTO =================
     @Getter @Setter
     @NoArgsConstructor
     @AllArgsConstructor
@@ -44,6 +52,7 @@ public class PostDetailDTO {
         private String mediaType;
     }
 
+    // ================= CommentDTO =================
     @Getter @Setter
     @NoArgsConstructor
     @AllArgsConstructor

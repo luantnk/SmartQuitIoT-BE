@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.repository;
 
 import com.smartquit.smartquitiot.entity.Post;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,15 +14,10 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     List<Post> findAllByOrderByCreatedAtDesc();
 
-    @Query("SELECT p FROM Post p " +
-            "LEFT JOIN FETCH p.account " +
-            "LEFT JOIN FETCH p.media " +
-            "LEFT JOIN FETCH p.comments c " +
-            "LEFT JOIN FETCH c.account " +
-            "LEFT JOIN FETCH c.commentMedia " +
-            "LEFT JOIN FETCH c.replies " +
-            "WHERE p.id = :postId")
-    Post findPostDetailById(Integer postId);
+    @EntityGraph(attributePaths = {"account", "media"})
+    @Query("SELECT p FROM Post p WHERE p.id = :postId")
+    Post findPostWithMediaAndAccount(@Param("postId") Integer postId);
+
 
     @Query("SELECT p FROM Post p LEFT JOIN p.account a " +
             "WHERE lower(p.title) LIKE lower(concat('%', :query, '%')) " +

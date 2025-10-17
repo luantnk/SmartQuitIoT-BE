@@ -5,11 +5,13 @@ import com.smartquit.smartquitiot.dto.request.PostUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.PostDetailDTO;
 import com.smartquit.smartquitiot.dto.response.PostSummaryDTO;
 import com.smartquit.smartquitiot.entity.Account;
+import com.smartquit.smartquitiot.entity.Comment;
 import com.smartquit.smartquitiot.entity.Post;
 import com.smartquit.smartquitiot.entity.PostMedia;
 import com.smartquit.smartquitiot.enums.MediaType;
 import com.smartquit.smartquitiot.mapper.PostMapper;
 import com.smartquit.smartquitiot.repository.AccountRepository;
+import com.smartquit.smartquitiot.repository.CommentRepository;
 import com.smartquit.smartquitiot.repository.PostMediaRepository;
 import com.smartquit.smartquitiot.repository.PostRepository;
 import com.smartquit.smartquitiot.service.PostService;
@@ -33,6 +35,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
     private final PostMediaRepository postMediaRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     public List<PostSummaryDTO> getLatestPosts(int limit) {
@@ -65,16 +68,45 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional
     public PostDetailDTO getPostDetail(Integer postId) {
-        Post post = postRepository.findPostDetailById(postId);
+        Post post = postRepository.findPostWithMediaAndAccount(postId);
+        if (post == null) {
+            throw new RuntimeException("Post not found with id " + postId);
+        }
+        List<Comment> rootComments = commentRepository.findRootCommentsByPostId(postId);
+        for (Comment c : rootComments) {
+            loadRepliesRecursively(c);
+        }
+//        post.setComments(rootComments);
         return PostMapper.toDetailDTO(post);
     }
+
+    private void loadRepliesRecursively(Comment parent) {
+        List<Comment> replies = commentRepository.findRepliesByParentId(parent.getId());
+        if (replies.isEmpty()) return;
+
+        for (Comment reply : replies) {
+            loadRepliesRecursively(reply);
+        }
+        parent.setReplies(replies);
+    }
+
+    @Transactional
+    public void buildCommentTree(List<Comment> comments) {
+        for (Comment c : comments) {
+            List<Comment> replies = commentRepository.findRepliesByParentId(c.getId());
+            c.setReplies(replies);
+            buildCommentTree(replies); // đệ quy tiếp
+        }
+    }
+
 
     @Override
     @Transactional
     public PostDetailDTO createPost(PostCreateRequest request) {
 
-        System.out.println("Received request to create post: " + request.toString());
+//        System.out.println("Received request to create post: " + request.toString());
 
         if (!StringUtils.hasText(request.getTitle()) || !StringUtils.hasText(request.getContent())) {
             throw new IllegalArgumentException("Title and content must not be empty");
