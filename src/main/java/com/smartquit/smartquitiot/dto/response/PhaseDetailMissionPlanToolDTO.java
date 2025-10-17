@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MissionPlanDTO {
-    private String code;
-    private String title;
-    private String description;
+public class PhaseDetailMissionPlanToolDTO {
+    int id;
+    String code;
+    String name;
+    String description;
 }
