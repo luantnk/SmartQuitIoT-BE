@@ -47,7 +47,10 @@ public class SecurityConfig {
             Map.entry("/accounts/coach/create", HttpMethod.POST),
             Map.entry("/accounts/p", HttpMethod.GET),
             Map.entry("/members/p", HttpMethod.GET),
-            Map.entry("/coaches/p", HttpMethod.GET)
+            Map.entry("/coaches/p", HttpMethod.GET),
+            Map.entry("/interest-category/all", HttpMethod.GET),
+            Map.entry("/quit-plan/create-in-first-login", HttpMethod.POST),
+            Map.entry("/quit-plan", HttpMethod.GET)
     );
 
     private final AccountRepository accountRepository;
@@ -103,8 +106,8 @@ public class SecurityConfig {
         return new CorsFilter(source);
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+//    @Bean
+//    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+//        return config.getAuthenticationManager();
+//    }
 }
