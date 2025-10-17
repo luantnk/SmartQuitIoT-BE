@@ -1,4 +1,7 @@
 package com.smartquit.smartquitiot.repository;
 
-public interface MissionTypeRepository {
+import com.smartquit.smartquitiot.entity.MissionType;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface MissionTypeRepository extends JpaRepository<MissionType, Integer> {
 }
