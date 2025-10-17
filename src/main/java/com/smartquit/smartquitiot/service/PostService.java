@@ -9,7 +9,8 @@ import java.util.List;
 
 public interface PostService {
     List<PostSummaryDTO> getLatestPosts(int limit);
-    List<PostSummaryDTO> getAllPosts();
+//    List<PostSummaryDTO> getAllPosts();
+    List<PostSummaryDTO> getAllPosts(String query);
     PostDetailDTO getPostDetail(Integer postId);
     PostDetailDTO createPost(PostCreateRequest request);
     PostDetailDTO updatePost(Integer postId, PostUpdateRequest request);

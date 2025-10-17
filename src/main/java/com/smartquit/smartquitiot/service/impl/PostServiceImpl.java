@@ -42,10 +42,24 @@ public class PostServiceImpl implements PostService {
                 .collect(Collectors.toList());
     }
 
+//    @Override
+//    public List<PostSummaryDTO> getAllPosts() {
+//        return postRepository.findAllByOrderByCreatedAtDesc()
+//                .stream()
+//                .map(PostMapper::toSummaryDTO)
+//                .collect(Collectors.toList());
+//    }
+
     @Override
-    public List<PostSummaryDTO> getAllPosts() {
-        return postRepository.findAllByOrderByCreatedAtDesc()
-                .stream()
+    public List<PostSummaryDTO> getAllPosts(String query) {
+        List<Post> posts;
+        if (!StringUtils.hasText(query)) {
+            posts = postRepository.findAllByOrderByCreatedAtDesc();
+        }
+        else {
+            posts = postRepository.searchPosts(query.trim());
+        }
+        return posts.stream()
                 .map(PostMapper::toSummaryDTO)
                 .collect(Collectors.toList());
     }
@@ -59,13 +73,16 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public PostDetailDTO createPost(PostCreateRequest request) {
+
+        System.out.println("Received request to create post: " + request.toString());
+
         if (!StringUtils.hasText(request.getTitle()) || !StringUtils.hasText(request.getContent())) {
             throw new IllegalArgumentException("Title and content must not be empty");
         }
 
-//        if (request.getAccountId() == null) {
-//            throw new IllegalArgumentException("Account ID is required");
-//        }
+        if (request.getAccountId() == null) {
+            throw new IllegalArgumentException("Account ID is required");
+        }
 
         Account account = accountRepository.findById(request.getAccountId())
                 .orElseThrow(() -> new RuntimeException("Account not found: " + request.getAccountId()));

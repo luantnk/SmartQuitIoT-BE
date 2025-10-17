@@ -11,6 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@ToString
 public class PostCreateRequest {
 
     @NotBlank(message = "Title is required")
@@ -24,7 +25,8 @@ public class PostCreateRequest {
     String thumbnail;
 
     List<PostMediaRequest> media;
-    private int accountId;
+
+    Integer accountId;
 
     @Data
     @NoArgsConstructor

@@ -23,7 +23,8 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping("/latest")
-//    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get latest posts for Home screen", description = "Returns latest N posts with summary info")
     public ResponseEntity<GlobalResponse<List<PostSummaryDTO>>> getLatestPosts(
             @RequestParam(defaultValue = "5") int limit
@@ -33,16 +34,17 @@ public class PostController {
     }
 
     @GetMapping
-    //    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN', 'COACH')")
-
-    @Operation(summary = "Get all posts (full list)", description = "Returns all posts with summary info")
-    public ResponseEntity<GlobalResponse<List<PostSummaryDTO>>> getAllPosts() {
-        List<PostSummaryDTO> allPosts = postService.getAllPosts();
-        return ResponseEntity.ok(GlobalResponse.ok(allPosts));
+    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse<List<PostSummaryDTO>>> getAllPosts(
+            @RequestParam(name = "query", required = false) String query) {
+        List<PostSummaryDTO> posts = postService.getAllPosts(query);
+        return ResponseEntity.ok(GlobalResponse.ok(posts));
     }
 
     @GetMapping("/{id}")
-    //    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN', 'COACH')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get post detail by id", description = "Returns full post content including media and comments")
     public ResponseEntity<GlobalResponse<PostDetailDTO>> getPostDetail(@PathVariable("id") Integer id) {
         PostDetailDTO postDetail = postService.getPostDetail(id);
@@ -50,16 +52,22 @@ public class PostController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<PostDetailDTO> createPost(@RequestBody PostCreateRequest request) {
         return ResponseEntity.ok(postService.createPost(request));
     }
 
     @PutMapping("/{postId}")
+    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<PostDetailDTO> updatePost(@PathVariable Integer postId, @RequestBody PostUpdateRequest request) {
         return ResponseEntity.ok(postService.updatePost(postId, request));
     }
 
     @DeleteMapping("/{postId}")
+    @PreAuthorize("hasAnyRole('MEMBER', 'ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<?> deletePost(@PathVariable Integer postId) {
         postService.deletePost(postId);
         return ResponseEntity.ok().body("{\"message\": \"Post deleted successfully\"}");
