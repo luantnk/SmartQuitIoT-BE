@@ -41,49 +41,49 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         }
         int ftndScore = calculateFTNDScore(req);
         if (account.isFirstLogin()) {
-        //get response from ai
-        PhaseResponse phaseResponse = phaseService.generatePhasesInFirstLogin(req, ftndScore, account);
+            //get response from ai
+            PhaseResponse phaseResponse = phaseService.generatePhasesInFirstLogin(req, ftndScore, account);
 
-        // save quit plan
-        QuitPlan quitPlan = new QuitPlan();
-        quitPlan.setName(req.getQuitPlanName());
-        quitPlan.setFtndScore(ftndScore);
-        quitPlan.setMember(account.getMember());
-        quitPlan.setStartDate(req.getStartDate());
-        quitPlan.setStatus(QuitPlanStatus.CREATED);
-        quitPlan.setUseNRT(req.isUseNRT());
-        //from metric
-        FormMetric formMetric = new FormMetric();
-        formMetric.setSmokeAvgPerDay(req.getSmokeAvgPerDay());
-        formMetric.setNumberOfYearsOfSmoking(req.getNumberOfYearsOfSmoking());
-        formMetric.setCigarettesPerPackage(req.getCigarettesPerPackage());
-        formMetric.setMinutesAfterWakingToSmoke(req.getMinutesAfterWakingToSmoke());
-        formMetric.setSmokingInForbiddenPlaces(req.isSmokingInForbiddenPlaces());
-        formMetric.setCigaretteHateToGiveUp(req.isCigaretteHateToGiveUp());
-        formMetric.setMorningSmokingFrequency(req.isMorningSmokingFrequency());
-        formMetric.setSmokeWhenSick(req.isSmokeWhenSick());
-        formMetric.setMoneyPerPackage(req.getMoneyPerPackage());
-        formMetric.setEstimatedMoneySavedOnPlan(calculateMoneySavedOnPlan(req.getStartDate(),
-                phaseResponse.getEndDateOfQuitPlan(), req.getCigarettesPerPackage(),
-                req.getMoneyPerPackage(), req.getSmokeAvgPerDay()));
-        formMetric.setAmountOfNicotinePerCigarettes(req.getAmountOfNicotinePerCigarettes());
-        formMetric.setEstimatedNicotineIntakePerDay(calculateNicotineIntakePerDay(req.getAmountOfNicotinePerCigarettes(), req.getSmokeAvgPerDay()));
-        formMetric.setInterests(req.getInterests());
-      //  formMetric.setTriggered(req.getTriggered());
-        quitPlan.setFormMetric(formMetric);
-        quitPlan.setEndDate(phaseResponse.getEndDateOfQuitPlan());
-        //save quit plan and form metric
-        quitPlanRepository.save(quitPlan);
-        // set account is first login ve false
-        account.setFirstLogin(false);
-        accountRepository.save(account);
-        //save phase and system phase condition
-        phaseService.savePhasesAndSystemPhaseCondition(phaseResponse, quitPlan);
-        //tao phase detail
-        List<PhaseDetail> preparedDetails = phaseDetailService.generateInitialPhaseDetails(quitPlan,"Preparation");
+            // save quit plan
+            QuitPlan quitPlan = new QuitPlan();
+            quitPlan.setName(req.getQuitPlanName());
+            quitPlan.setFtndScore(ftndScore);
+            quitPlan.setMember(account.getMember());
+            quitPlan.setStartDate(req.getStartDate());
+            quitPlan.setStatus(QuitPlanStatus.CREATED);
+            quitPlan.setUseNRT(req.isUseNRT());
+            //from metric
+            FormMetric formMetric = new FormMetric();
+            formMetric.setSmokeAvgPerDay(req.getSmokeAvgPerDay());
+            formMetric.setNumberOfYearsOfSmoking(req.getNumberOfYearsOfSmoking());
+            formMetric.setCigarettesPerPackage(req.getCigarettesPerPackage());
+            formMetric.setMinutesAfterWakingToSmoke(req.getMinutesAfterWakingToSmoke());
+            formMetric.setSmokingInForbiddenPlaces(req.isSmokingInForbiddenPlaces());
+            formMetric.setCigaretteHateToGiveUp(req.isCigaretteHateToGiveUp());
+            formMetric.setMorningSmokingFrequency(req.isMorningSmokingFrequency());
+            formMetric.setSmokeWhenSick(req.isSmokeWhenSick());
+            formMetric.setMoneyPerPackage(req.getMoneyPerPackage());
+            formMetric.setEstimatedMoneySavedOnPlan(calculateMoneySavedOnPlan(req.getStartDate(),
+                    phaseResponse.getEndDateOfQuitPlan(), req.getCigarettesPerPackage(),
+                    req.getMoneyPerPackage(), req.getSmokeAvgPerDay()));
+            formMetric.setAmountOfNicotinePerCigarettes(req.getAmountOfNicotinePerCigarettes());
+            formMetric.setEstimatedNicotineIntakePerDay(calculateNicotineIntakePerDay(req.getAmountOfNicotinePerCigarettes(), req.getSmokeAvgPerDay()));
+            formMetric.setInterests(req.getInterests());
+            //  formMetric.setTriggered(req.getTriggered());
+            quitPlan.setFormMetric(formMetric);
+            quitPlan.setEndDate(phaseResponse.getEndDateOfQuitPlan());
+            //save quit plan and form metric
+            quitPlanRepository.save(quitPlan);
+            // set account is first login ve false
+            account.setFirstLogin(false);
+            accountRepository.save(account);
+            //save phase and system phase condition
+            phaseService.savePhasesAndSystemPhaseCondition(phaseResponse, quitPlan);
+            //tao phase detail
+            List<PhaseDetail> preparedDetails = phaseDetailService.generateInitialPhaseDetails(quitPlan,"Preparation");
 
-        return phaseDetailMissionService.generatePhaseDetailMissionsForPhase
-                (preparedDetails,quitPlan, 4, "Preparation", MissionPhase.PREPARATION);
+            return phaseDetailMissionService.generatePhaseDetailMissionsForPhase
+                    (preparedDetails,quitPlan, 4, "Preparation", MissionPhase.PREPARATION);
 
         } else {
             throw new RuntimeException("isFirstLogin is FALSE in createQuitPlanInFirstLogin function ");
@@ -118,7 +118,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     }
 
     private int calculateFTNDScore(CreateQuitPlanInFirstLoginRequest req) {
-       //https://www.aarc.org/wp-content/uploads/2014/08/Fagerstrom_test.pdf
+        //https://www.aarc.org/wp-content/uploads/2014/08/Fagerstrom_test.pdf
         int score = 0;
         // 1) How soon after waking do you smoke your first cigarette?
         // ≤5 phút: 3 điểm; 6–30: 2; 31–60: 1; >60: 0
@@ -143,7 +143,4 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         if (req.isSmokeWhenSick()) score += 1;
         return score;
     }
-
-
-
 }

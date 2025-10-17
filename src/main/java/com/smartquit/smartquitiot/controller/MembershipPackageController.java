@@ -36,18 +36,6 @@ public class MembershipPackageController {
         return ResponseEntity.ok(membershipPackageService.getMembershipPackagesPlanByMembershipPackageId(membershipPackageId));
     }
 
-//    @GetMapping("/test-payment-link")
-//    public ResponseEntity<?> testPayOs(){
-//        /*
-//        * Payment success url : http://localhost:5173/success?code=00&id=bb812d700c7d4e52b26b50d6a5822440&cancel=false&status=PAID&orderCode=1760344734
-//        * Payment failed url : http://localhost:5173/cancel?code=00&id=1cc9fccd2e8d4aad8711b4210380140f&cancel=true&status=CANCELLED&orderCode=1760344840
-//        * */
-//
-//
-//        return new ResponseEntity<>(null, HttpStatus.CREATED);
-//    }
-
-    //Create payment link if package is free trial will not return payment url
     @PostMapping("/create-payment-link")
     @Operation(summary = "Create membership payment link",
             description = "Mobile gửi membershipPackageId, duration về, nếu id của gói free trial sẽ không tạo payment link mà sẽ tạo MembershipSubscription với gói Free Trial luôn.")

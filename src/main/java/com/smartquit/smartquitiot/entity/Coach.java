@@ -3,6 +3,7 @@ package com.smartquit.smartquitiot.entity;
 import com.smartquit.smartquitiot.enums.Gender;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,7 +19,9 @@ public class Coach {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
+    @NotEmpty(message = "FirstName is required")
     String firstName;
+    @NotEmpty(message = "LastName is required")
     String lastName;
     String avatarUrl;
     String certificateUrl;

@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service;
 
+import com.smartquit.smartquitiot.dto.request.CoachUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.CoachDTO;
 import com.smartquit.smartquitiot.dto.response.CoachSummaryDTO;
 import com.smartquit.smartquitiot.entity.Coach;
@@ -13,6 +14,7 @@ public interface    CoachService {
     Coach getAuthenticatedCoach();
     CoachDTO getAuthenticatedCoachProfile();
     List<CoachSummaryDTO> getCoachList();
-
     Page<CoachDTO> getAllCoaches(int page, int size, String searchString, Sort.Direction sortBy);
+    CoachDTO getCoachById(int id);
+    CoachDTO updateProfile(int coachId, CoachUpdateRequest request);
 }

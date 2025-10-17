@@ -1,28 +1,21 @@
-package com.smartquit.smartquitiot.entity;
+package com.smartquit.smartquitiot.dto.response;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DiaryRecord {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class DiaryRecordDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-
     LocalDate date;
     boolean haveSmoked;
     int cigarettesSmoked;
@@ -34,7 +27,6 @@ public class DiaryRecord {
     int confidenceLevel;
     int anxietyLevel;
     String note;
-    // new attribute, new metric, can use for showing dashboard
     boolean isConnectIoTDevice;
     int steps;
     int heartRate;
@@ -43,14 +35,4 @@ public class DiaryRecord {
     int respiratoryRate;
     double sleepDuration;
     int sleepQuality;
-    BigDecimal estimatedNicotineIntake;
-
-    @CreationTimestamp
-    LocalDateTime createdAt;
-    @UpdateTimestamp
-    LocalDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    Member member;
-
 }
