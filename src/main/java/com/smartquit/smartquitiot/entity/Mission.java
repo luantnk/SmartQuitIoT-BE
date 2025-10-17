@@ -7,7 +7,9 @@ import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,7 +34,9 @@ public class Mission {
     @Enumerated(EnumType.STRING)
     MissionStatus status;
     int exp;
+    @CreationTimestamp
     LocalDateTime createdAt;
+    @UpdateTimestamp
     LocalDateTime updatedAt;
 
     @Column(name = "condition_json", columnDefinition = "JSON")
@@ -44,9 +48,6 @@ public class Mission {
 
     @ManyToOne(fetch = FetchType.LAZY)
     InterestCategory interestCategory;
-
-    @OneToMany(mappedBy = "mission")
-    List<SystemRuleMission> systemRuleMissions;
 
     @OneToMany(mappedBy = "mission")
     List<PhaseDetailMission> phaseDetailMissions;

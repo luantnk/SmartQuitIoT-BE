@@ -1,10 +1,12 @@
 package com.smartquit.smartquitiot.entity;
 
 
+import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -34,8 +36,16 @@ public class FormMetric {
     BigDecimal estimatedMoneySavedOnPlan;
     BigDecimal amountOfNicotinePerCigarettes;
     BigDecimal estimatedNicotineIntakePerDay;
+   // String reason;
+
+    @Column(name = "interests", columnDefinition = "json")
+    @Type(JsonType.class)
     List<String> interests;
-    List<String> triggered; //After Meal, Gaming, Party, Coffee, Stress, null
+
+    @Column(name = "triggered", columnDefinition = "json")
+    @Type(JsonType.class)
+    List<String> triggered;// xem o create quit plan request
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     LocalDateTime createdAt;
@@ -45,7 +55,7 @@ public class FormMetric {
     LocalDateTime updatedAt;
 
     @OneToOne(mappedBy = "formMetric")
-    private QuitPlan quitPlan;
+    QuitPlan quitPlan;
 
 
 }
