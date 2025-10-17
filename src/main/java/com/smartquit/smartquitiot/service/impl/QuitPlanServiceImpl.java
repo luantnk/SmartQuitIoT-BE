@@ -50,7 +50,7 @@ public class QuitPlanServiceImpl {
            QuitPlan quitPlan = new QuitPlan();
            quitPlan.setName(req.getQuitPlanName());
            quitPlan.setFtndScore(ftndScore);
-           quitPlan.setMemberId(account.getMember().getId());
+           quitPlan.setMember(account.getMember());
            quitPlan.setStartDate(req.getStartDate());
            quitPlan.setStatus(QuitPlanStatus.CREATED);
            quitPlan.setUseNRT(req.isUseNRT());

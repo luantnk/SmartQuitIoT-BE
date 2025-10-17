@@ -59,7 +59,7 @@ public class Account {
     Member member;
 
     @JsonIgnore
-    @OneToOne(mappedBy = "account", optional = false, cascade = CascadeType.MERGE)
+    @OneToOne(mappedBy = "account", cascade = CascadeType.MERGE)
     Coach coach;
 
 }

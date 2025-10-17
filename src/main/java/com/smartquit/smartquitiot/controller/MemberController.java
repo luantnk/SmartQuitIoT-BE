@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Member;
@@ -9,9 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/members")
@@ -26,5 +25,19 @@ public class MemberController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<MemberDTO> getAuthenticatedMember(){
         return ResponseEntity.ok(memberService.getAuthenticatedMemberProfile());
+    }
+
+    @GetMapping("/{memberId}")
+    @Operation(summary = "This endpoint for get member by memberId")
+    public ResponseEntity<MemberDTO> getMemberById(@PathVariable int memberId){
+        return ResponseEntity.ok(memberService.getMemberById(memberId));
+    }
+
+    @PutMapping
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "This endpoint for update member profile", description = "Only members can update their own profile")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<MemberDTO> updateMemberProfile(@RequestBody MemberUpdateRequest request){
+        return ResponseEntity.ok(memberService.updateProfile(request));
     }
 }
