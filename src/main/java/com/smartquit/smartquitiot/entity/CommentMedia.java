@@ -20,5 +20,6 @@ public class CommentMedia {
     MediaType mediaType;
     String mediaUrl;
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false)
     Comment comment;
 }
