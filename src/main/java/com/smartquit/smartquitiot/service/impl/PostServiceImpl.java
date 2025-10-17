@@ -131,11 +131,11 @@ public class PostServiceImpl implements PostService {
 
         Account account = accountRepository.findById(request.getAccountId())
                 .orElseThrow(() -> new RuntimeException("Account not found with id: " + request.getAccountId()));
-
-        if (post.getAccount().getId() != account.getId() &&
-                (account.getRole() == null || !account.getRole().name().equals("ADMIN"))) {
-            throw new RuntimeException("You do not have permission to edit this post");
-        }
+//
+//        if (post.getAccount().getId() != account.getId() &&
+//                (account.getRole() == null || !account.getRole().name().equals("ADMIN"))) {
+//            throw new RuntimeException("You do not have permission to edit this post");
+//        }
 
         if (StringUtils.hasText(request.getTitle())) {
             post.setTitle(request.getTitle());

@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -32,12 +33,16 @@ public class Post {
     LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    Account account;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
+
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true) // khi xóa bài post các con (media) xóa theo
     List<PostMedia> media;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Comment> comments;
+
+
 
 }
