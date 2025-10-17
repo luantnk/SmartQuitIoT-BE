@@ -43,9 +43,12 @@ public class Member {
     @JoinColumn(name = "account_id")
     Account account;
     @JsonIgnore
+<<<<<<< HEAD
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "member")
     List<QuitPlan> quitPlans;
 
+=======
+>>>>>>> 7f8e94e49093e3d0f73c091969d34ff97e67dcfa
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "member")
     List<Notification> notifications;
     @JsonIgnore

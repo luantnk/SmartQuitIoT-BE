@@ -143,4 +143,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         if (req.isSmokeWhenSick()) score += 1;
         return score;
     }
+
+
+
 }
