@@ -1,16 +1,16 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartquit.smartquitiot.dto.request.CompleteMissionRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
 import com.smartquit.smartquitiot.dto.response.PhaseDetailMissionPlanToolDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseDetailPlanToolDTO;
+import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.PhaseDetailMissionStatus;
-import com.smartquit.smartquitiot.repository.MissionRepository;
-import com.smartquit.smartquitiot.repository.PhaseDetailMissionRepository;
-import com.smartquit.smartquitiot.repository.PhaseDetailRepository;
-import com.smartquit.smartquitiot.repository.PhaseRepository;
+import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
+import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.PhaseDetailMissionService;
 import com.smartquit.smartquitiot.toolcalling.MissionTools;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,48 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     private final PhaseRepository phaseRepository;
     private final ChatClient  chatClient;
     private final MissionTools  missionTools;
+    private final QuitPlanMapper quitPlanMapper;
+
+    @Override
+    @Transactional
+    public QuitPlanResponse completePhaseDetailMission(CompleteMissionRequest req) {
+        PhaseDetailMission phaseDetailMission = phaseDetailMissionRepository.findById(req.getPhaseDetailMissionId())
+                .orElseThrow(() -> new IllegalArgumentException("PhaseDetailMission not found: " + req.getPhaseDetailMissionId()));
+        if(!phaseDetailMission.getStatus().equals(PhaseDetailMissionStatus.COMPLETED)){
+            phaseDetailMission.setCompletedAt(LocalDateTime.now());
+            phaseDetailMission.setStatus(PhaseDetailMissionStatus.COMPLETED);
+            Phase phase = phaseRepository.findById(req.getPhaseId()) .orElseThrow(() -> new IllegalArgumentException("Phase not found: " + req.getPhaseDetailMissionId()));
+            phase.setCompletedMissions(phase.getCompletedMissions() + 1);
+            phase.setProgress(calculateProgress(phase));
+            phaseDetailMissionRepository.save(phaseDetailMission);
+            phaseRepository.save(phase);
+          return quitPlanMapper.toResponse(phase.getQuitPlan());
+
+        }else{
+            throw new IllegalStateException("Phase detail mission has been completed");
+        }
+    }
+
+    private BigDecimal calculateProgress(Phase phase) {
+        int total = phase.getTotalMissions();
+        int done  = phase.getCompletedMissions();
+
+        if (total <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal progress = BigDecimal.valueOf(done)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP);
+
+        if (progress.compareTo(BigDecimal.ZERO) < 0)  return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        if (progress.compareTo(BigDecimal.valueOf(100)) > 0) return BigDecimal.valueOf(100).setScale(2, RoundingMode.HALF_UP);
+
+        return progress;
+    }
+
+
+
 
     @Override
     @Transactional
@@ -182,4 +226,6 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
 
         return totalSaved;
     }
+
+
 }
