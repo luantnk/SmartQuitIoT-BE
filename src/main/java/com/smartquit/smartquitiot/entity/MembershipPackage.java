@@ -22,8 +22,10 @@ public class MembershipPackage {
     String name;
     String description;
     long price;
+
     @Enumerated(EnumType.STRING)
     MembershipPackageType type;
+
     int duration;
     @Enumerated(EnumType.STRING)
     DurationUnit durationUnit;

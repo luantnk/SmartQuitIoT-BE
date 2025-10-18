@@ -50,7 +50,7 @@ public class ScheduleController {
             @Valid @RequestBody ScheduleUpdateRequest request) {
 
         scheduleService.updateScheduleByDate(date, request);
-        return ResponseEntity.ok(GlobalResponse.ok("Cập nhật lịch thành công", null));
+        return ResponseEntity.ok(GlobalResponse.ok("Update successfully", null));
     }
 
 
