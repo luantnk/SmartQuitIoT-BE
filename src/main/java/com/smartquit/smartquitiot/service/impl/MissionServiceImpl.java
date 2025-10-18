@@ -105,12 +105,12 @@ public class MissionServiceImpl implements MissionService {
 
         String key = field.trim().toLowerCase().replace(" ", "_");
         return switch (key) {
-            case "avg_confident_level" -> account.getMember().getMetric().getAvg_confident_level();
-            case "avg_craving_level" -> account.getMember().getMetric().getAvg_craving_level();
-            case "avg_mood" -> account.getMember().getMetric().getAvg_mood();
-            case "avg_anxiety" -> account.getMember().getMetric().getAvg_anxiety();
+            case "avg_confident_level" -> account.getMember().getMetric().getAvgConfidentLevel();
+            case "avg_craving_level" -> account.getMember().getMetric().getAvgCravingLevel();
+            case "avg_mood" -> account.getMember().getMetric().getAvgMood();
+            case "avg_anxiety" -> account.getMember().getMetric().getAvgAnxiety();
             case "streaks" -> account.getMember().getMetric().getStreaks();
-            case "relapse_count_in_phase" -> account.getMember().getMetric().getRelapse_count_in_phase();
+            case "relapse_count_in_phase" -> account.getMember().getMetric().getRelapseCountInPhase();
             case "use_nrt" -> plan.isUseNRT();  //  boolean field
             case "morning_smoking_frequency" -> formMetric.isMorningSmokingFrequency();
             case "minutes_after_waking_to_smoke" -> formMetric.getMinutesAfterWakingToSmoke();

@@ -14,5 +14,5 @@ public interface DiaryRecordRepository extends JpaRepository<DiaryRecord, Intege
 
     List<DiaryRecord> findByMemberId(Integer memberId);
 
-    Optional<DiaryRecord> findTopByDateAndMemberIdOrderByDate(LocalDate date, Integer memberId);
+    Optional<DiaryRecord> findTopByMemberIdOrderByDate(Integer memberId);
 }

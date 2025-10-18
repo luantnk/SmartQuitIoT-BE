@@ -14,22 +14,22 @@ import java.util.List;
 public class DiaryRecordRequest {
 
     LocalDate date;
-    boolean haveSmoked;
-    int cigarettesSmoked;
+    Boolean haveSmoked;
+    Integer cigarettesSmoked;
     List<String> triggers;
-    boolean isUseNrt;
-    double moneySpentOnNrt;
-    int cravingLevel;
-    int moodLevel;
-    int confidenceLevel;
-    int anxietyLevel;
+    Boolean isUseNrt;
+    Double moneySpentOnNrt;
+    Integer cravingLevel;
+    Integer moodLevel;
+    Integer confidenceLevel;
+    Integer anxietyLevel;
     String note;
-    boolean isConnectIoTDevice;
-    int steps;
-    int heartRate;
-    int spo2;
-    int activityMinutes;
-    int respiratoryRate;
-    double sleepDuration;
-    int sleepQuality;
+    Boolean isConnectIoTDevice;
+    Integer steps;
+    Integer heartRate;
+    Integer spo2;
+    Integer activityMinutes;
+    Integer respiratoryRate;
+    Double sleepDuration;
+    Integer sleepQuality;
 }
