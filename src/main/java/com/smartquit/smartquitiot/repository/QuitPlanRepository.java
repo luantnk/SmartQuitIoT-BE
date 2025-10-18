@@ -12,4 +12,5 @@ public interface QuitPlanRepository extends JpaRepository<QuitPlan,Integer> {
     QuitPlan findTopByOrderByCreatedAtDesc();
     QuitPlan findTopByMemberIdOrderByCreatedAtDesc(Integer memberId);
     Optional<QuitPlan> findByMemberId(Integer memberId);
+    QuitPlan findByMember_IdAndStatus(int memberId, QuitPlanStatus status);
 }

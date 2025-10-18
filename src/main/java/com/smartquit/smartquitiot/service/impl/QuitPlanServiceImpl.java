@@ -92,9 +92,13 @@ public class QuitPlanServiceImpl implements QuitPlanService {
 
     @Override
     public QuitPlanResponse getCurrentQuitPlan() {
-        QuitPlan plan = quitPlanRepository.findTopByOrderByCreatedAtDesc();
+        Account account = accountService.getAuthenticatedAccount();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
         if (plan == null) {
-            throw new RuntimeException("No QuitPlan found");
+            plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
+        }
+        if(plan == null) {
+            throw new RuntimeException("No Quit Plan found when using!");
         }
         return quitPlanMapper.toResponse(plan);
     }

@@ -75,11 +75,10 @@ public class MissionTools {
             description = "To retrieve list mission candidates for the current phase.")
     public List<PhaseDetailMissionToolDTO> getCandidateMissions(@ToolParam(description = "Enum value of the target phase (PREPARATION, ONSET, PEAK_CRAVING, SUBSIDING, MAINTENANCE).")MissionPhase missionPhase) {
         Account account = accountService.getAuthenticatedAccount();
-//        QuitPlan plan = quitPlanRepository.findByStatus(QuitPlanStatus.CREATED);
-//        if(plan == null){
-//            quitPlanRepository.findByStatus(QuitPlanStatus.IN_PROGRESS);
-//        }
-       QuitPlan plan = quitPlanRepository.findTopByOrderByCreatedAtDesc();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
+        if (plan == null) {
+            plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
+        }
         if(plan == null){
             throw  new RuntimeException("Mission Plan Not Found at getCandidateMissions tools");
         }
