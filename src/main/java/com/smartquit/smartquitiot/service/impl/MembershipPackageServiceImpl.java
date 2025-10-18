@@ -18,6 +18,7 @@ import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.repository.MembershipPackageRepository;
 import com.smartquit.smartquitiot.repository.MembershipSubscriptionRepository;
 import com.smartquit.smartquitiot.repository.PaymentRepository;
+import com.smartquit.smartquitiot.service.EmailService;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
     private final MembershipPackageRepository membershipPackageRepository;
     private final MembershipPackageMapper membershipPackageMapper;
     private final MemberService memberService;
+    private final EmailService emailService;
     private final MembershipSubscriptionRepository membershipSubscriptionRepository;
     private final MemberRepository memberRepository;
     private final PayOS payOS;
@@ -193,18 +195,43 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
                 subscription.setStatus(MembershipSubscriptionStatus.UNAVAILABLE);
                 membershipSubscriptionRepository.save(subscription);
             }
-
             pendingSubscription.setStatus(MembershipSubscriptionStatus.AVAILABLE);
             membershipSubscriptionRepository.save(pendingSubscription);
-
             Payment payment = new Payment();
             payment.setAmount(pendingSubscription.getTotalAmount());
             payment.setOrderCode(request.getOrderCode());
             payment.setPaymentLinkId(request.getId());
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setSubscription(pendingSubscription);
-
             paymentRepository.save(payment);
+            emailService.sendPaymentSuccessEmail(
+                    member.getAccount().getEmail(),
+                    member.getAccount().getUsername(),
+                    pendingSubscription.getMembershipPackage().getName(),
+                    pendingSubscription.getTotalAmount(),
+                    request.getOrderCode()
+            );
+        } else {
+            if (request.getStatus().equals(PaymentStatus.CANCELLED)) {
+                // Khi hủy payment ko lưu thông tin payment, chỉ gửi email cancel payment
+//                Payment payment = new Payment();
+//                payment.setAmount(pendingSubscription.getTotalAmount());
+//                payment.setOrderCode(request.getOrderCode());
+//                payment.setPaymentLinkId(request.getId());
+//                payment.setStatus(PaymentStatus.CANCELLED);
+//                pendingSubscription.setStatus(MembershipSubscriptionStatus.UNAVAILABLE);
+//                payment.setSubscription(pendingSubscription);
+//                paymentRepository.save(payment);
+                emailService.sendPaymentCancelEmail(
+                        member.getAccount().getEmail(),
+                        member.getAccount().getUsername(),
+                        pendingSubscription.getMembershipPackage().getName(),
+                        request.getOrderCode()
+                );
+            } else {
+                pendingSubscription.setStatus(MembershipSubscriptionStatus.UNAVAILABLE);
+                membershipSubscriptionRepository.save(pendingSubscription);
+            }
         }
         return membershipSubscriptionMapper.toMembershipSubscriptionDTO(pendingSubscription);
     }

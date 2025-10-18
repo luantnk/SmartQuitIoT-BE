@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "accounts")
@@ -59,7 +60,11 @@ public class Account {
     Member member;
 
     @JsonIgnore
-    @OneToOne(mappedBy = "account", optional = false, cascade = CascadeType.MERGE)
+    @OneToOne(mappedBy = "account", cascade = CascadeType.MERGE)
     Coach coach;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Post> posts;
 
 }
