@@ -4,6 +4,7 @@ import com.smartquit.smartquitiot.dto.request.ScheduleAssignRequest;
 import com.smartquit.smartquitiot.dto.request.ScheduleUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.CoachSummaryDTO;
 import com.smartquit.smartquitiot.dto.response.ScheduleByDayResponse;
+import com.smartquit.smartquitiot.dto.response.SlotAvailableResponse;
 import com.smartquit.smartquitiot.entity.Coach;
 import com.smartquit.smartquitiot.entity.CoachWorkSchedule;
 import com.smartquit.smartquitiot.entity.Slot;
@@ -18,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.management.InstanceAlreadyExistsException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -194,5 +197,30 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
     }
 
+    @Override
+    public List<SlotAvailableResponse> getAvailableSlots(int coachId, LocalDate date) {
+        if (!coachRepository.existsById(coachId)) {
+            throw new IllegalArgumentException("Coach không tồn tại.");
+        }
 
+        LocalDate today = LocalDate.now();
+        if (date.isBefore(today)) throw new IllegalArgumentException("Ngày không được nhỏ hơn ngày hiện tại ");
+        LocalDateTime now = LocalDateTime.now();
+        return coachWorkScheduleRepository
+                .findAllByCoachIdAndDateAndStatusWithSlot(coachId, date, CoachWorkScheduleStatus.AVAILABLE)
+                .stream()
+                .filter(cws -> {
+                    if (date.isEqual(today)) {
+                        LocalDateTime slotStart = LocalDateTime.of(date, cws.getSlot().getStartTime());
+                        return !slotStart.isBefore(now);
+                    }
+                    return true;
+                })
+                .map(cws -> new SlotAvailableResponse(
+                        cws.getSlot().getId(),
+                        cws.getSlot().getStartTime(),
+                        cws.getSlot().getEndTime()
+                ))
+                .collect(Collectors.toList());
+    }
 }
