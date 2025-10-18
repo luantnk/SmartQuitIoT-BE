@@ -85,7 +85,8 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         return phaseDetailMissionService.generatePhaseDetailMissionsForPhase
                 (preparedDetails,quitPlan, 4, "Preparation", MissionPhase.PREPARATION);
 
-        } else {
+       }
+        else {
             throw new RuntimeException("isFirstLogin is FALSE in createQuitPlanInFirstLogin function ");
         }
     }

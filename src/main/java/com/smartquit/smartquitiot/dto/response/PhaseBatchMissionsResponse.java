@@ -13,5 +13,5 @@ public class PhaseBatchMissionsResponse {
     private Integer phaseId;
     private String phaseName;
     private int durationDays;
-    private List<PhaseDetailPlanToolDTO> items;
+    private List<PhaseDetailPlanToolDTO> phaseDetails;
 }

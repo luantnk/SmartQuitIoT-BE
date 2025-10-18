@@ -6,6 +6,7 @@ import com.smartquit.smartquitiot.dto.response.PhaseDetailMissionPlanToolDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseDetailPlanToolDTO;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
+import com.smartquit.smartquitiot.enums.PhaseDetailMissionStatus;
 import com.smartquit.smartquitiot.repository.MissionRepository;
 import com.smartquit.smartquitiot.repository.PhaseDetailMissionRepository;
 import com.smartquit.smartquitiot.repository.PhaseDetailRepository;
@@ -18,6 +19,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +29,7 @@ import static com.smartquit.smartquitiot.toolcalling.MissionTools.SYS_PHASE;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class PhaseDetailMissionImpl implements PhaseDetailMissionService {
+public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService {
     private final PhaseDetailRepository  phaseDetailRepository;
     private final PhaseDetailMissionRepository phaseDetailMissionRepository;
     private final MissionRepository missionRepository;
@@ -48,8 +50,23 @@ public class PhaseDetailMissionImpl implements PhaseDetailMissionService {
                 maxPerDay,
                 missionPhase
         );
+//        if (ai != null && ai.getItems() != null && !ai.getItems().isEmpty()) {
+//            for (int i = 0; i < ai.getItems().size() && i < preparedDetails.size(); i++) {
+//                var dto = ai.getItems().get(i);
+//                PhaseDetail pd = preparedDetails.get(i);
+//                if (dto.getPhaseDetailId() == null) {
+//                    log.warn("duma getPhaseDetailId null roi");
+//                    dto.setPhaseDetailId(pd.getId());
+//                    dto.setPhaseDetailName(pd.getName());
+//                }
+//            }
+//        }
 
-        savePhaseDetailMissionsForPhase(ai);
+       int totalMissions = savePhaseDetailMissionsForPhase(ai);
+       phase.setTotalMissions(totalMissions);
+       phase.setCompletedMissions(0);
+       phase.setProgress(BigDecimal.ZERO);
+       phaseRepository.save(phase);
         return ai;
 
     }
@@ -100,13 +117,14 @@ public class PhaseDetailMissionImpl implements PhaseDetailMissionService {
     }
     @Override
     @Transactional
-    public void savePhaseDetailMissionsForPhase(PhaseBatchMissionsResponse resp) {
-        if (resp == null || resp.getItems() == null) {
+    public int savePhaseDetailMissionsForPhase(PhaseBatchMissionsResponse resp) {
+        if (resp == null || resp.getPhaseDetails() == null) {
             log.warn("AI response is null or items null -> nothing to persist");
-            return;
+            return 0;
         }
+        int totalSaved = 0;
+        for (PhaseDetailPlanToolDTO day : resp.getPhaseDetails()) {
 
-        for (PhaseDetailPlanToolDTO day : resp.getItems()) {
             Integer phaseDetailId = day.getPhaseDetailId();
             if (phaseDetailId == null) {
                 log.warn("Skip a day because phaseDetailId is null");
@@ -141,6 +159,7 @@ public class PhaseDetailMissionImpl implements PhaseDetailMissionService {
                 entity.setPhaseDetail(phaseDetail);
                 entity.setCode(mission.getCode());
                 entity.setName(mission.getName());
+                entity.setStatus(PhaseDetailMissionStatus.INCOMPLETED);
                 entity.setDescription(mission.getDescription());
 
                 toSave.add(entity);
@@ -148,10 +167,19 @@ public class PhaseDetailMissionImpl implements PhaseDetailMissionService {
 
             if (!toSave.isEmpty()) {
                 phaseDetailMissionRepository.saveAll(toSave);
+                totalSaved +=  toSave.size();
                 log.info("Saved {} PhaseDetailMission for phaseDetailId={}", toSave.size(), phaseDetailId);
             } else {
                 log.info("No valid missions to save for phaseDetailId={}", phaseDetailId);
             }
         }
+//        if (totalSaved <= 0) {
+//            throw new RuntimeException(
+//                    "No PhaseDetailMission saved at savePhaseDetailMissionsForPhase — possible causes: null phaseDetailId or invalid mission mapping. Phase: "
+//                            + resp.getPhaseName()
+//            );
+//        }
+
+        return totalSaved;
     }
 }

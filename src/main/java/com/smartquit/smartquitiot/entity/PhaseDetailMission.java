@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -19,6 +21,8 @@ public class PhaseDetailMission {
     String code;
     String name;
     String description;
+    LocalDateTime completedAt;
+
     @Enumerated(EnumType.STRING)
     PhaseDetailMissionStatus  status = PhaseDetailMissionStatus.INCOMPLETED;
 

@@ -65,7 +65,10 @@ public class QuitPlanMapper {
         dto.setReason(phase.getReason());
         dto.setStartDate(phase.getStartDate());
         dto.setEndDate(phase.getEndDate());
-
+        dto.setCondition(phase.getCondition());
+        dto.setTotalMissions(phase.getTotalMissions());
+        dto.setCompletedMissions(phase.getCompletedMissions());
+        dto.setProgress(phase.getProgress());
         if (phase.getDetails() != null) {
             List<PhaseDetailResponseDTO> details = phase.getDetails().stream()
                     .map(this::toPhaseDetailDTO)

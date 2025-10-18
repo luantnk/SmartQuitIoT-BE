@@ -8,7 +8,7 @@ import com.smartquit.smartquitiot.enums.MissionPhase;
 import java.util.List;
 
 public interface PhaseDetailMissionService {
-    void savePhaseDetailMissionsForPhase(PhaseBatchMissionsResponse resp);
+    int savePhaseDetailMissionsForPhase(PhaseBatchMissionsResponse resp);
     PhaseBatchMissionsResponse generatePhaseDetailMissionsForPhase(List<PhaseDetail> preparedDetails , QuitPlan plan,
                                                                    int maxPerDay, String phaseName, MissionPhase missionPhase);
 }

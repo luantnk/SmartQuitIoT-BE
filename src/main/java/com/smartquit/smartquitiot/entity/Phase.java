@@ -9,6 +9,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,11 +31,16 @@ public class Phase {
     LocalDate startDate;
     LocalDate endDate;
     int durationDays;
+    int totalMissions;
+    int completedMissions;
+    @Column(precision = 5, scale = 2)
+    BigDecimal progress;
 
     @Column(name = "condition_json", columnDefinition = "JSON", nullable = false)
     @Type(JsonType.class)
     JsonNode condition;
 
+    @Column(columnDefinition = "TEXT")
     String reason;
 
     @Enumerated(EnumType.STRING)

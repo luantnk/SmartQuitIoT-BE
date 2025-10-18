@@ -85,7 +85,7 @@ public class AppInitialConfig {
     }
     private void initInterestCategories() {
         String[][] interestCategories = {
-                {"All Interests", "Universal category suitable for any user regardless of their interests — missions here apply to everyone."},
+                {"All Interests", "Universal category suitable for any user regardless of their interests missions here apply to everyone."},
                 {"Sports and Exercise", "Activities that improve fitness, strength, and overall physical health."},
                 {"Art and Creativity", "Expressing creativity through drawing, painting, crafting, or other artistic activities."},
                 {"Cooking and Food", "Exploring new recipes, enjoying healthy meals, and discovering culinary experiences."},

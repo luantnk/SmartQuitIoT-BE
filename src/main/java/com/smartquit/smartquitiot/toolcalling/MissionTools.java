@@ -27,61 +27,60 @@ import java.util.List;
 @Slf4j
 public class MissionTools {
     private final AccountService accountService;
-    private final MissionService  missionService;
+    private final MissionService missionService;
     private final QuitPlanRepository quitPlanRepository;
 
     public static final String SYS_PHASE = """
-            You are a smoking cessation coach responsible for generating phase missions for a Quit Plan.
+            You are a mission assignment assistant for a Quit Plan phase.
+            Your role is to SELECT and DISTRIBUTE appropriate missions from the provided candidate list, not to create new ones.
             
-            CRITICAL RULES:
-            - At the beginning, you MUST call the tool `getCandidateMissions` to fetch a list of mission candidates for the current phase.
+            CRITICAL RULES
+            - At the beginning you MUST call the tool `getCandidateMissions` to fetch mission candidates for the current phase.
             - You MUST ONLY choose missions from that tool response.
-            - Do NOT create or modify mission codes or invent new ones.
-            - Use mission id, code, name, and description exactly as provided.
-            - If the tool returns an empty list, you MUST return an empty `missions` array for this phase.
-
+            - Do NOT create or modify mission codes; use id, code, name, and description exactly as provided.
+            - The tool always provides suitable missions — do NOT generate empty days.
             
-            ASSIGNMENT RULES:
-            - DO NOT repeat the same mission across different days in this phase.
+            INPUT CONTEXT
+            - You are given "phaseDetails": an array where each element has:
+              { phaseDetailId, phaseDetailName, date, dayIndex }.
+            
+            OUTPUT SHAPE RULES
+            - You MUST return a top-level object: { phaseId, phaseName, durationDays, phaseDetails }.
+            - `phaseDetails` in your output MUST contain exactly one entry for every input element, in the SAME ORDER.
+            - Each output `phaseDetails[i]` MUST copy the same { phaseDetailId, phaseDetailName, date, dayIndex } from input.
+            - Never output null for phaseDetailId or phaseDetailName.
+            - Day 1 MUST always exist and include PREP_LIST_TRIGGERS for the PREPARATION phase.
+            
+            ASSIGNMENT RULES
+            - Select missions most appropriate for the user’s phase context.
+            - Distribute missions logically across days to ensure balance and variety.
+            - DO NOT repeat the same mission across multiple days.
             - Pick up to {MAX_PER_DAY} missions per day.
-            - Return titles and descriptions, concise and contextual.
+            - Titles and descriptions should remain concise and contextual.
             
-            SPECIAL RULES BY PHASE:
-            
-            ## For PREPARATION phase only:
-            1. **PREP_LIST_TRIGGERS (Trigger Identification)**
-               - MUST always appear on Day 1.
-               - This task helps users identify personal smoking triggers early.
-            
-            2. **PREP_LEARN_NRT (Nicotine Replacement Therapy Learning)**
-               - If `useNRT` == true and `PREP_LEARN_NRT` exists in the candidate list, include it early (preferably Day 1 or Day 2).
-            
-            3. **Priority when both exist**
-               - `PREP_LIST_TRIGGERS` -> Day 1.
-               - `PREP_LEARN_NRT` -> Day 2 (or immediately after triggers if space allows).
-            
-            4. **Context**
-               - If `useNRT` == false → exclude `PREP_LEARN_NRT`.
-               - Arrange other missions logically (motivational -> skill-building).
-               - Distribute missions evenly across available days.
-            
-            ## For other phases:
-            - Follow logical progression and avoid repetition.
-            - Select missions contextually appropriate for the phase.
+            SPECIAL RULES — PREPARATION PHASE
+            1) PREP_LIST_TRIGGERS MUST always appear on Day 1.
+            2) If useNRT == true and PREP_LEARN_NRT exists, include it early (preferably Day 1 or Day 2).
+            3) Priority when both exist:
+               - Day 1: PREP_LIST_TRIGGERS
+               - Day 2: PREP_LEARN_NRT (or right after triggers if needed)
+            4) If useNRT == false, exclude PREP_LEARN_NRT.
+            5) Arrange other missions logically (motivational → skill-building) and distribute evenly.
             
             """;
 
     @Tool(name = "getCandidateMissions",
             description = "To retrieve list mission candidates for the current phase.")
-    public List<PhaseDetailMissionToolDTO> getCandidateMissions(@ToolParam(description = "Enum value of the target phase (PREPARATION, ONSET, PEAK_CRAVING, SUBSIDING, MAINTENANCE).")MissionPhase missionPhase) {
+    public List<PhaseDetailMissionToolDTO> getCandidateMissions(@ToolParam(description = "Enum value of the target phase (PREPARATION, ONSET, PEAK_CRAVING, SUBSIDING, MAINTENANCE).") MissionPhase missionPhase) {
         Account account = accountService.getAuthenticatedAccount();
         QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
         if (plan == null) {
             plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
         }
-        if(plan == null){
-            throw  new RuntimeException("Mission Plan Not Found at getCandidateMissions tools");
+        if (plan == null) {
+            throw new RuntimeException("Mission Plan Not Found at getCandidateMissions tools");
         }
+        log.info("plan id: {}", plan.getId());
         List<Mission> candidates = missionService.filterMissionsForPhase(
                 plan, account,
                 missionPhase,
