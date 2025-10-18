@@ -24,16 +24,27 @@ public class DiaryRecord {
     int id;
 
     LocalDate date;
+    boolean haveSmoked;
     int cigarettesSmoked;
-    int smokingFrequency;
     List<String> triggers;
     boolean isUseNrt;
     double moneySpentOnNrt;
-    boolean haveSmoked;
+    int cravingLevel;
     int moodLevel;
     int confidenceLevel;
     int anxietyLevel;
-    BigDecimal estimatedNicotineIntake; // new attribute, new metric, can use for showing dashboard
+    String note;
+    // new attribute, new metric, can use for showing dashboard
+    boolean isConnectIoTDevice;
+    int steps;
+    int heartRate;
+    int spo2;
+    int activityMinutes;
+    int respiratoryRate;
+    double sleepDuration;
+    int sleepQuality;
+    BigDecimal estimatedNicotineIntake;
+
     @CreationTimestamp
     LocalDateTime createdAt;
     @UpdateTimestamp

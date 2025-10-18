@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.smartquit.smartquitiot.enums.NewsStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +23,8 @@ public class News {
     String title;
     @Column(columnDefinition = "TEXT")
     String content;
+    @Enumerated(EnumType.STRING)
+    NewsStatus status;
 
     @CreationTimestamp
     LocalDateTime createdAt;

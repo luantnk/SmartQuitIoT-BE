@@ -5,7 +5,6 @@ import com.smartquit.smartquitiot.dto.request.PaymentProcessRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.dto.response.MembershipSubscriptionDTO;
-import com.smartquit.smartquitiot.entity.MembershipSubscription;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -13,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 
@@ -23,7 +21,6 @@ import java.util.List;
 public class MembershipPackageController {
 
     private final MembershipPackageService membershipPackageService;
-
 
     @GetMapping
     @Operation(summary = "Get all membership package")
@@ -39,18 +36,6 @@ public class MembershipPackageController {
         return ResponseEntity.ok(membershipPackageService.getMembershipPackagesPlanByMembershipPackageId(membershipPackageId));
     }
 
-//    @GetMapping("/test-payment-link")
-//    public ResponseEntity<?> testPayOs(){
-//        /*
-//        * Payment success url : http://localhost:5173/success?code=00&id=bb812d700c7d4e52b26b50d6a5822440&cancel=false&status=PAID&orderCode=1760344734
-//        * Payment failed url : http://localhost:5173/cancel?code=00&id=1cc9fccd2e8d4aad8711b4210380140f&cancel=true&status=CANCELLED&orderCode=1760344840
-//        * */
-//
-//
-//        return new ResponseEntity<>(null, HttpStatus.CREATED);
-//    }
-
-    //Create payment link if package is free trial will not return payment url
     @PostMapping("/create-payment-link")
     @Operation(summary = "Create membership payment link",
             description = "Mobile gửi membershipPackageId, duration về, nếu id của gói free trial sẽ không tạo payment link mà sẽ tạo MembershipSubscription với gói Free Trial luôn.")
@@ -63,6 +48,7 @@ public class MembershipPackageController {
 
     @PostMapping("/process")
     @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Process Payment", description = "Mobile gửi body gồm các trường như bên dưới để BE xác thực thanh toán , xử lí gói membership")
     public ResponseEntity<GlobalResponse<MembershipSubscriptionDTO>> processMembershipPayment(@RequestBody PaymentProcessRequest request){
         return ResponseEntity.ok(GlobalResponse.created("Membership payment success", membershipPackageService.processMembershipPackagePayment(request)));
     }

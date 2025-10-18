@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Member;
@@ -27,6 +28,27 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberDTO getAuthenticatedMemberProfile() {
         Member member = getAuthenticatedMember();
+        return memberMapper.toMemberDTO(member);
+    }
+
+    @Override
+    public MemberDTO getMemberById(int id) {
+        Member member = memberRepository.findById(id).orElseThrow(() -> new RuntimeException("Member not found"));
+        return memberMapper.toMemberDTO(member);
+    }
+
+    @Override
+    public MemberDTO updateProfile(MemberUpdateRequest request) {
+        Member member = getAuthenticatedMember();
+        member.setFirstName(request.getFirstName());
+        member.setLastName(request.getLastName());
+        if(request.getAvatarUrl() != null) {
+            member.setAvatarUrl(request.getAvatarUrl());
+        }
+        if(request.getDob() != null){
+            member.setDob(request.getDob());
+        }
+        member = memberRepository.save(member);
         return memberMapper.toMemberDTO(member);
     }
 }
