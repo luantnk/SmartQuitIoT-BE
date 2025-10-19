@@ -31,4 +31,5 @@ public class PhaseDTO {
     BigDecimal progress;
     JsonNode condition;
     List<PhaseDetailResponseDTO> details;
+    PhaseDetailResponseDTO currentPhaseDetail;
 }

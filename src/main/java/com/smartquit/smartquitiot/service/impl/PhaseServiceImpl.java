@@ -1,15 +1,18 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseDTO;
+import com.smartquit.smartquitiot.dto.response.PhaseDetailResponseDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseResponse;
-import com.smartquit.smartquitiot.entity.Account;
-import com.smartquit.smartquitiot.entity.Phase;
-import com.smartquit.smartquitiot.entity.QuitPlan;
-import com.smartquit.smartquitiot.entity.SystemPhaseCondition;
+import com.smartquit.smartquitiot.entity.*;
+import com.smartquit.smartquitiot.enums.PhaseDetailMissionStatus;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
+import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
+import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.repository.SystemPhaseConditionRepository;
+import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.PhaseService;
 import com.smartquit.smartquitiot.toolcalling.QuitPlanTools;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
@@ -32,6 +36,64 @@ public class PhaseServiceImpl implements PhaseService {
     private final QuitPlanTools quitPlanTools;
     private final ChatClient chatClient;
     private final PhaseRepository phaseRepository;
+    private final AccountService  accountService;
+    private final QuitPlanRepository quitPlanRepository;
+    //nho lam cai schedule update status of PHASE
+    @Override
+    public PhaseDTO getCurrentPhaseAtHomePage() {
+        Account account = accountService.getAuthenticatedAccount();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
+        if (plan == null) {
+            plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
+        }
+        if (plan == null) {
+            throw new RuntimeException("Mission Plan Not Found at getCurrentPhaseAtHomePage tools");
+        }
+
+        LocalDate currentDate = LocalDate.now();
+        Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS,plan.getId())
+                .orElseThrow(() -> new IllegalArgumentException("get current Phase not found at getCurrentPhaseAtHomePage"));
+
+        int missionCompletedInCurrentPhaseDetail = 0;
+        PhaseDetail currentPhaseDetail = null;
+        for (PhaseDetail phaseDetail : currentPhase.getDetails()) {
+            if (phaseDetail.getDate() != null && phaseDetail.getDate().isEqual(currentDate)) {
+                currentPhaseDetail =  phaseDetail;
+                for (PhaseDetailMission mission : phaseDetail.getPhaseDetailMissions()) {
+                    if (mission.getStatus() == PhaseDetailMissionStatus.COMPLETED) {
+                        missionCompletedInCurrentPhaseDetail++;
+                    }
+                }
+            }
+        }
+        if(currentPhaseDetail == null){
+            throw new RuntimeException("No active current Phase Detail found for current date at getCurrentPhaseAtHomePage");
+        }
+
+        PhaseDTO phaseDTO = new PhaseDTO();
+        phaseDTO.setId(currentPhase.getId());
+        phaseDTO.setName(currentPhase.getName());
+        phaseDTO.setStartDate(currentPhase.getStartDate());
+        phaseDTO.setEndDate(currentPhase.getEndDate());
+        phaseDTO.setDurationDay(currentPhase.getDurationDays());
+        phaseDTO.setReason(currentPhase.getReason());
+        phaseDTO.setTotalMissions(currentPhase.getTotalMissions());
+        phaseDTO.setCompletedMissions(currentPhase.getCompletedMissions());
+        phaseDTO.setProgress(currentPhase.getProgress());
+        phaseDTO.setCondition(currentPhase.getCondition());
+
+        PhaseDetailResponseDTO  phaseDetailResponseDTO = new PhaseDetailResponseDTO();
+        phaseDetailResponseDTO.setId(currentPhaseDetail.getId());
+        phaseDetailResponseDTO.setName(currentPhaseDetail.getName());
+        phaseDetailResponseDTO.setDate(currentPhaseDetail.getDate());
+        phaseDetailResponseDTO.setDayIndex(currentPhaseDetail.getDayIndex());
+        phaseDetailResponseDTO.setMissionCompleted(missionCompletedInCurrentPhaseDetail);
+        phaseDetailResponseDTO.setTotalMission(currentPhaseDetail.getPhaseDetailMissions().size());
+        phaseDTO.setCurrentPhaseDetail(phaseDetailResponseDTO);
+
+        return phaseDTO;
+
+    }
 
     @Override
     public PhaseResponse generatePhasesInFirstLogin(CreateQuitPlanInFirstLoginRequest req, int FTND, Account account) {
@@ -96,6 +158,9 @@ public class PhaseServiceImpl implements PhaseService {
             phaseRepository.save(phase);
         }
     }
+
+
+
     private int calculateAge(LocalDate dob) {
         return Period.between(dob, LocalDate.now()).getYears();
     }

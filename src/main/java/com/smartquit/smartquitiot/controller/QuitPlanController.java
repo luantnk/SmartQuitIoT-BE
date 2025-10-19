@@ -42,6 +42,4 @@ public class QuitPlanController {
         QuitPlanResponse response = quitPlanServiceImpl.getCurrentQuitPlan();
         return ResponseEntity.ok(response);
     }
-
-
 }

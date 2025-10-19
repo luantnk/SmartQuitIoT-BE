@@ -19,5 +19,7 @@ public class PhaseDetailResponseDTO {
     String name;
     LocalDate date;
     int dayIndex;
+    int missionCompleted;
+    int totalMission;
     List<PhaseDetailMissionResponseDTO> missions;
 }

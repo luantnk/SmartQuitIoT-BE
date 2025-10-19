@@ -46,7 +46,8 @@ public class SecurityConfig {
             Map.entry("/membership-subscriptions/current", HttpMethod.GET),
             Map.entry("/interest-category/all", HttpMethod.GET),
             Map.entry("/quit-plan/create-in-first-login", HttpMethod.POST),
-            Map.entry("/quit-plan", HttpMethod.GET)
+            Map.entry("/quit-plan", HttpMethod.GET),
+            Map.entry("/phase/home-page", HttpMethod.GET)
     );
 
     @Bean
