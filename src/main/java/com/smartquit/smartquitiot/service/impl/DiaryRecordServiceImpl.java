@@ -38,7 +38,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         Member member = memberService.getAuthenticatedMember();
         QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
         FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
-
         //money member spent for cigarettes package
         BigDecimal moneyPerPackage = currentFormMetric.getMoneyPerPackage();
         int cigarettesPerPackage  = currentFormMetric.getCigarettesPerPackage();
@@ -52,12 +51,16 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         BigDecimal packagesOfYear = BigDecimal.valueOf(numOfDays / avgDayToSmokeAll);
         //Money will be spent in a year
         BigDecimal annualSaved = packagesOfYear.multiply(moneyPerPackage);
-
         //calculate money saved on plan
         LocalDate startDate = currentQuitPlan.getStartDate();
-        LocalDate currentDate = LocalDate.now();
+        LocalDate currentDate = request.getDate();
+        if(currentDate.isBefore(startDate)) {
+            throw new RuntimeException("Invalid diary date");
+        }
         long dayBetween = ChronoUnit.DAYS.between(startDate, currentDate);
-
+        var pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage));
+        var moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
+        var currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
 
         Optional<DiaryRecord> isExistingTodayRecord = diaryRecordRepository.findByDateAndMemberId(request.getDate(), member.getId());
         if (isExistingTodayRecord.isPresent()) {
@@ -96,7 +99,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             diaryRecord.setSleepQuality(request.getSleepQuality());
         }
         diaryRecord.setMember(member);
-        diaryRecord = diaryRecordRepository.save(diaryRecord);
 
         Metric metric = metricRepository.findByMemberId(member.getId()).orElseGet(
                 () -> {
@@ -114,6 +116,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newMetric.setCurrentConfidenceLevel(request.getConfidenceLevel());
                     newMetric.setCurrentMoodLevel(request.getMoodLevel());
                     newMetric.setAnnualSaved(annualSaved);
+                    newMetric.setMoneySaved(request.getHaveSmoked() ? BigDecimal.ZERO : currentMoneySaved);
 
                     if(request.getSteps() != null){
                         newMetric.setSteps(request.getSteps());
@@ -142,12 +145,14 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         );
 
         int streaksCount = 1;
-        Optional<DiaryRecord> previousDayRecord = diaryRecordRepository.findTopByMemberIdOrderByDate(member.getId());
+        Optional<DiaryRecord> previousDayRecord = diaryRecordRepository.findTopByMemberIdOrderByDateDesc(member.getId());
         if(previousDayRecord.isPresent()){
+            System.out.println("have previous day record");
             LocalDate date = previousDayRecord.get().getDate();
-            LocalDate yesterday = LocalDate.now().minusDays(1);
+            LocalDate yesterday = request.getDate().minusDays(1);
             boolean isYesterday = date.isEqual(yesterday);
-            if(isYesterday && !request.getHaveSmoked()){
+            System.out.println("isYesterday: " + isYesterday);
+            if(isYesterday && request.getHaveSmoked() == false){
                 streaksCount = metric.getStreaks() +1;
             }
         }
@@ -168,6 +173,12 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         metric.setCurrentCravingLevel(request.getCravingLevel());
         metric.setCurrentConfidenceLevel(request.getConfidenceLevel());
         metric.setCurrentMoodLevel(request.getMoodLevel());
+        metric.setAnnualSaved(annualSaved);
+        if(request.getHaveSmoked() == false){
+            metric.setMoneySaved(currentMoneySaved.subtract(BigDecimal.valueOf(request.getMoneySpentOnNrt())));
+        }else{
+            metric.setMoneySaved(metric.getMoneySaved().subtract(BigDecimal.valueOf(request.getMoneySpentOnNrt())));
+        }
         if(request.getSteps() != null){
             metric.setSteps(request.getSteps());
         }
@@ -190,7 +201,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             metric.setSleepQuality(request.getSleepQuality());
         }
         metricRepository.save(metric);
-
+        diaryRecord = diaryRecordRepository.save(diaryRecord);
         return diaryRecordMapper.toDiaryRecordDTO(diaryRecord);
     }
 }
