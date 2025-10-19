@@ -25,14 +25,20 @@ public class Metric {
 
     int streaks;
     int relapseCountInPhase = 0;
+
+    //avg metrics
     double avgCravingLevel;
     double avgMood;
     double avgAnxiety;
     double avgConfidentLevel;
+
+    //current metrics
     int currentCravingLevel;
     int currentMoodLevel;
     int currentConfidenceLevel;
     int currentAnxietyLevel;
+
+    //iot metrics
     int steps;
     int heartRate;
     int spo2;
@@ -41,6 +47,9 @@ public class Metric {
     double sleepDuration;
     int sleepQuality;
 
+    //money metrics
+    BigDecimal annualSaved;
+    BigDecimal moneySaved;
 
     @CreationTimestamp
     LocalDateTime createdAt;
