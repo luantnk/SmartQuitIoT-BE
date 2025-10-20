@@ -10,4 +10,5 @@ public interface PhaseService {
     PhaseResponse generatePhasesInFirstLogin(CreateQuitPlanInFirstLoginRequest req, int FTND, Account account);
     void savePhasesAndSystemPhaseCondition(PhaseResponse phaseResponse, QuitPlan quitPlan);
     PhaseDTO getCurrentPhaseAtHomePage();
+    void updateQuitPlanAndPhaseStatuses();
 }

@@ -29,6 +29,7 @@ public class Metric {
     double avgMood;
     double avgAnxiety;
     double avgConfidentLevel;
+    int avgCigarettesPerDay;
     int currentCravingLevel;
     int currentMoodLevel;
     int currentConfidenceLevel;

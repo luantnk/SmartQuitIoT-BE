@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.*;
 import com.smartquit.smartquitiot.repository.*;
+import com.smartquit.smartquitiot.service.PhaseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
@@ -30,7 +31,7 @@ public class AppInitialConfig {
     private final MemberRepository memberRepository;
     private final MissionTypeRepository missionTypeRepository;
     private final InterestCategoryRepository interestCategoryRepository;
-
+    private final PhaseService phaseService;
 
 
 
@@ -80,7 +81,6 @@ public class AppInitialConfig {
             if (interestCategoryRepository.count() == 0) {
                 initInterestCategories();
             }
-
         };
     }
     private void initInterestCategories() {
@@ -151,7 +151,7 @@ public class AppInitialConfig {
             """
   {
     "rules": [
-      {"field": "mission_avg", "operator": ">=", "value": 80}
+      {"field": "progress", "operator": ">=", "value": 80}
     ],
     "logic": "AND"
   }
@@ -168,24 +168,20 @@ public class AppInitialConfig {
               {
                "field": "craving_level_avg",
                "operator": "<=",
-               "formula": {
-                 "base": "craving_level_avg",
-                 "operator": "*",
-                 "percent": 0.3
-               }
+               "value": 8
              },
              {
-               "field": "cigarettes_total",
+               "field": "avg_cigarettes",
                "operator": "<=",
                "formula": {
-                 "base": "cigarettes_total",
+                 "base": "fm_cigarettes_total",
                  "operator": "*",
-                 "percent": 0.5
+                 "percent": 0.8
                }
              }
            ]
          },
-         { "field": "mission_avg", "operator": ">=", "value": 80 }
+         { "field": "progress", "operator": ">=", "value": 80 }
        ]
      }
     """,
@@ -201,24 +197,20 @@ public class AppInitialConfig {
               {
                "field": "craving_level_avg",
                "operator": "<=",
-               "formula": {
-                 "base": "craving_level_avg",
-                 "operator": "*",
-                 "percent": 0.3
-               }
+               "value": 7
              },
              {
-               "field": "cigarettes_total",
+               "field": "avg_cigarettes",
                "operator": "<=",
                "formula": {
-                 "base": "cigarettes_total",
+                     "base": "fm_cigarettes_total",
                  "operator": "*",
-                 "percent": 0.8
+                 "percent": 0.7
                }
              }
            ]
          },
-         { "field": "mission_avg", "operator": ">=", "value": 80 }
+         { "field": "progress", "operator": ">=", "value": 80 }
        ]
      }
     """,
@@ -234,20 +226,20 @@ public class AppInitialConfig {
              {
               "field": "craving_level_avg",
               "operator": "<=",
-              "value": 2.5
+              "value": 5
             },
             {
-              "field": "cigarettes_total",
+              "field": "avg_cigarettes",
               "operator": "<=",
               "formula": {
-                "base": "cigarettes_total",
+                "base": "fm_cigarettes_total",
                 "operator": "*",
-                "percent": 1
+                "percent": 0.6
               }
             }
           ]
         },
-        { "field": "mission_avg", "operator": ">=", "value": 80 }
+        { "field": "progress", "operator": ">=", "value": 80 }
       ]
     }
     """,
@@ -262,20 +254,20 @@ public class AppInitialConfig {
               {
                "field": "craving_level_avg",
                "operator": "<=",
-               "value": 1.5
+               "value": 3
              },
              {
-               "field": "cigarettes_total",
+               "field": "avg_cigarettes",
                "operator": "<=",
                "formula": {
-                 "base": "cigarettes_total",
+                 "base": "fm_cigarettes_total",
                  "operator": "*",
                  "percent": 0.5
                }
              }
            ]
          },
-         { "field": "mission_avg", "operator": ">=", "value": 80 }
+         { "field": "progress", "operator": ">=", "value": 80 }
        ]
      }
     """

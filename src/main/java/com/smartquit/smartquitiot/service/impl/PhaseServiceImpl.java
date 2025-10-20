@@ -6,6 +6,7 @@ import com.smartquit.smartquitiot.dto.response.PhaseDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseDetailResponseDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseResponse;
 import com.smartquit.smartquitiot.entity.*;
+import com.smartquit.smartquitiot.enums.Operator;
 import com.smartquit.smartquitiot.enums.PhaseDetailMissionStatus;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
@@ -18,7 +19,9 @@ import com.smartquit.smartquitiot.toolcalling.QuitPlanTools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -178,4 +181,157 @@ public class PhaseServiceImpl implements PhaseService {
         }
         return (int) days;
     }
+
+    //update status cua plan va quit plan
+    //tam thoi server ko co. nen la de 1p chay 1 lan cho de test
+    @Scheduled(cron = "0 */5 * * * *")
+    @Transactional
+    @Override
+    public void updateQuitPlanAndPhaseStatuses() {
+        LocalDate currentDate = LocalDate.now();
+
+        // Lấy tất cả plan đang chạy trong hệ thống
+        List<QuitPlan> activePlans =
+                quitPlanRepository.findByStatusIn(List.of(QuitPlanStatus.CREATED, QuitPlanStatus.IN_PROGRESS));
+
+        if (activePlans.isEmpty()) {
+            log.info("Không có QuitPlan CREATED/IN_PROGRESS để cập nhật.");
+            return;
+        }
+
+        for (QuitPlan currentPlan : activePlans) {
+            // Trước ngày bắt đầu thì tất cả CREATED
+            if (currentDate.isBefore(currentPlan.getStartDate())) {
+                if (currentPlan.getStatus() != QuitPlanStatus.CREATED) currentPlan.setStatus(QuitPlanStatus.CREATED);
+                for (Phase p : currentPlan.getPhases()) {
+                    if (p.getStatus() != PhaseStatus.CREATED) p.setStatus(PhaseStatus.CREATED);
+                    phaseRepository.save(p);
+                }
+                quitPlanRepository.save(currentPlan);
+                log.info("Plan {} giữ trạng thái CREATED (chưa đến ngày bắt đầu)", currentPlan.getId());
+                continue;
+            }
+
+            // Đến/sau startDate thì plan IN_PROGRESS
+            if (currentPlan.getStatus() != QuitPlanStatus.IN_PROGRESS) {
+                currentPlan.setStatus(QuitPlanStatus.IN_PROGRESS);
+            }
+
+            FormMetric formMetric = currentPlan.getFormMetric();
+            List<Phase> phases = currentPlan.getPhases();
+            for (int i = 0; i < phases.size(); i++) {
+                Phase phase = phases.get(i);
+                PhaseStatus oldStatus = phase.getStatus();
+
+                if (currentDate.isBefore(phase.getStartDate())) {
+                    phase.setStatus(PhaseStatus.CREATED);
+                }
+                else if (!currentDate.isAfter(phase.getEndDate())) {
+                    // Trong khung thời gian phase
+                    if (i == 0 || phases.get(i - 1).getStatus() == PhaseStatus.COMPLETED) {
+                        phase.setStatus(PhaseStatus.IN_PROGRESS);
+                    }
+                }
+                else { // currentDate > endDate
+
+                    Account account = currentPlan.getMember() != null ? currentPlan.getMember().getAccount() : null;
+                    boolean passed = evaluateCondition(phase.getCondition(), account, phase, formMetric);
+                    phase.setStatus(passed ? PhaseStatus.COMPLETED : PhaseStatus.FAILED);
+                    //thong bao
+                }
+
+                if (oldStatus != phase.getStatus()) {
+                    phaseRepository.save(phase);
+                    log.info("Phase {} đổi trạng thái: {} → {}", phase.getId(), oldStatus, phase.getStatus());
+                }
+            }
+
+            // Nếu tất cả phase COMPLETED thì plan COMPLETED
+            boolean allCompleted = phases.stream().allMatch(p -> p.getStatus() == PhaseStatus.COMPLETED);
+            if (allCompleted && currentPlan.getStatus() != QuitPlanStatus.COMPLETED) {
+                currentPlan.setStatus(QuitPlanStatus.COMPLETED);
+                log.info("QuitPlan {} đã hoàn thành toàn bộ.", currentPlan.getId());
+            }
+
+            quitPlanRepository.save(currentPlan);
+        }
+
+        log.info("Đã cập nhật trạng thái cho {} quit plan(s).", activePlans.size());
+    }
+
+
+    private boolean evaluateCondition(JsonNode node, Account account, Phase phase, FormMetric formMetric) {
+        String logic = node.has("logic") ? node.get("logic").asText("AND") : "AND";
+        boolean result = logic.equalsIgnoreCase("AND");
+
+        for (JsonNode rule : node.get("rules")) {
+            boolean current;
+
+            if (rule.has("rules")) {
+                current = evaluateCondition(rule, account, phase, formMetric);
+            } else {
+                String field = rule.get("field").asText();
+                String operator = rule.get("operator").asText();
+
+                Object actualValue = getMetricValueDynamic(field, account, phase, formMetric);
+                double expected = 0;
+
+                if (rule.has("formula")) {
+                    JsonNode f = rule.get("formula");
+                    String base = f.get("base").asText();
+                    String fop = f.has("operator") ? f.get("operator").asText("*") : "*";
+                    double percent = f.get("percent").asDouble();
+
+                    Object baseVal = getMetricValueDynamic(base, account, phase, formMetric);
+                    if (baseVal instanceof Number baseNum) {
+                        double baseValue = baseNum.doubleValue();
+                        expected = switch (fop) {
+                            case "*" -> baseValue * percent;
+                            case "+" -> baseValue + percent;
+                            case "-" -> baseValue - percent;
+                            case "/" -> baseValue / percent;
+                            default -> baseValue;
+                        };
+                    }
+                } else if (rule.has("value") && rule.get("value").isNumber()) {
+                    expected = rule.get("value").asDouble();
+                }
+
+                current = (actualValue instanceof Number actualNum)
+                        && compare(actualNum.doubleValue(), Operator.fromSymbol(operator), expected);
+            }
+
+            if (logic.equalsIgnoreCase("AND")) result &= current;
+            else if (logic.equalsIgnoreCase("OR")) result |= current;
+        }
+        return result;
+    }
+
+
+    private Object getMetricValueDynamic(String field, Account account, Phase phase,FormMetric formMetric) {
+        if (field == null || account == null || account.getMember() == null) return null;
+
+        String key = field.trim().toLowerCase().replace(" ", "_");
+        return switch (key) {
+            case "progress" -> phase.getProgress();
+            case "craving_level_avg" -> account.getMember().getMetric().getAvgCravingLevel();
+            case "avg_cigarettes" -> account.getMember().getMetric().getAvgCigarettesPerDay();
+            case "fm_cigarettes_total" -> formMetric.getSmokeAvgPerDay();
+            default -> null;
+        };
+    }
+
+
+    private boolean compare(double actual, Operator op, double expected) {
+        return switch (op) {
+            case LT -> actual < expected;
+            case LE -> actual <= expected;
+            case EQ -> Double.compare(actual, expected) == 0;
+            case GE -> actual >= expected;
+            case GT -> actual > expected;
+        };
+    }
+
+
+
 }
