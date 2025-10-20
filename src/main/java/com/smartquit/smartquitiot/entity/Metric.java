@@ -1,7 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.smartquit.smartquitiot.enums.MetricType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,15 +24,21 @@ public class Metric {
 
     int streaks;
     int relapseCountInPhase = 0;
+
+    //avg metrics
     double avgCravingLevel;
     double avgMood;
     double avgAnxiety;
     double avgConfidentLevel;
     int avgCigarettesPerDay;
+
+    //current metrics
     int currentCravingLevel;
     int currentMoodLevel;
     int currentConfidenceLevel;
     int currentAnxietyLevel;
+
+    //iot metrics
     int steps;
     int heartRate;
     int spo2;
@@ -42,6 +47,9 @@ public class Metric {
     double sleepDuration;
     int sleepQuality;
 
+    //money metrics
+    BigDecimal annualSaved;
+    BigDecimal moneySaved;
 
     @CreationTimestamp
     LocalDateTime createdAt;

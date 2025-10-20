@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,26 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         Member member = memberService.getAuthenticatedMember();
         QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
         FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
+
+        //money member spent for cigarettes package
+        BigDecimal moneyPerPackage = currentFormMetric.getMoneyPerPackage();
+        int cigarettesPerPackage  = currentFormMetric.getCigarettesPerPackage();
+        int smokeAvgPerDay = currentFormMetric.getSmokeAvgPerDay();
+        double _avgDayToSmokeAll = (double) cigarettesPerPackage / smokeAvgPerDay;
+        //Number of consumption day
+        int avgDayToSmokeAll = (int) Math.ceil(_avgDayToSmokeAll);
+        Calendar cal = Calendar.getInstance();
+        int numOfDays = cal.getActualMaximum(Calendar.DAY_OF_YEAR);
+        //Estimate number of package will be used in a year
+        BigDecimal packagesOfYear = BigDecimal.valueOf(numOfDays / avgDayToSmokeAll);
+        //Money will be spent in a year
+        BigDecimal annualSaved = packagesOfYear.multiply(moneyPerPackage);
+
+        //calculate money saved on plan
+        LocalDate startDate = currentQuitPlan.getStartDate();
+        LocalDate currentDate = LocalDate.now();
+        long dayBetween = ChronoUnit.DAYS.between(startDate, currentDate);
+
 
         Optional<DiaryRecord> isExistingTodayRecord = diaryRecordRepository.findByDateAndMemberId(request.getDate(), member.getId());
         if (isExistingTodayRecord.isPresent()) {
@@ -91,6 +113,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newMetric.setCurrentCravingLevel(request.getCravingLevel());
                     newMetric.setCurrentConfidenceLevel(request.getConfidenceLevel());
                     newMetric.setCurrentMoodLevel(request.getMoodLevel());
+                    newMetric.setAnnualSaved(annualSaved);
 
                     if(request.getSteps() != null){
                         newMetric.setSteps(request.getSteps());
@@ -124,8 +147,8 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             LocalDate date = previousDayRecord.get().getDate();
             LocalDate yesterday = LocalDate.now().minusDays(1);
             boolean isYesterday = date.isEqual(yesterday);
-            if(isYesterday){
-                streaksCount++;
+            if(isYesterday && !request.getHaveSmoked()){
+                streaksCount = metric.getStreaks() +1;
             }
         }
 
