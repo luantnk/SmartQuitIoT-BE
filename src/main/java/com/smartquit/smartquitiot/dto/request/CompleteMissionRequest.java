@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -12,6 +14,6 @@ import lombok.experimental.FieldDefaults;
 public class CompleteMissionRequest {
     int phaseId;
     int phaseDetailMissionId;
-    JsonNode answer;
+    List<String> triggered;
     String notes;
 }

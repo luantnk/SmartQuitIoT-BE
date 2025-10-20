@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.service;
 
 import com.smartquit.smartquitiot.dto.request.CompleteMissionRequest;
+import com.smartquit.smartquitiot.dto.response.MissionTodayResponse;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.entity.PhaseDetail;
@@ -15,4 +16,7 @@ public interface PhaseDetailMissionService {
                                                                    int maxPerDay, String phaseName, MissionPhase missionPhase);
 
     QuitPlanResponse completePhaseDetailMission(CompleteMissionRequest completeMissionRequest);
+
+    MissionTodayResponse getListMissionToday();
+    MissionTodayResponse completePhaseDetailMissionAtHomePage(CompleteMissionRequest completeMissionRequest);
 }

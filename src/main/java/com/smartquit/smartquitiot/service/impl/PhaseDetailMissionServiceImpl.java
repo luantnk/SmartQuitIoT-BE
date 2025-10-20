@@ -2,15 +2,15 @@ package com.smartquit.smartquitiot.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartquit.smartquitiot.dto.request.CompleteMissionRequest;
-import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
-import com.smartquit.smartquitiot.dto.response.PhaseDetailMissionPlanToolDTO;
-import com.smartquit.smartquitiot.dto.response.PhaseDetailPlanToolDTO;
-import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
+import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.PhaseDetailMissionStatus;
+import com.smartquit.smartquitiot.enums.PhaseStatus;
+import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.*;
+import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.PhaseDetailMissionService;
 import com.smartquit.smartquitiot.toolcalling.MissionTools;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,12 +40,20 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     private final ChatClient  chatClient;
     private final MissionTools  missionTools;
     private final QuitPlanMapper quitPlanMapper;
-
+    private final AccountService  accountService;
+    private final QuitPlanRepository quitPlanRepository;
+    private final FormMetricRepository formMetricRepository;
     @Override
     @Transactional
     public QuitPlanResponse completePhaseDetailMission(CompleteMissionRequest req) {
         PhaseDetailMission phaseDetailMission = phaseDetailMissionRepository.findById(req.getPhaseDetailMissionId())
                 .orElseThrow(() -> new IllegalArgumentException("PhaseDetailMission not found: " + req.getPhaseDetailMissionId()));
+        LocalDate currentDate = LocalDate.now();
+
+        if(!phaseDetailMission.getPhaseDetail().getDate().equals(currentDate)) {
+            throw new IllegalStateException("Phase detail mission id is not today");
+        }
+
         if(!phaseDetailMission.getStatus().equals(PhaseDetailMissionStatus.COMPLETED)){
             phaseDetailMission.setCompletedAt(LocalDateTime.now());
             phaseDetailMission.setStatus(PhaseDetailMissionStatus.COMPLETED);
@@ -53,7 +62,112 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
             phase.setProgress(calculateProgress(phase));
             phaseDetailMissionRepository.save(phaseDetailMission);
             phaseRepository.save(phase);
+
+            //set trigger for from metric
+            if(phaseDetailMission.getCode().equals("PREP_LIST_TRIGGERS")){
+                FormMetric formMetric = phase.getQuitPlan().getFormMetric();
+                formMetric.setTriggered(req.getTriggered());
+                formMetricRepository.save(formMetric);
+            }
           return quitPlanMapper.toResponse(phase.getQuitPlan());
+
+        }else{
+            throw new IllegalStateException("Phase detail mission has been completed");
+        }
+    }
+
+    @Override
+    public MissionTodayResponse getListMissionToday() {
+
+        Account account = accountService.getAuthenticatedAccount();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
+        if (plan == null) {
+            plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
+        }
+        if (plan == null) {
+            throw new RuntimeException("Mission Plan Not Found at getCurrentPhaseAtHomePage tools");
+        }
+
+        LocalDate currentDate = LocalDate.now();
+        Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS,plan.getId())
+                .orElseThrow(() -> new IllegalArgumentException("get current Phase not found at getCurrentPhaseAtHomePage"));
+
+        MissionTodayResponse missionTodayResponse = new MissionTodayResponse();
+        List<PhaseDetailMissionResponseDTO> phaseDetailMissionResponseDTOS = new ArrayList<>();
+        for (PhaseDetail phaseDetail : currentPhase.getDetails()) {
+            if (phaseDetail.getDate() != null && phaseDetail.getDate().isEqual(currentDate)) {
+                for (PhaseDetailMission mission : phaseDetail.getPhaseDetailMissions()) {
+                    PhaseDetailMissionResponseDTO  phaseDetailMissionResponseDTO = new PhaseDetailMissionResponseDTO();
+                    phaseDetailMissionResponseDTO.setId(mission.getId());
+                    phaseDetailMissionResponseDTO.setStatus(mission.getStatus());
+                    phaseDetailMissionResponseDTO.setName(mission.getName());
+                    phaseDetailMissionResponseDTO.setDescription(mission.getDescription());
+                    phaseDetailMissionResponseDTO.setCode(mission.getCode());
+                    phaseDetailMissionResponseDTO.setCompletedAt(mission.getCompletedAt());
+                    phaseDetailMissionResponseDTOS.add(phaseDetailMissionResponseDTO);
+                }
+            }
+        }
+        if(phaseDetailMissionResponseDTOS.isEmpty()){
+            throw new IllegalArgumentException("List Phase Detail Mission to day is empty at getListMissionToday");
+        }
+        missionTodayResponse.setPhaseDetailMissionResponseDTOS(phaseDetailMissionResponseDTOS);
+        missionTodayResponse.setPhaseId(currentPhase.getId());
+
+        return missionTodayResponse;
+    }
+
+    @Override
+    public MissionTodayResponse completePhaseDetailMissionAtHomePage(CompleteMissionRequest request) {
+
+        PhaseDetailMission phaseDetailMission = phaseDetailMissionRepository.findById(request.getPhaseDetailMissionId())
+                .orElseThrow(() -> new IllegalArgumentException("PhaseDetailMission not found: " + request.getPhaseDetailMissionId()));
+
+        LocalDate currentDate = LocalDate.now();
+        if(!phaseDetailMission.getPhaseDetail().getDate().equals(currentDate)) {
+            throw new IllegalStateException("Phase detail mission id is not today");
+        }
+        if(!phaseDetailMission.getStatus().equals(PhaseDetailMissionStatus.COMPLETED)){
+            phaseDetailMission.setCompletedAt(LocalDateTime.now());
+            phaseDetailMission.setStatus(PhaseDetailMissionStatus.COMPLETED);
+            Phase phase = phaseRepository.findById(request.getPhaseId()) .orElseThrow(() -> new IllegalArgumentException("Phase not found: " + request.getPhaseDetailMissionId()));
+            phase.setCompletedMissions(phase.getCompletedMissions() + 1);
+            phase.setProgress(calculateProgress(phase));
+
+            phaseDetailMissionRepository.save(phaseDetailMission);
+            Phase newPhase = phaseRepository.save(phase);
+
+            MissionTodayResponse missionTodayResponse = new MissionTodayResponse();
+            List<PhaseDetailMissionResponseDTO> phaseDetailMissionResponseDTOS = new ArrayList<>();
+            int completedMissionInPhaseDetail = 0;
+            for (PhaseDetail phaseDetail : newPhase.getDetails()) {
+                if (phaseDetail.getDate() != null && phaseDetail.getDate().isEqual(currentDate)) {
+                    for (PhaseDetailMission mission : phaseDetail.getPhaseDetailMissions()) {
+                        PhaseDetailMissionResponseDTO  phaseDetailMissionResponseDTO = new PhaseDetailMissionResponseDTO();
+                        phaseDetailMissionResponseDTO.setId(mission.getId());
+                        phaseDetailMissionResponseDTO.setStatus(mission.getStatus());
+                        phaseDetailMissionResponseDTO.setName(mission.getName());
+                        phaseDetailMissionResponseDTO.setDescription(mission.getDescription());
+                        phaseDetailMissionResponseDTO.setCode(mission.getCode());
+                        phaseDetailMissionResponseDTO.setCompletedAt(mission.getCompletedAt());
+                        phaseDetailMissionResponseDTOS.add(phaseDetailMissionResponseDTO);
+                        if(mission.getStatus().equals(PhaseDetailMissionStatus.COMPLETED)){
+                            completedMissionInPhaseDetail++;
+                        }
+                    }
+                    if(completedMissionInPhaseDetail == phaseDetail.getPhaseDetailMissions().size()){
+                        missionTodayResponse.setPopup("Congratulations! All missions for today are complete. You're crushing it!");
+                    }
+                }
+            }
+            if(phaseDetailMissionResponseDTOS.isEmpty()){
+                throw new IllegalArgumentException("List Phase Detail Mission to day is empty at completePhaseDetailMissionAtHomePage");
+            }
+            missionTodayResponse.setPhaseDetailMissionResponseDTOS(phaseDetailMissionResponseDTOS);
+            missionTodayResponse.setPhaseId(newPhase.getId());
+
+
+            return missionTodayResponse;
 
         }else{
             throw new IllegalStateException("Phase detail mission has been completed");

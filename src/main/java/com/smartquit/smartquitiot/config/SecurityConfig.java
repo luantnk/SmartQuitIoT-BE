@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -47,7 +48,9 @@ public class SecurityConfig {
             Map.entry("/interest-category/all", HttpMethod.GET),
             Map.entry("/quit-plan/create-in-first-login", HttpMethod.POST),
             Map.entry("/quit-plan", HttpMethod.GET),
-            Map.entry("/phase/home-page", HttpMethod.GET)
+            Map.entry("/phase/home-page", HttpMethod.GET),
+            Map.entry("/phase-detail-mission/mission-today", HttpMethod.GET),
+            Map.entry("/phase-detail-mission/complete/home-page", HttpMethod.POST)
     );
 
     @Bean
