@@ -44,6 +44,7 @@ public class DiaryRecord {
     double sleepDuration;
     int sleepQuality;
     BigDecimal estimatedNicotineIntake;
+    double reductionPercentage;
 
     @CreationTimestamp
     LocalDateTime createdAt;

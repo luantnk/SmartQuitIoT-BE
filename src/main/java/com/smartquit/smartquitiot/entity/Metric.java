@@ -30,7 +30,7 @@ public class Metric {
     double avgMood;
     double avgAnxiety;
     double avgConfidentLevel;
-    int avgCigarettesPerDay;
+    double avgCigarettesPerDay;
 
     //current metrics
     int currentCravingLevel;
@@ -50,6 +50,10 @@ public class Metric {
     //money metrics
     BigDecimal annualSaved;
     BigDecimal moneySaved;
+
+    //smokeMetrics
+    double reductionPercentage;
+    double smokeFreeDayPercentage;
 
     @CreationTimestamp
     LocalDateTime createdAt;

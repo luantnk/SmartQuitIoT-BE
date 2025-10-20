@@ -3,13 +3,11 @@ package com.smartquit.smartquitiot.controller;
 import com.smartquit.smartquitiot.dto.request.DiaryRecordRequest;
 import com.smartquit.smartquitiot.entity.DiaryRecord;
 import com.smartquit.smartquitiot.service.DiaryRecordService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/diary-records")
@@ -18,10 +16,32 @@ public class DiaryRecordController {
 
     private final DiaryRecordService diaryRecordService;
 
-    @PostMapping
+    @PostMapping("/log")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<?> logDiaryRecord(@RequestBody DiaryRecordRequest request) {
         return ResponseEntity.ok(diaryRecordService.logDiaryRecord(request));
+    }
+
+    @GetMapping("/history")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Get diary record history for the authenticated member",
+            description = "Chỉ có member đang đăng nhập mới có thể lấy được lịch sử nhật ký của chính họ.")
+    public ResponseEntity<?> getDiaryRecordHistory() {
+        return ResponseEntity.ok(diaryRecordService.getDiaryRecordsForMember());
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get diary record detail")
+    public ResponseEntity<?> getDiaryRecordById(@PathVariable Integer id) {
+        return ResponseEntity.ok(diaryRecordService.getDiaryRecordById(id));
+    }
+
+    @GetMapping("/charts")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Get diary record chart for the authenticated member",
+            description = "Chỉ có member đang đăng nhập mới có thể lấy được biểu đồ.")
+    public ResponseEntity<?> getDiaryRecordsCharts() {
+        return ResponseEntity.ok(diaryRecordService.getDiaryRecordsCharts());
     }
 
 }

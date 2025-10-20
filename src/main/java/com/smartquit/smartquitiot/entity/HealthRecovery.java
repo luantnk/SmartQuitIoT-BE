@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smartquit.smartquitiot.enums.HealthRecoveryDataName;
 import com.smartquit.smartquitiot.enums.MetricType;
 import jakarta.persistence.*;
@@ -28,9 +29,11 @@ public class HealthRecovery {
     BigDecimal value;
     String description;
     LocalDateTime timeTriggered;//thời gian bắt đầu
-    LocalDateTime timeStarted;
-    int recoveryTime;//thời gian để hồi phục đơn vị là phút
+    double recoveryTime;//thời gian để hồi phục đơn vị là phút
+    //targetTime = timeTriggered + recoveryTime
+    LocalDateTime targetTime;//thời gian mục tiêu hồi phục được
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     Member member;
 }

@@ -16,14 +16,16 @@ public class DiaryRecordMapper {
         diaryRecordDTO.setHaveSmoked(diaryRecord.isHaveSmoked());
         diaryRecordDTO.setCigarettesSmoked(diaryRecord.getCigarettesSmoked());
         diaryRecordDTO.setTriggers(diaryRecord.getTriggers());
-        diaryRecordDTO.setUseNrt(diaryRecord.isUseNrt());
+        diaryRecordDTO.setIsUseNrt(diaryRecord.isUseNrt());
         diaryRecordDTO.setMoneySpentOnNrt(diaryRecord.getMoneySpentOnNrt());
         diaryRecordDTO.setCravingLevel(diaryRecord.getCravingLevel());
         diaryRecordDTO.setMoodLevel(diaryRecord.getMoodLevel());
         diaryRecordDTO.setConfidenceLevel(diaryRecord.getConfidenceLevel());
         diaryRecordDTO.setAnxietyLevel(diaryRecord.getAnxietyLevel());
         diaryRecordDTO.setNote(diaryRecord.getNote());
-        diaryRecordDTO.setConnectIoTDevice(diaryRecord.isConnectIoTDevice());
+        diaryRecordDTO.setIsConnectIoTDevice(diaryRecord.isConnectIoTDevice());
+        diaryRecordDTO.setEstimatedNicotineIntake(diaryRecord.getEstimatedNicotineIntake());
+        diaryRecordDTO.setReductionPercentage(diaryRecord.getReductionPercentage());
         if(diaryRecord.isConnectIoTDevice()){
             diaryRecordDTO.setSteps(diaryRecord.getSteps());
             diaryRecordDTO.setHeartRate(diaryRecord.getHeartRate());
@@ -34,6 +36,18 @@ public class DiaryRecordMapper {
             diaryRecordDTO.setSleepQuality(diaryRecord.getSleepQuality());
         }
 
+        return diaryRecordDTO;
+    }
+
+    public DiaryRecordDTO toListDiaryRecordDTO(DiaryRecord diaryRecord) {
+        if(diaryRecord == null)
+            return null;
+        DiaryRecordDTO diaryRecordDTO = new DiaryRecordDTO();
+        diaryRecordDTO.setId(diaryRecord.getId());
+        diaryRecordDTO.setDate(diaryRecord.getDate());
+        diaryRecordDTO.setHaveSmoked(diaryRecord.isHaveSmoked());
+        diaryRecordDTO.setEstimatedNicotineIntake(diaryRecord.getEstimatedNicotineIntake());
+        diaryRecordDTO.setReductionPercentage(diaryRecord.getReductionPercentage());
         return diaryRecordDTO;
     }
 }
