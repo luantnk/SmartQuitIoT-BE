@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.response.InterestCategoryDTO;
 import com.smartquit.smartquitiot.entity.InterestCategory;
 import com.smartquit.smartquitiot.service.InterestCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,10 +21,10 @@ public class InterestCategoryController {
     private final InterestCategoryService interestCategoryService;
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('MEMBER')")
+    @PreAuthorize("hasAnyRole('ADMIN','MEMBER','COACH')")
     @Operation(summary = "Get all Interest category")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<List<InterestCategory>> getAllInterestCategories() {
+    public ResponseEntity<List<InterestCategoryDTO>> getAllInterestCategories() {
         return ResponseEntity.ok(interestCategoryService.getAllInterestCategories());
     }
 }

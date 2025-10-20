@@ -81,6 +81,7 @@ public class PhaseServiceImpl implements PhaseService {
         phaseDTO.setCompletedMissions(currentPhase.getCompletedMissions());
         phaseDTO.setProgress(currentPhase.getProgress());
         phaseDTO.setCondition(currentPhase.getCondition());
+        phaseDTO.setStartDateOfQuitPlan(plan.getStartDate());
 
         PhaseDetailResponseDTO  phaseDetailResponseDTO = new PhaseDetailResponseDTO();
         phaseDetailResponseDTO.setId(currentPhaseDetail.getId());

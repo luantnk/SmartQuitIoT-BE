@@ -22,6 +22,7 @@ import java.util.List;
 public class PhaseDTO {
     private int id;
     private String name;
+    private LocalDate startDateOfQuitPlan; // cái này ở home page figma phần đầu tiên có time đếm ngược, nhét vào đây cho đở tốn API
     private LocalDate startDate;
     private LocalDate endDate;
     private int durationDay;
