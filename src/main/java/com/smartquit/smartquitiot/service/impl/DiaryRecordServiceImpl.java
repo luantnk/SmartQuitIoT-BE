@@ -198,6 +198,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             avgCigarettesPerDay = metric.getAvgCigarettesPerDay();
         }
         double smokeFreeDayPercentage = ((double) smokeFreeDaysCount / dayBetween) * 100.0;
+        if(Double.isNaN(smokeFreeDayPercentage) || Double.isInfinite(smokeFreeDayPercentage)){
+            smokeFreeDayPercentage = metric.getSmokeFreeDayPercentage();
+        }
         metric.setStreaks(request.getHaveSmoked() ? 0 : streaksCount);
         metric.setAvgCravingLevel(newAvgCravingLevel);
         metric.setAvgMood(newAvgMoodLevel);
