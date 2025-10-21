@@ -5,6 +5,7 @@ import com.smartquit.smartquitiot.entity.DiaryRecord;
 import com.smartquit.smartquitiot.service.DiaryRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ public class DiaryRecordController {
 
     @PostMapping("/log")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<?> logDiaryRecord(@RequestBody DiaryRecordRequest request) {
+    public ResponseEntity<?> logDiaryRecord(@RequestBody @Valid DiaryRecordRequest request) {
         return ResponseEntity.ok(diaryRecordService.logDiaryRecord(request));
     }
 

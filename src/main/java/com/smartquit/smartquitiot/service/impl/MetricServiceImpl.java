@@ -1,10 +1,12 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.response.MetricDTO;
+import com.smartquit.smartquitiot.entity.DiaryRecord;
 import com.smartquit.smartquitiot.entity.HealthRecovery;
 import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.entity.Metric;
 import com.smartquit.smartquitiot.mapper.MetricMapper;
+import com.smartquit.smartquitiot.repository.DiaryRecordRepository;
 import com.smartquit.smartquitiot.repository.HealthRecoveryRepository;
 import com.smartquit.smartquitiot.repository.MetricRepository;
 import com.smartquit.smartquitiot.service.MemberService;
@@ -23,12 +25,21 @@ public class MetricServiceImpl implements MetricService {
     private final MetricRepository metricRepository;
     private final HealthRecoveryRepository healthRecoveryRepository;
     private final MetricMapper metricMapper;
+    private final DiaryRecordRepository diaryRecordRepository;
 
     @Override
-    public MetricDTO getHomeScreenMetrics() {
+    public Map<String, Object> getHomeScreenMetrics() {
+        Map<String, Object> response = new HashMap<>();
         Member member = memberService.getAuthenticatedMember();
         Metric metric = metricRepository.findByMemberId(member.getId()).orElse(null);
-        return metricMapper.toMetricStatistic(metric);
+        MetricDTO metricDTO = metricMapper.toMetricStatistic(metric);
+        List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
+        response.put("metric", metricDTO);
+        response.put("cravingLevelChart", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "cravingLevel", record.getCravingLevel()
+        )).toList());
+        return response;
     }
 
     @Override

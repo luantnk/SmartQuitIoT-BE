@@ -95,7 +95,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         diaryRecord.setHaveSmoked(request.getHaveSmoked());
         //sau này sẽ xử lí nếu hút trong quá trình cai thuốc sau
         diaryRecord.setCigarettesSmoked(request.getCigarettesSmoked());
-        diaryRecord.setTriggers(request.getTriggers());
+        if(!request.getTriggers().isEmpty()){
+            diaryRecord.setTriggers(request.getTriggers());
+        }
         diaryRecord.setUseNrt(request.getIsUseNrt());
         diaryRecord.setMoneySpentOnNrt(request.getMoneySpentOnNrt());
         diaryRecord.setCravingLevel(request.getCravingLevel());
@@ -136,6 +138,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newMetric.setReductionPercentage(reductionPercentage);
                     newMetric.setMoneySaved(currentMoneySaved.subtract(BigDecimal.valueOf(request.getMoneySpentOnNrt())).subtract(pricePerCigarettes.multiply(BigDecimal.valueOf(request.getCigarettesSmoked()))));
                     newMetric.setSmokeFreeDayPercentage(request.getHaveSmoked() == true ? 0.0 : 100.0);
+                    newMetric.setAvgCigarettesPerDay(request.getCigarettesSmoked());
                     if(request.getSteps() != null){
                         newMetric.setSteps(request.getSteps());
                     }
@@ -176,23 +179,24 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         }
 
         int smokeFreeDaysCount = 0;
-        int totalCiagrettesInRecords = 0;
+        int totalCigarettesInRecords = 0;
         List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
         for(DiaryRecord record : records){
             if(!record.isHaveSmoked()) {
                 //count only days member did not smoke
                 smokeFreeDaysCount += 1;
             }
-        }
-        for(DiaryRecord record : records){
-            totalCiagrettesInRecords += record.getCigarettesSmoked();
+            totalCigarettesInRecords += record.getCigarettesSmoked();
         }
         int count = records.size(); // number of member's diary records
         double newAvgCravingLevel = metric.getAvgCravingLevel() + (request.getCravingLevel() - metric.getAvgCravingLevel()) / (count +1);
         double newAvgMoodLevel = metric.getAvgMood() + (request.getMoodLevel() - metric.getAvgMood()) / (count +1);
         double newAvgConfidenceLevel = metric.getAvgConfidentLevel() + (request.getConfidenceLevel() - metric.getAvgConfidentLevel()) / (count +1);
         double newAvgAnxietyLevel = metric.getAvgAnxiety() + (request.getAnxietyLevel() - metric.getAvgAnxiety()) / (count +1);
-        double avgCigarettesPerDay = (double) totalCiagrettesInRecords /count;
+        double avgCigarettesPerDay = (double) totalCigarettesInRecords /count;
+        if(Double.isNaN(avgCigarettesPerDay) || Double.isInfinite(avgCigarettesPerDay)){
+            avgCigarettesPerDay = metric.getAvgCigarettesPerDay();
+        }
         double smokeFreeDayPercentage = ((double) smokeFreeDaysCount / dayBetween) * 100.0;
         metric.setStreaks(request.getHaveSmoked() ? 0 : streaksCount);
         metric.setAvgCravingLevel(newAvgCravingLevel);

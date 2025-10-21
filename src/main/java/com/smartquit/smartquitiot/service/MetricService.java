@@ -6,6 +6,6 @@ import java.util.Map;
 
 public interface MetricService {
 
-    MetricDTO getHomeScreenMetrics();
+    Map<String, Object> getHomeScreenMetrics();
     Map<String, Object> getHealthMetrics();
 }

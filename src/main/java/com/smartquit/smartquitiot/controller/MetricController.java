@@ -23,7 +23,7 @@ public class MetricController {
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get metric statistic for the authenticated member",
             description = "API để hiển thị trạng thái của member trên home screen")
-    public ResponseEntity<MetricDTO> getHomeScreenMetrics() {
+    public ResponseEntity<Map<String, Object>> getHomeScreenMetrics() {
         return ResponseEntity.ok(metricService.getHomeScreenMetrics());
     }
 
