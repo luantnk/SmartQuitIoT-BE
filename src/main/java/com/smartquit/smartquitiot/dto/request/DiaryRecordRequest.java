@@ -41,8 +41,10 @@ public class DiaryRecordRequest {
     Boolean isConnectIoTDevice;
     @Min(value = 0, message = "Invalid steps count")
     Integer steps;
+    @Max(value = 300, message = "It is not possible for a human to have such a high heart rate.")
     @Min(value = 0, message = "Invalid heart rate")
     Integer heartRate;
+    @Max(value = 100, message = "Invalid spo2 level")
     @Min(value = 0, message = "Invalid spo2 level")
     Integer spo2;
     @Min(value = 0, message = "Invalid activity minutes")
@@ -51,6 +53,7 @@ public class DiaryRecordRequest {
     Integer respiratoryRate;
     @Min(value = 0, message = "Invalid sleep duration")
     Double sleepDuration;
+    @Max(value = 100, message = "Invalid sleep quality")
     @Min(value = 0, message = "Invalid sleep quality")
     Integer sleepQuality;
 }
