@@ -18,24 +18,24 @@ public class DiaryRecordRequest {
 
     LocalDate date;
     Boolean haveSmoked;
+    @Max(value = 50, message = "Nooo..., you smoked too much!")
     @Min(value = 0, message = "Invalid cigarettes smoked number")
     Integer cigarettesSmoked;
     List<String> triggers;
     Boolean isUseNrt;
     @Min(value = 0, message = "Invalid money spent on nrt")
     Double moneySpentOnNrt;
-    @Positive(message = "Invalid craving level")
-    @Max(value = 10, message = "Invalid craving level")
-    @Min(value = 1, message = "Invalid craving level")
+    @Max(value = 10, message = "Invalid craving level, max range is 10")
+    @Min(value = 1, message = "Invalid craving level, min range is 1")
     Integer cravingLevel;
-    @Max(value = 10, message = "Invalid mood level")
-    @Min(value = 1, message = "Invalid mood level")
+    @Max(value = 10, message = "Invalid mood level, max range is 10")
+    @Min(value = 1, message = "Invalid mood level, min range is 1")
     Integer moodLevel;
-    @Max(value = 10, message = "Invalid confidence level")
-    @Min(value = 1, message = "Invalid confidence level")
+    @Max(value = 10, message = "Invalid confidence level, max range is 10")
+    @Min(value = 1, message = "Invalid confidence level, min range is 1")
     Integer confidenceLevel;
-    @Max(value = 10, message = "Invalid anxiety level")
-    @Min(value = 1, message = "Invalid anxiety level")
+    @Max(value = 10, message = "Invalid anxiety level, max range is 10")
+    @Min(value = 1, message = "Invalid anxiety level, min range is 1")
     Integer anxietyLevel;
     String note;
     Boolean isConnectIoTDevice;
