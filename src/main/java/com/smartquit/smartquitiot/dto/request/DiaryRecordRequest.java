@@ -18,27 +18,22 @@ public class DiaryRecordRequest {
 
     LocalDate date;
     Boolean haveSmoked;
-    @Max(value = 100, message = "Invalid cigarettes smoked number")
     @Min(value = 0, message = "Invalid cigarettes smoked number")
     Integer cigarettesSmoked;
     List<String> triggers;
     Boolean isUseNrt;
-    @Max(value = 100, message = "Invalid money spent on nrt")
     @Min(value = 0, message = "Invalid money spent on nrt")
     Double moneySpentOnNrt;
     @Positive(message = "Invalid craving level")
     @Max(value = 10, message = "Invalid craving level")
     @Min(value = 1, message = "Invalid craving level")
     Integer cravingLevel;
-    @Positive(message = "Invalid mood level")
     @Max(value = 10, message = "Invalid mood level")
     @Min(value = 1, message = "Invalid mood level")
     Integer moodLevel;
-    @Positive(message = "Invalid confidence level")
     @Max(value = 10, message = "Invalid confidence level")
     @Min(value = 1, message = "Invalid confidence level")
     Integer confidenceLevel;
-    @Positive(message = "Invalid anxiety level")
     @Max(value = 10, message = "Invalid anxiety level")
     @Min(value = 1, message = "Invalid anxiety level")
     Integer anxietyLevel;
