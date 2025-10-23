@@ -21,8 +21,8 @@ import org.springframework.context.annotation.Configuration;
                 )
         ),
         servers = {
-                @Server(url = "http://localhost:8080/api", description = "Local Development Server"),
-                @Server(url = "https://server.smartquitiot.website/", description = " Server deployment")
+                @Server(url = "https://server.smartquitiot.website/", description = " Server deployment"),
+                @Server(url = "http://localhost:8080/api", description = "Local Development Server")
         }
 )
 @SecurityScheme(
