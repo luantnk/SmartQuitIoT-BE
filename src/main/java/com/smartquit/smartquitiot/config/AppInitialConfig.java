@@ -38,7 +38,7 @@ public class AppInitialConfig {
     @Bean
     ApplicationRunner applicationRunner() {
         return args -> {
-            if (accountRepository.findByRole(Role.ADMIN).isEmpty()) {
+            if (accountRepository.findByUsername("admin").isEmpty()) {
                 Account account = new Account();
                 account.setUsername("admin");
                 account.setEmail("admin@smartquit.io.vn");
@@ -49,7 +49,7 @@ public class AppInitialConfig {
                 accountRepository.save(account);
                 log.info("Admin account has been created");
             }
-            if (accountRepository.findByRole(Role.MEMBER).isEmpty()) {
+            if (accountRepository.findByUsername("member1").isEmpty()) {
                 Account account2 = new Account();
                 account2.setUsername("member1");
                 account2.setEmail("member1@smartquit.io.vn");
