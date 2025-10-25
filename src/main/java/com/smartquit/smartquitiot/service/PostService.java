@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface PostService {
     List<PostSummaryDTO> getLatestPosts(int limit);
-//    List<PostSummaryDTO> getAllPosts();
+    List<PostSummaryDTO> getAllMyPosts();
     List<PostSummaryDTO> getAllPosts(String query);
     PostDetailDTO getPostDetail(Integer postId);
     PostDetailDTO createPost(PostCreateRequest request);

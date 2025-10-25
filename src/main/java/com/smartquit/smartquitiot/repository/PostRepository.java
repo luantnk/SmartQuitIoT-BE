@@ -27,4 +27,6 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
             "ORDER BY p.createdAt DESC")
     List<Post> searchPosts(@Param("query") String query);
 
+    List<Post> findByAccountId(Integer accountId);
+
 }

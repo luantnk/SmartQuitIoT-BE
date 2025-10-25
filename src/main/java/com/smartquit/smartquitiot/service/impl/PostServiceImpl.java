@@ -15,6 +15,7 @@ import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.repository.CommentRepository;
 import com.smartquit.smartquitiot.repository.PostMediaRepository;
 import com.smartquit.smartquitiot.repository.PostRepository;
+import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.PostService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +36,9 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
+    private final AccountService accountService;
     private final PostMediaRepository postMediaRepository;
     private final CommentRepository commentRepository;
-    private final AccountServiceImpl accountService;
 
     @Override
     public List<PostSummaryDTO> getLatestPosts(int limit) {
@@ -47,13 +48,6 @@ public class PostServiceImpl implements PostService {
                 .collect(Collectors.toList());
     }
 
-//    @Override
-//    public List<PostSummaryDTO> getAllPosts() {
-//        return postRepository.findAllByOrderByCreatedAtDesc()
-//                .stream()
-//                .map(PostMapper::toSummaryDTO)
-//                .collect(Collectors.toList());
-//    }
 
     @Override
     public List<PostSummaryDTO> getAllPosts(String query) {
@@ -197,8 +191,6 @@ public class PostServiceImpl implements PostService {
         return PostMapper.toDTO(updatedPost);
     }
 
-
-
     @Override
     @Transactional
     public void deletePost(Integer postId) {
@@ -207,5 +199,10 @@ public class PostServiceImpl implements PostService {
         postRepository.delete(post);
     }
 
-
+    @Override
+    public List<PostSummaryDTO> getAllMyPosts() {
+        Account authAccount = accountService.getAuthenticatedAccount();
+        List<Post> myPosts = postRepository.findByAccountId(authAccount.getId());
+        return myPosts.stream().map(PostMapper::toSummaryDTO).toList();
+    }
 }

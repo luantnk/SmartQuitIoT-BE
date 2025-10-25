@@ -4,7 +4,7 @@ import com.smartquit.smartquitiot.dto.response.PostDetailDTO;
 import com.smartquit.smartquitiot.dto.response.PostSummaryDTO;
 import com.smartquit.smartquitiot.entity.Comment;
 import com.smartquit.smartquitiot.entity.Post;
-import com.smartquit.smartquitiot.entity.PostMedia;
+import com.smartquit.smartquitiot.enums.Role;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,13 +20,18 @@ public class PostMapper {
         dto.setCreatedAt(post.getCreatedAt().toString());
 
         PostSummaryDTO.AccountDTO accountDTO = new PostSummaryDTO.AccountDTO();
-        if(post.getAccount() != null) {
+        if (post.getAccount() != null) {
             accountDTO.setId(post.getAccount().getId());
             accountDTO.setUsername(post.getAccount().getUsername());
-            if(post.getAccount().getMember() != null) {
+            if (post.getAccount().getRole().equals(Role.MEMBER)) {
                 accountDTO.setFirstName(post.getAccount().getMember().getFirstName());
                 accountDTO.setLastName(post.getAccount().getMember().getLastName());
                 accountDTO.setAvatarUrl(post.getAccount().getMember().getAvatarUrl());
+            }
+            if(post.getAccount().getRole().equals(Role.COACH)){
+                accountDTO.setFirstName(post.getAccount().getCoach().getFirstName());
+                accountDTO.setLastName(post.getAccount().getCoach().getLastName());
+                accountDTO.setAvatarUrl(post.getAccount().getCoach().getAvatarUrl());
             }
         }
 
@@ -45,14 +50,14 @@ public class PostMapper {
         dto.setUpdatedAt(post.getUpdatedAt());
 
         PostDetailDTO.AccountDTO accountDTO = new PostDetailDTO.AccountDTO();
-        if(post.getAccount() != null) {
+        if (post.getAccount() != null) {
             accountDTO.setId(post.getAccount().getId());
             accountDTO.setUsername(post.getAccount().getUsername());
         }
         dto.setAccount(accountDTO);
 
         // media
-        if(post.getMedia() != null) {
+        if (post.getMedia() != null) {
             List<PostDetailDTO.PostMediaDTO> mediaDTO = post.getMedia().stream()
                     .map(m -> new PostDetailDTO.PostMediaDTO(m.getId(), m.getMediaUrl(), m.getMediaType().name()))
                     .collect(Collectors.toList());
@@ -60,7 +65,7 @@ public class PostMapper {
         }
 
         // comments
-        if(post.getComments() != null) {
+        if (post.getComments() != null) {
             List<PostDetailDTO.CommentDTO> commentDTOs = post.getComments().stream()
                     .map(PostMapper::toCommentDTO)
                     .collect(Collectors.toList());
@@ -78,10 +83,10 @@ public class PostMapper {
         dto.setCreatedAt(comment.getCreatedAt().toString());
 
         PostDetailDTO.AccountDTO accountDTO = new PostDetailDTO.AccountDTO();
-        if(comment.getAccount() != null) {
+        if (comment.getAccount() != null) {
             accountDTO.setId(comment.getAccount().getId());
             accountDTO.setUsername(comment.getAccount().getUsername());
-            if(comment.getAccount().getMember() != null) {
+            if (comment.getAccount().getMember() != null) {
                 accountDTO.setFirstName(comment.getAccount().getMember().getFirstName());
                 accountDTO.setLastName(comment.getAccount().getMember().getLastName());
                 accountDTO.setAvatarUrl(comment.getAccount().getMember().getAvatarUrl());
@@ -92,7 +97,7 @@ public class PostMapper {
         dto.setAccount(accountDTO);
 
         // media
-        if(comment.getCommentMedia() != null) {
+        if (comment.getCommentMedia() != null) {
             List<PostDetailDTO.PostMediaDTO> mediaDTO = comment.getCommentMedia().stream()
                     .map(m -> new PostDetailDTO.PostMediaDTO(m.getId(), m.getMediaUrl(), m.getMediaType().name()))
                     .collect(Collectors.toList());
@@ -100,7 +105,7 @@ public class PostMapper {
         }
 
         // replies
-        if(comment.getReplies() != null) {
+        if (comment.getReplies() != null) {
             List<PostDetailDTO.CommentDTO> repliesDTO = comment.getReplies().stream()
                     .map(PostMapper::toCommentDTO)
                     .collect(Collectors.toList());
@@ -162,11 +167,6 @@ public class PostMapper {
 
         return dto;
     }
-
-
-
-
-
 
 
 }

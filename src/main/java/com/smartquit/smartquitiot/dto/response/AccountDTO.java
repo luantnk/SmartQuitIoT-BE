@@ -14,13 +14,17 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AccountDTO {
 
-    int id;
+    Integer id;
     String username;
     String email;
     String role;
     String accountType;
-    boolean isActive;
-    boolean isBanned;
-    boolean isFirstLogin;
+    Boolean isActive;
+    Boolean isBanned;
+    Boolean isFirstLogin;
     LocalDateTime createdAt;
+
+    String firstName;
+    String lastName;
+    String avatarUrl;
 }
