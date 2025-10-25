@@ -45,12 +45,21 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new IllegalArgumentException("List coach null");
         }
 
-        List<LocalDate> parsedDates = new ArrayList<>();
-        for (LocalDate dateStr : request.getDates()) {
-            parsedDates.add(dateStr);
+        // === Dedupe inputs: tránh insert trùng nếu client gửi duplicate dates/coachIds ===
+        // preserve order: LinkedHashSet
+        Set<LocalDate> parsedDates = request.getDates().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Set<Integer> coachIdSet = request.getCoachIds().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (parsedDates.isEmpty() || coachIdSet.isEmpty()) {
+            throw new IllegalArgumentException("Dates or coachIds are empty after dedupe");
         }
 
-        // lấy danh sách slot đã được seed sẵn (07:00 - 15:00, 30p)
+        // lấy danh sách slot đã seed sẵn
         List<Slot> slots = slotService.listAll();
         if (slots.isEmpty()) {
             throw new IllegalStateException("Slot list is not exist in the system");
@@ -60,7 +69,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // duyệt từng ngày và từng coach
         for (LocalDate date : parsedDates) {
-            for (Integer coachId : request.getCoachIds()) {
+            for (Integer coachId : coachIdSet) {
                 Optional<Coach> coachOpt = coachRepository.findById(coachId);
                 if (coachOpt.isEmpty()) {
                     log.warn("Coach id {} không tồn tại, bỏ qua", coachId);
@@ -68,11 +77,14 @@ public class ScheduleServiceImpl implements ScheduleService {
                 }
                 Coach coach = coachOpt.get();
 
-                for (Slot slot : slots) {
-                    boolean exists = coachWorkScheduleRepository
-                            .existsByCoachIdAndDateAndSlotId(coachId, date, slot.getId());
+                // fetch existing slot ids for this coach & date in one query (minimize DB calls)
+                List<CoachWorkSchedule> existing = coachWorkScheduleRepository.findAllByCoachAndDate(coachId, date);
+                Set<Integer> existingSlotIds = existing.stream()
+                        .map(c -> c.getSlot().getId())
+                        .collect(Collectors.toSet());
 
-                    if (!exists) {
+                for (Slot slot : slots) {
+                    if (!existingSlotIds.contains(slot.getId())) {
                         CoachWorkSchedule schedule = new CoachWorkSchedule();
                         schedule.setCoach(coach);
                         schedule.setDate(date);
@@ -85,12 +97,21 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
 
         if (!newSchedules.isEmpty()) {
-            coachWorkScheduleRepository.saveAll(newSchedules);
-            log.info("Đã tạo {} lịch làm việc mới", newSchedules.size());
+            try {
+                coachWorkScheduleRepository.saveAll(newSchedules);
+                log.info("Đã tạo {} lịch làm việc mới", newSchedules.size());
+            } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+                // Race condition: nếu 2 request insert cùng lúc, DB unique constraint sẽ ném lỗi
+                // Bắt lại ở đây để service không crash; log để dev biết
+                log.warn("DataIntegrityViolationException when saving schedules (likely duplicate due to concurrent insert): {}",
+                        ex.getMessage());
+                // Optionally: re-query how many actual records now exist or return partial info.
+            }
         }
 
         return newSchedules.size();
     }
+
 
     @Override
     public List<ScheduleByDayResponse> getSchedulesByMonth(int year, int month) {
