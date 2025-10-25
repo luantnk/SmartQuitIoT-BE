@@ -14,12 +14,12 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AppointmentRequest {
-    @NotNull(message = "Member ID is required")
-    int memberId;
     @NotNull(message = "Coach ID is required")
     int coachId;
+
     @NotNull(message = "Slot ID is required")
     int slotId;
+
     @NotNull(message = "Date is required")
     @FutureOrPresent(message = "Date must be today or in the future")
     LocalDate date;
