@@ -14,10 +14,10 @@ public class AccountMapper {
         accountDTO.setEmail(account.getEmail());
         accountDTO.setRole(account.getRole().name());
         accountDTO.setAccountType(account.getAccountType().name());
-        accountDTO.setBanned(account.isBanned());
-        accountDTO.setActive(account.isActive());
+        accountDTO.setIsBanned(account.isBanned());
+        accountDTO.setIsActive(account.isActive());
         accountDTO.setCreatedAt(account.getCreatedAt());
-        accountDTO.setFirstLogin(account.isFirstLogin());
+        accountDTO.setIsFirstLogin(account.isFirstLogin());
 
         return accountDTO;
     }

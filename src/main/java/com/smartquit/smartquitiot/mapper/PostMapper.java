@@ -53,6 +53,17 @@ public class PostMapper {
         if (post.getAccount() != null) {
             accountDTO.setId(post.getAccount().getId());
             accountDTO.setUsername(post.getAccount().getUsername());
+            accountDTO.setEmail(post.getAccount().getEmail());
+            if (post.getAccount().getRole().equals(Role.MEMBER)) {
+                accountDTO.setFirstName(post.getAccount().getMember().getFirstName());
+                accountDTO.setLastName(post.getAccount().getMember().getLastName());
+                accountDTO.setAvatarUrl(post.getAccount().getMember().getAvatarUrl());
+            }
+            if(post.getAccount().getRole().equals(Role.COACH)){
+                accountDTO.setFirstName(post.getAccount().getCoach().getFirstName());
+                accountDTO.setLastName(post.getAccount().getCoach().getLastName());
+                accountDTO.setAvatarUrl(post.getAccount().getCoach().getAvatarUrl());
+            }
         }
         dto.setAccount(accountDTO);
 
