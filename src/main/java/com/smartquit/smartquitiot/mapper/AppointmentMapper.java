@@ -14,6 +14,7 @@ public class AppointmentMapper {
 
         return AppointmentResponse.builder()
                 .appointmentId(appointment.getId())
+                .coachId(appointment.getCoach().getId())
                 .coachName(appointment.getCoach().getFirstName() + " " + appointment.getCoach().getLastName())
                 .date(appointment.getDate())
                 .slotId(appointment.getSlot().getId())

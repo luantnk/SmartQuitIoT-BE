@@ -4,6 +4,7 @@ import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
 import com.smartquit.smartquitiot.dto.response.AppointmentResponse;
 import com.smartquit.smartquitiot.entity.Appointment;
 import com.smartquit.smartquitiot.entity.CoachWorkSchedule;
+import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.enums.CoachWorkScheduleStatus;
 import com.smartquit.smartquitiot.mapper.AppointmentMapper;
 import com.smartquit.smartquitiot.repository.AppointmentRepository;
@@ -28,18 +29,18 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse bookAppointment(AppointmentRequest request) {
-/*
-    Sau này cần kiểm tra xem đã mua gói PREMIUM chưa, và số lượt đặt tương ứng, thống nhất lại.
- */
-        var member = memberRepository.findById(request.getMemberId())
+    public AppointmentResponse bookAppointment(int accountId, AppointmentRequest request) {
+
+        // Resolve Account -> Member
+        Member member = memberRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("Member không tồn tại"));
 
+        var memberId = member.getId();
         var date = request.getDate();
         var coachId = request.getCoachId();
         var slotId = request.getSlotId();
 
-        // Kiểm tra slot đã được đặt chưa
+        // Kiểm tra slot đã được đặt chưa (by coachId, slotId, date)
         if (appointmentRepository.existsByCoachIdAndSlotIdAndDate(coachId, slotId, date)) {
             throw new IllegalStateException("Slot này đã được đặt trước đó!");
         }
@@ -67,18 +68,23 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointmentRepository.save(appointment);
 
-        log.info("Member {} đã đặt slot {} với coach {} vào ngày {}", member, slotId, coachId, date);
+        log.info("Member(accountId={}) (memberId={}) đã đặt slot {} với coach {} vào ngày {}",
+                accountId, memberId, slotId, coachId, date);
 
         return appointmentMapper.toResponse(appointment);
     }
 
     @Override
     @Transactional
-    public void cancelAppointment(int appointmentId, int memberId) {
+    public void cancelAppointment(int appointmentId, int accountId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Appointment không tồn tại"));
 
-        if (appointment.getMember().getId() != memberId) {
+        // Resolve accountId -> member and validate ownership
+        Member member = memberRepository.findByAccountId(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Member không tồn tại"));
+
+        if (appointment.getMember().getId() != member.getId()) {
             throw new SecurityException("Bạn không có quyền huỷ lịch này");
         }
 
@@ -95,14 +101,17 @@ public class AppointmentServiceImpl implements AppointmentService {
         coachWorkScheduleRepository.save(cws);
 
         appointmentRepository.delete(appointment);
-        log.info("Member {} đã huỷ appointment {}", memberId, appointmentId);
+        log.info("Member(accountId={}) đã huỷ appointment {}", accountId, appointmentId);
     }
 
     @Override
     @Transactional
-    public List<AppointmentResponse> getAppointmentsByMemberId(int memberId) {
-        var member = memberRepository.findById(memberId)
+    public List<AppointmentResponse> getAppointmentsByMemberId(int accountId) {
+        // Resolve accountId -> Member
+        Member member = memberRepository.findByAccountId(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("Member không tồn tại"));
+
+        var memberId = member.getId();
 
         var appointments = appointmentRepository.findAllByMemberId(memberId);
 
