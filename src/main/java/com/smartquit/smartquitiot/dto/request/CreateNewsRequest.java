@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.dto.request;
 
+import com.smartquit.smartquitiot.enums.NewsStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,9 +11,10 @@ import java.util.List;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CompleteMissionRequest {
-    int phaseId;
-    int phaseDetailMissionId;
-    List<String> triggered;
-    String notes;
+public class CreateNewsRequest {
+
+    String title;
+    String content;
+    NewsStatus status;
+    List<String> mediaUrls;
 }
