@@ -54,7 +54,8 @@ public class SecurityConfig {
             Map.entry("/diary-records/log", HttpMethod.POST),
             Map.entry("/diary-records/history", HttpMethod.POST),
             Map.entry("/metrics/home-screen", HttpMethod.GET),
-            Map.entry("/metrics/health-data", HttpMethod.GET)
+            Map.entry("/metrics/health-data", HttpMethod.GET),
+            Map.entry("/missions", HttpMethod.GET)
     );
 
     @Bean

@@ -21,4 +21,13 @@ public class InterestCategoryMapper {
         }
         return listInterestCategoryDTO;
     }
+
+    public InterestCategoryDTO toInterestCategoryDTO(InterestCategory interestCategory){
+        if(interestCategory == null) return null;
+        InterestCategoryDTO interestCategoryDTO = new InterestCategoryDTO();
+        interestCategoryDTO.setId(interestCategory.getId());
+        interestCategoryDTO.setName(interestCategory.getName());
+        interestCategoryDTO.setDescription(interestCategory.getDescription());
+        return interestCategoryDTO;
+    }
 }

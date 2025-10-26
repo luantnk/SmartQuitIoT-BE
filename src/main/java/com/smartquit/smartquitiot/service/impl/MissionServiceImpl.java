@@ -2,14 +2,18 @@ package com.smartquit.smartquitiot.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartquit.smartquitiot.dto.response.MissionDTO;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.MissionStatus;
 import com.smartquit.smartquitiot.enums.Operator;
+import com.smartquit.smartquitiot.mapper.MissionMapper;
 import com.smartquit.smartquitiot.repository.MissionRepository;
 import com.smartquit.smartquitiot.service.MissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +24,7 @@ import java.util.List;
 public class MissionServiceImpl implements MissionService {
     private final MissionRepository missionRepository;
     private final ObjectMapper objectMapper;
+    private final MissionMapper missionMapper;
 
     @Override
     public List<Mission> filterMissionsForPhase(
@@ -131,6 +136,10 @@ public class MissionServiceImpl implements MissionService {
         };
     }
 
-
-
+    @Override
+    public Page<MissionDTO> getAllMissions(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<Mission> missions = missionRepository.findAll(pageRequest);
+        return missions.map(missionMapper::toMissionDTO);
+    }
 }

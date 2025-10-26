@@ -1,9 +1,7 @@
 
 package com.smartquit.smartquitiot.toolcalling;
 
-import com.smartquit.smartquitiot.dto.response.InterestCategoryDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseDetailMissionToolDTO;
-import com.smartquit.smartquitiot.dto.response.MissionTypeDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Mission;
 import com.smartquit.smartquitiot.entity.QuitPlan;

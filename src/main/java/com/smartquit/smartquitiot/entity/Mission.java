@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.MissionStatus;
@@ -49,6 +50,7 @@ public class Mission {
     @ManyToOne(fetch = FetchType.LAZY)
     InterestCategory interestCategory;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "mission")
     List<PhaseDetailMission> phaseDetailMissions;
 
