@@ -42,14 +42,18 @@ public class Member {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
     Account account;
+
     @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "member")
     List<QuitPlan> quitPlans;
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "member")
     List<Notification> notifications;
+
     @JsonIgnore
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,mappedBy = "member")
     List<HealthRecovery> healthRecoveries;
+
     @JsonIgnore
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     Metric metric;
