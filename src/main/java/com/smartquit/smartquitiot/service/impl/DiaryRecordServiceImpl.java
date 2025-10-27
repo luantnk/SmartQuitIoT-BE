@@ -72,7 +72,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         BigDecimal annualSaved = packagesOfYear.multiply(moneyPerPackage);
         //calculate money saved on plan
         long dayBetween = ChronoUnit.DAYS.between(startDate, currentDate);
-        var pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage));
+        var pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
         var moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
         var currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
 
