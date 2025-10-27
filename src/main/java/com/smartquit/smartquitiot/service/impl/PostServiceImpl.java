@@ -39,7 +39,6 @@ public class PostServiceImpl implements PostService {
     private final AccountService accountService;
     private final PostMediaRepository postMediaRepository;
     private final CommentRepository commentRepository;
-    private final AccountServiceImpl accountService;
     private final MemberAchievementService  memberAchievementService;
     private final MetricRepository metricRepository;
 
