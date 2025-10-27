@@ -70,12 +70,6 @@
         </dependency>
         <!-- agora-->
 
-        <dependency>
-            <groupId>io.agora</groupId>
-            <artifactId>authentication</artifactId>
-            <version>${version}</version>
-        </dependency>
-
 
         <!-- Cloud & AI -->
         <dependency>
