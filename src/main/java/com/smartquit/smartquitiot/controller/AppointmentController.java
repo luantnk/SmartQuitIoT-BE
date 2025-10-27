@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
+import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
 import com.smartquit.smartquitiot.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -75,4 +76,31 @@ public class AppointmentController {
         return ResponseEntity.ok(GlobalResponse.ok("Lấy danh sách lịch hẹn thành công", responses));
     }
 
+    @PostMapping("/{appointmentId}/join-token")
+    @PreAuthorize("hasAnyRole('MEMBER','COACH')")
+    @Operation(summary = "Generate Agora join token for an appointment (member or coach can request)")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> getJoinToken(
+            @PathVariable int appointmentId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401).body(GlobalResponse.error("Not found accountId in token", 401));
+        }
+        int accountId = accountIdNum.intValue();
+
+        try {
+            JoinTokenResponse dto = appointmentService.generateJoinTokenForAppointment(appointmentId, accountId);
+            return ResponseEntity.ok(GlobalResponse.ok("Token created", dto));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(GlobalResponse.error(e.getMessage(), 404));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(GlobalResponse.error(e.getMessage(), 403));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(GlobalResponse.error(e.getMessage(), 403));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(GlobalResponse.error("Error when creating token: " + e.getMessage(), 500));
+        }
+    }
 }
