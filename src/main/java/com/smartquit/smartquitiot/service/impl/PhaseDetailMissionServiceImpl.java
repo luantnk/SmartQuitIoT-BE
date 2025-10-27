@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.CompleteMissionRequest;
 import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
@@ -11,6 +12,7 @@ import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.AccountService;
+import com.smartquit.smartquitiot.service.MemberAchievementService;
 import com.smartquit.smartquitiot.service.PhaseDetailMissionService;
 import com.smartquit.smartquitiot.toolcalling.MissionTools;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +45,9 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     private final AccountService  accountService;
     private final QuitPlanRepository quitPlanRepository;
     private final FormMetricRepository formMetricRepository;
+    private final MetricRepository metricRepository;
+    private final MemberAchievementService memberAchievementService;
+
     @Override
     @Transactional
     public QuitPlanResponse completePhaseDetailMission(CompleteMissionRequest req) {
@@ -54,6 +59,10 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
             throw new IllegalStateException("Phase detail mission id is not today");
         }
 
+        Account account = accountService.getAuthenticatedAccount();
+        Metric metric = metricRepository.findByMemberId(account.getMember().getId())
+                .orElseThrow(() ->  new IllegalArgumentException("Metric not found: " + account.getMember().getId()));
+
         if(!phaseDetailMission.getStatus().equals(PhaseDetailMissionStatus.COMPLETED)){
             phaseDetailMission.setCompletedAt(LocalDateTime.now());
             phaseDetailMission.setStatus(PhaseDetailMissionStatus.COMPLETED);
@@ -61,7 +70,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
             phase.setCompletedMissions(phase.getCompletedMissions() + 1);
             phase.setProgress(calculateProgress(phase));
             phaseDetailMissionRepository.save(phaseDetailMission);
-            phaseRepository.save(phase);
+            Phase newPhase = phaseRepository.save(phase);
 
             //set trigger for from metric
             if(phaseDetailMission.getCode().equals("PREP_LIST_TRIGGERS")){
@@ -69,7 +78,34 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
                 formMetric.setTriggered(req.getTriggered());
                 formMetricRepository.save(formMetric);
             }
-          return quitPlanMapper.toResponse(phase.getQuitPlan());
+
+            int completedMissionInPhaseDetail = 0;
+            for (PhaseDetail phaseDetail : newPhase.getDetails()) {
+                if (phaseDetail.getDate() != null && phaseDetail.getDate().isEqual(currentDate)) {
+                    for (PhaseDetailMission mission : phaseDetail.getPhaseDetailMissions()) {
+                        if(mission.getStatus().equals(PhaseDetailMissionStatus.COMPLETED)){
+                            completedMissionInPhaseDetail++;
+                        }
+                    }
+                    if(completedMissionInPhaseDetail == phaseDetail.getPhaseDetailMissions().size()){
+                        metric.setCompleted_all_mission_in_day(metric.getCompleted_all_mission_in_day() + 1);
+                    }
+                }
+            }
+
+            metric.setTotal_mission_completed(metric.getTotal_mission_completed() + 1);
+            metricRepository.save(metric);
+
+            AddAchievementRequest addAchievementRequestTotalMissionCompleted = new  AddAchievementRequest();
+            addAchievementRequestTotalMissionCompleted.setField("total_mission_completed");
+            memberAchievementService.addMemberAchievement(addAchievementRequestTotalMissionCompleted).orElse(null);
+
+            AddAchievementRequest addAchievementRequestAllMissionInDay = new  AddAchievementRequest();
+            addAchievementRequestAllMissionInDay.setField("completed_all_mission_in_day");
+            memberAchievementService.addMemberAchievement(addAchievementRequestAllMissionInDay).orElse(null);
+
+
+            return quitPlanMapper.toResponse(phase.getQuitPlan());
 
         }else{
             throw new IllegalStateException("Phase detail mission has been completed");
@@ -117,6 +153,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
         return missionTodayResponse;
     }
 
+    // api này ko có dùng
     @Override
     public MissionTodayResponse completePhaseDetailMissionAtHomePage(CompleteMissionRequest request) {
 

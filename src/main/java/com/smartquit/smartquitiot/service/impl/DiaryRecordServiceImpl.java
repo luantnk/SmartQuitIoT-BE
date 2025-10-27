@@ -1,7 +1,9 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.DiaryRecordRequest;
 import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
+import com.smartquit.smartquitiot.dto.response.NotificationDTO;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.HealthRecoveryDataName;
 import com.smartquit.smartquitiot.mapper.DiaryRecordMapper;
@@ -10,8 +12,12 @@ import com.smartquit.smartquitiot.repository.HealthRecoveryRepository;
 import com.smartquit.smartquitiot.repository.MetricRepository;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.service.DiaryRecordService;
+import com.smartquit.smartquitiot.service.MemberAchievementService;
 import com.smartquit.smartquitiot.service.MemberService;
+import com.smartquit.smartquitiot.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +28,7 @@ import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiaryRecordServiceImpl implements DiaryRecordService {
@@ -43,6 +50,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     private final int REDUCED_RISK_OF_HEART_DISEASE = 525600; //minutes => 1 year
     private final int STROKE_RISK_REDUCTION = 2628000; //minutes => 5 years
     private final int LUNG_CANCER_RISK_REDUCTION = 5256000; //minutes => 10 years
+
+    private final MemberAchievementService memberAchievementService;
+    private final NotificationService notificationService;
 
     @Transactional
     @Override
@@ -238,10 +248,30 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             metric.setSleepQuality(request.getSleepQuality());
         }
         metricRepository.save(metric);
+
+
         diaryRecord = diaryRecordRepository.save(diaryRecord);
 
         //calculate recovery time
         calculateRecoveryTime(calculateAge(member.getDob()), currentQuitPlan.getFtndScore(), request.getHaveSmoked());
+
+        // add achievement streaks ( already check )
+        AddAchievementRequest addAchievementRequestStreaks = new  AddAchievementRequest();
+        addAchievementRequestStreaks.setField("streaks");
+        memberAchievementService.addMemberAchievement(addAchievementRequestStreaks).orElse(null);
+
+
+        // add achievement money_saved ( already check )
+        AddAchievementRequest addAchievementRequestMoneySaved = new  AddAchievementRequest();
+        addAchievementRequestMoneySaved.setField("money_saved");
+        memberAchievementService.addMemberAchievement(addAchievementRequestMoneySaved).orElse(null);
+
+        // add achievement money_saved ( already check )
+        AddAchievementRequest addAchievementRequestSteps = new  AddAchievementRequest();
+        addAchievementRequestSteps.setField("steps");
+        memberAchievementService.addMemberAchievement(addAchievementRequestSteps).orElse(null);
+
+
 
         return diaryRecordMapper.toDiaryRecordDTO(diaryRecord);
     }

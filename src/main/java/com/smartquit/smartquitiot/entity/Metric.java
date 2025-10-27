@@ -24,6 +24,10 @@ public class Metric {
 
     int streaks;
     int relapseCountInPhase = 0;
+    int post_count;
+    int comment_count;
+    int total_mission_completed;
+    int completed_all_mission_in_day;
 
     //avg metrics
     double avgCravingLevel;

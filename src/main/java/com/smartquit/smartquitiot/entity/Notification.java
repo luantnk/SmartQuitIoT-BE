@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.smartquit.smartquitiot.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -24,6 +25,19 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     String content;
     boolean isRead = false;
+
+    //điều hướng web
+    String url;
+
+    //điều hướng mobile
+    String deepLink;   // ví dụ: smartquit://achievement/42
+
+    // gợi ý: một số UI icon
+    String icon = "https://res.cloudinary.com/dhmmm2sq1/image/upload/v1761473137/logo_gb1xi7.png";
+
+    @Enumerated(EnumType.STRING)
+    NotificationType notificationType;
+
     @CreationTimestamp
     LocalDateTime createdAt;
 
