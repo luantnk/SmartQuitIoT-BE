@@ -3,7 +3,9 @@ package com.smartquit.smartquitiot.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
+import com.smartquit.smartquitiot.dto.response.AchievementDTO;
 import com.smartquit.smartquitiot.dto.response.ConditionAchievementDTO;
+import com.smartquit.smartquitiot.dto.response.TopMemberAchievementDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Achievement;
 import com.smartquit.smartquitiot.entity.MemberAchievement;
@@ -93,6 +95,69 @@ public class MemberAchievementServiceImpl implements MemberAchievementService {
         // hãy check xem no1 là cái nào. xog sau đó get nó ra và so sánh với condition theo format {"field":"streaks","operator":">=","value":1}
         // sau đó nếu pass thì check tiếp xem họ đã sở hữu nó chưa, nếu chưa thì add họ vào và return trả ra achievement đó
 
+    }
+
+    @Override
+    public List<AchievementDTO> getAllMyAchievements() {
+        Account account = accountService.getAuthenticatedAccount();
+
+        List<MemberAchievement> memberAchievements = memberAchievementRepository
+               .getMemberAchievementsByMember_IdOrderByAchievedAt(account.getMember().getId());
+
+        List<AchievementDTO> achievementDTOList = new ArrayList<>();
+
+        for (MemberAchievement memberAchievement : memberAchievements) {
+            Achievement achievement = memberAchievement.getAchievement();
+            AchievementDTO dto = new AchievementDTO();
+            dto.setId(achievement.getId());
+            dto.setName(achievement.getName());
+            dto.setDescription(achievement.getDescription());
+            dto.setIcon(achievement.getIcon());
+            dto.setType(achievement.getType().name());
+          //  dto.setCondition(achievement.getCondition());
+            dto.setAchievedAt(memberAchievement.getAchievedAt());
+
+            achievementDTOList.add(dto);
+        }
+
+        return achievementDTOList;
+    }
+
+    @Override
+    public List<TopMemberAchievementDTO> getTop10MembersWithAchievements() {
+        List<Object[]> top = memberAchievementRepository.findTop10MembersWithMostAchievements();
+
+        List<TopMemberAchievementDTO> result = new ArrayList<>();
+        for (Object[] row : top) {
+            int memberId = ((Number) row[0]).intValue();
+            int total = ((Number) row[1]).intValue();
+
+            List<MemberAchievement> memberAchievements = memberAchievementRepository
+                    .getMemberAchievementsByMember_IdOrderByAchievedAt(memberId);
+
+
+            List<AchievementDTO> achievements = memberAchievements.stream().map(ma -> {
+                Achievement a = ma.getAchievement();
+                AchievementDTO dto = new AchievementDTO();
+                dto.setId(a.getId());
+                dto.setName(a.getName());
+                dto.setDescription(a.getDescription());
+                dto.setIcon(a.getIcon());
+                dto.setType(a.getType().name());
+             //   dto.setCondition(a.getCondition());
+                dto.setAchievedAt(ma.getAchievedAt());
+                return dto;
+            }).toList();
+
+            TopMemberAchievementDTO dto = new TopMemberAchievementDTO();
+            dto.setMemberId(memberId);
+            dto.setMemberName(memberAchievements.get(0).getMember().getFirstName() + " " + memberAchievements.get(0).getMember().getLastName());
+            dto.setTotalAchievements(total);
+            dto.setAchievements(achievements);
+
+            result.add(dto);
+        }
+        return result;
     }
 
 
