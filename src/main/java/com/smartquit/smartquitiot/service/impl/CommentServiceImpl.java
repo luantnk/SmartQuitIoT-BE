@@ -1,14 +1,17 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.CommentCreateRequest;
 import com.smartquit.smartquitiot.dto.request.CommentUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.PostDetailDTO;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MediaType;
+import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.mapper.CommentMapper;
 import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.CommentService;
+import com.smartquit.smartquitiot.service.MemberAchievementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +31,8 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final CommentMediaRepository commentMediaRepository;
     private final AccountService accountService;
+    private final MetricRepository metricRepository;
+    private final MemberAchievementService memberAchievementService;
 
     @Override
     @Transactional
@@ -76,6 +81,15 @@ public class CommentServiceImpl implements CommentService {
             saved.setCommentMedia(mediaList);
         }
 
+        if(account.getRole().equals(Role.MEMBER)){
+            Metric metric = metricRepository.findByMemberId(account.getMember().getId())
+                    .orElseThrow(() -> new RuntimeException("Metric not found"));
+            metric.setComment_count(metric.getComment_count() + 1);
+            metricRepository.save(metric);
+            AddAchievementRequest addAchievementRequest = new  AddAchievementRequest();
+            addAchievementRequest.setField("comment_count");
+            memberAchievementService.addMemberAchievement(addAchievementRequest).orElse(null);
+        }
         return CommentMapper.toDTO(saved);
     }
 

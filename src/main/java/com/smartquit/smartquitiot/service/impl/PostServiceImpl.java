@@ -1,20 +1,16 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.PostCreateRequest;
 import com.smartquit.smartquitiot.dto.request.PostUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.PostDetailDTO;
 import com.smartquit.smartquitiot.dto.response.PostSummaryDTO;
-import com.smartquit.smartquitiot.entity.Account;
-import com.smartquit.smartquitiot.entity.Comment;
-import com.smartquit.smartquitiot.entity.Post;
-import com.smartquit.smartquitiot.entity.PostMedia;
+import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MediaType;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.mapper.PostMapper;
-import com.smartquit.smartquitiot.repository.AccountRepository;
-import com.smartquit.smartquitiot.repository.CommentRepository;
-import com.smartquit.smartquitiot.repository.PostMediaRepository;
-import com.smartquit.smartquitiot.repository.PostRepository;
+import com.smartquit.smartquitiot.repository.*;
+import com.smartquit.smartquitiot.service.MemberAchievementService;
 import com.smartquit.smartquitiot.service.PostService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +34,9 @@ public class PostServiceImpl implements PostService {
     private final PostMediaRepository postMediaRepository;
     private final CommentRepository commentRepository;
     private final AccountServiceImpl accountService;
+    private final MemberAchievementService  memberAchievementService;
+    private final MetricRepository metricRepository;
+
 
     @Override
     public List<PostSummaryDTO> getLatestPosts(int limit) {
@@ -138,6 +137,16 @@ public class PostServiceImpl implements PostService {
             }
             postMediaRepository.saveAll(mediaList);
             savedPost.setMedia(mediaList);
+        }
+        Account  account =  accountService.getAuthenticatedAccount();
+        if(account.getRole().equals(Role.MEMBER)){
+            Metric metric = metricRepository.findByMemberId(account.getMember().getId())
+                    .orElseThrow(() -> new RuntimeException("Metric not found"));
+            metric.setPost_count(metric.getPost_count() + 1);
+            metricRepository.save(metric);
+            AddAchievementRequest addAchievementRequest = new  AddAchievementRequest();
+            addAchievementRequest.setField("post_count");
+            memberAchievementService.addMemberAchievement(addAchievementRequest).orElse(null);
         }
 
         return PostMapper.toDTO(savedPost);

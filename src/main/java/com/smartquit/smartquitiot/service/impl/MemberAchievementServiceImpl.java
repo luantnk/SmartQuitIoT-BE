@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.response.ConditionAchievementDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Achievement;
@@ -9,9 +10,12 @@ import com.smartquit.smartquitiot.entity.MemberAchievement;
 import com.smartquit.smartquitiot.entity.Metric;
 import com.smartquit.smartquitiot.repository.AchievementRepository;
 import com.smartquit.smartquitiot.repository.MemberAchievementRepository;
+import com.smartquit.smartquitiot.repository.MetricRepository;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.MemberAchievementService;
+import com.smartquit.smartquitiot.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,24 +25,30 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberAchievementServiceImpl implements MemberAchievementService {
 
     private final AccountService accountService;
     private final MemberAchievementRepository memberAchievementRepository;
     private final AchievementRepository achievementRepository;
-
+    private final MetricRepository metricRepository;
+    private final NotificationService notificationService;
     @Override
     @Transactional
-    public Optional<Achievement> addAchievement(String field) {
-        if (field == null) return Optional.empty();
+    public Optional<Achievement> addMemberAchievement(AddAchievementRequest request) {
+        log.info("Adding achievement for member " + request.getField());
+        if (request.getField() == null) return Optional.empty();
         Account account = accountService.getAuthenticatedAccount();
-        Metric metric = account.getMember().getMetric();
-        int currentValue = readMetricValue(metric, field);
+
+        Metric metric = metricRepository.findByMemberId(account.getMember().getId()).orElse(null);
+
+        log.info("metric " + metric.getId());
+        int currentValue = readMetricValue(metric, request.getField());
         if (currentValue < 0) return Optional.empty();
 
         //get list achievement of users
         List<MemberAchievement>
-                memberAchievements  = memberAchievementRepository.getAchievements(account.getMember().getId());
+                memberAchievements  = memberAchievementRepository.getMemberAchievementsByMember_Id(account.getMember().getId());
 
         Set<Integer> owned = memberAchievements.stream()
                 .map(ma -> ma.getAchievement().getId())
@@ -49,7 +59,7 @@ public class MemberAchievementServiceImpl implements MemberAchievementService {
 
         List<AbstractMap.SimpleEntry<Achievement, ConditionAchievementDTO>> eligible =  all.stream()
                 .map(a -> new AbstractMap.SimpleEntry<>(a, parseConditionDTO(a.getCondition())))
-                .filter(e -> e.getValue() != null && field.equals(e.getValue().getField()))
+                .filter(e -> e.getValue() != null && request.getField().equals(e.getValue().getField()))
                 .filter(e -> compare(currentValue, e.getValue().getOperator(), e.getValue().getValue()))
                 .filter(e -> !owned.contains(e.getKey().getId()))
                 .collect(Collectors.toList());
@@ -70,6 +80,13 @@ public class MemberAchievementServiceImpl implements MemberAchievementService {
                 .max(Comparator.comparingInt(e -> e.getValue().getValue())) // so sánh theo threshold
                 .map(Map.Entry::getKey)
                 .orElse(null);
+
+        if(highest != null){
+            log.info("highest name: " + highest.getName());
+            notificationService.saveAndSendAchievementNoti(account.getMember(), highest);
+        }
+
+
         return Optional.ofNullable(highest);
         // viết hàm check điều kiện nhận object, vì object có thể là streaks, steps,
         // money_saved,post_count, comment_count, total mission completed, completed_all_mission_in_day nằm trong bảng metric,
