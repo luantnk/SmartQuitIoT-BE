@@ -28,4 +28,5 @@ public class AchievementDTO {
      String type;
      JsonNode condition;
      LocalDateTime achievedAt;
+     boolean unlocked;
 }

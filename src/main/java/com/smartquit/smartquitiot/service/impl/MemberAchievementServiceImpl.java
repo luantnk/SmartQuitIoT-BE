@@ -104,23 +104,36 @@ public class MemberAchievementServiceImpl implements MemberAchievementService {
         List<MemberAchievement> memberAchievements = memberAchievementRepository
                .getMemberAchievementsByMember_IdOrderByAchievedAt(account.getMember().getId());
 
-        List<AchievementDTO> achievementDTOList = new ArrayList<>();
+        List<Achievement> allAchievements = achievementRepository.findAll();
 
-        for (MemberAchievement memberAchievement : memberAchievements) {
-            Achievement achievement = memberAchievement.getAchievement();
-            AchievementDTO dto = new AchievementDTO();
-            dto.setId(achievement.getId());
-            dto.setName(achievement.getName());
-            dto.setDescription(achievement.getDescription());
-            dto.setIcon(achievement.getIcon());
-            dto.setType(achievement.getType().name());
-          //  dto.setCondition(achievement.getCondition());
-            dto.setAchievedAt(memberAchievement.getAchievedAt());
-
-            achievementDTOList.add(dto);
+        Map<Integer, MemberAchievement> ownedById = new HashMap<>();
+        for (MemberAchievement ma : memberAchievements) {
+            ownedById.put(ma.getAchievement().getId(), ma);
         }
 
-        return achievementDTOList;
+        List<AchievementDTO> result = new ArrayList<>(allAchievements.size());
+        for (Achievement a : allAchievements) {
+            AchievementDTO dto = new AchievementDTO();
+            dto.setId(a.getId());
+            dto.setName(a.getName());
+            dto.setDescription(a.getDescription());
+            dto.setIcon(a.getIcon());
+            dto.setType(a.getType().name());
+
+            MemberAchievement hit = ownedById.get(a.getId());
+            if (hit != null) {
+                dto.setUnlocked(true);
+                dto.setAchievedAt(hit.getAchievedAt());
+            } else {
+                dto.setUnlocked(false);
+                dto.setAchievedAt(null);
+            }
+            result.add(dto);
+        }
+        result.sort(Comparator.comparing(AchievementDTO::isUnlocked).reversed()
+                .thenComparing(AchievementDTO::getAchievedAt, Comparator.nullsLast(Comparator.reverseOrder())));
+
+        return result;
     }
 
     @Override
