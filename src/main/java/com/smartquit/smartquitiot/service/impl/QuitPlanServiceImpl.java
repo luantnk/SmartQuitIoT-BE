@@ -50,7 +50,14 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             quitPlan.setFtndScore(ftndScore);
             quitPlan.setMember(account.getMember());
             quitPlan.setStartDate(req.getStartDate());
-            quitPlan.setStatus(QuitPlanStatus.CREATED);
+            LocalDate currentDate = LocalDate.now();
+            
+            if(req.getStartDate().equals(currentDate)){
+                quitPlan.setStatus(QuitPlanStatus.IN_PROGRESS);
+            }else{
+                quitPlan.setStatus(QuitPlanStatus.CREATED);
+            }
+
             quitPlan.setUseNRT(req.isUseNRT());
             //from metric
             FormMetric formMetric = new FormMetric();

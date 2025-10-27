@@ -26,7 +26,7 @@ public class AchievementController {
     private final MemberAchievementService memberAchievementService;
 
 
-    @PostMapping()
+    @PostMapping("/add-member-achievement")
     @PreAuthorize("hasAnyRole('ADMIN','MEMBER','COACH')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "This end point for test handle achievement and receive notifications by websocket on web")
@@ -34,8 +34,6 @@ public class AchievementController {
         Achievement achievement = memberAchievementService.addMemberAchievement(request).orElse(null);
         return ResponseEntity.ok(achievement);
     }
-
-
 
     @GetMapping("/all-my-achievements")
     @PreAuthorize("hasAnyRole('ADMIN','MEMBER','COACH')")
