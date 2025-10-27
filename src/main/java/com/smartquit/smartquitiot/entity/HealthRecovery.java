@@ -2,12 +2,9 @@ package com.smartquit.smartquitiot.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.smartquit.smartquitiot.enums.HealthRecoveryDataName;
-import com.smartquit.smartquitiot.enums.MetricType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,7 +19,6 @@ public class HealthRecovery {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
-    @Column(unique = true)
     @Enumerated(EnumType.STRING)
     HealthRecoveryDataName name;
     @Column(precision = 5, scale = 2)

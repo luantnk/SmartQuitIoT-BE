@@ -27,6 +27,14 @@ public class MetricController {
         return ResponseEntity.ok(metricService.getHomeScreenMetrics());
     }
 
+    @GetMapping("/home-screen-health-recovery")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Get health recovery statistic for the authenticated member",
+            description = "API để hiển các thông số Pulse Rate, Oxygen Level, Carbon Monoxide Level của member trên home screen")
+    public ResponseEntity<Map<String, Object>> getHomeScreenHealthRecovery() {
+        return ResponseEntity.ok(metricService.getHomeScreenHealthRecoveryMetrics());
+    }
+
     @GetMapping("/health-data")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get health data statistic for the authenticated member",

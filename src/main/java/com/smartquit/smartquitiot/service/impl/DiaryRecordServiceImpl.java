@@ -178,11 +178,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         int streaksCount = 1;
         Optional<DiaryRecord> previousDayRecord = diaryRecordRepository.findTopByMemberIdOrderByDateDesc(member.getId());
         if(previousDayRecord.isPresent()){
-            System.out.println("have previous day record");
             LocalDate date = previousDayRecord.get().getDate();
             LocalDate yesterday = request.getDate().minusDays(1);
             boolean isYesterday = date.isEqual(yesterday);
-            System.out.println("isYesterday: " + isYesterday);
             if(isYesterday && request.getHaveSmoked() == false){
                 streaksCount = metric.getStreaks() +1;
             }

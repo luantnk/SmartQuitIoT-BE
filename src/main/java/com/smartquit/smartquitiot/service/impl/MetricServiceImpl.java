@@ -5,6 +5,7 @@ import com.smartquit.smartquitiot.entity.DiaryRecord;
 import com.smartquit.smartquitiot.entity.HealthRecovery;
 import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.entity.Metric;
+import com.smartquit.smartquitiot.enums.HealthRecoveryDataName;
 import com.smartquit.smartquitiot.mapper.MetricMapper;
 import com.smartquit.smartquitiot.repository.DiaryRecordRepository;
 import com.smartquit.smartquitiot.repository.HealthRecoveryRepository;
@@ -50,6 +51,19 @@ public class MetricServiceImpl implements MetricService {
         List<HealthRecovery> healthRecoveries = healthRecoveryRepository.findByMemberId(member.getId());
         response.put("metrics", metric);
         response.put("healthRecoveries", healthRecoveries);
+        return response;
+    }
+
+    @Override
+    public Map<String, Object> getHomeScreenHealthRecoveryMetrics() {
+        Map<String, Object> response = new HashMap<>();
+        Member member = memberService.getAuthenticatedMember();
+        HealthRecovery pulseRateRecovery = healthRecoveryRepository.findByNameAndMemberId(HealthRecoveryDataName.PULSE_RATE, member.getId()).orElse(null);
+        HealthRecovery oxygenLevelRecovery = healthRecoveryRepository.findByNameAndMemberId(HealthRecoveryDataName.OXYGEN_LEVEL, member.getId()).orElse(null);
+        HealthRecovery carbonMonoxideRecovery = healthRecoveryRepository.findByNameAndMemberId(HealthRecoveryDataName.CARBON_MONOXIDE_LEVEL, member.getId()).orElse(null);
+        response.put("pulseRate", pulseRateRecovery);
+        response.put("oxygenLevel", oxygenLevelRecovery);
+        response.put("carbonMonoxideLevel", carbonMonoxideRecovery);
         return response;
     }
 }
