@@ -26,4 +26,7 @@ public class Feedback {
     @ManyToOne(fetch = FetchType.LAZY)
     Coach coach;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    Member member;
+
 }
