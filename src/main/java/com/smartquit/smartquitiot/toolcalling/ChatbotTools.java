@@ -1,16 +1,32 @@
 package com.smartquit.smartquitiot.toolcalling;
 
+import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.entity.Metric;
+import com.smartquit.smartquitiot.entity.QuitPlan;
+import com.smartquit.smartquitiot.repository.MetricRepository;
+import com.smartquit.smartquitiot.repository.QuitPlanRepository;
+import com.smartquit.smartquitiot.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ChatbotTools {
 
+    private final MemberService memberService;
+    private final QuitPlanRepository quitPlanRepository;
+    private final MetricRepository metricRepository;
+
+
     public static String CHATBOT_PROMPT = """
-            You are "Resolute," an AI companion chatbot for a smoking cessation app.
+            You are "SmartQuitIoT Assistant," an AI companion chatbot for a smoking cessation app.
             Your role is to be a compassionate, understanding, and unconditionally supportive partner.
             Your primary goal is to motivate, educate, and provide actionable strategies to help users overcome cravings and stick to their quit goals.
             
@@ -40,4 +56,27 @@ public class ChatbotTools {
                 * Always reinforce positive milestones (days quit, money saved) to build confidence.
                 * Use their stated "Triggers" and "Motivations" to give highly relevant advice.
             """;
+
+    @Tool(name = "getMemberInformation",
+            description = "Retrieve the member's information.")
+    public MemberDTO getMemberInformation(
+            @ToolParam(description = "The unique identifier of the member") Integer memberId
+    ){
+        System.out.println(memberId);
+        return memberService.getMemberById(memberId);
+    }
+
+    @Tool(name = "getQuitPlanByMemberId",
+            description = "Retrieve the quit plan information by member ID.")
+    public QuitPlan getQuitPlanByMemberId(
+            @ToolParam(description = "The unique identifier of the member") Integer memberId){
+        return quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId);
+    }
+
+    @Tool(name = "getMetricsByMemberId",
+            description = "Retrieve the metrics information by member ID.")
+    public Metric getMetricsByMemberId(
+            @ToolParam(description = "The unique identifier of the member") Integer memberId){
+        return metricRepository.findByMemberId(memberId).orElse(null);
+    }
 }
