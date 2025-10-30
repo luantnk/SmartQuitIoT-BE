@@ -2,8 +2,10 @@ package com.smartquit.smartquitiot.repository;
 
 import com.smartquit.smartquitiot.entity.CoachWorkSchedule;
 import com.smartquit.smartquitiot.enums.CoachWorkScheduleStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -40,13 +42,14 @@ public interface CoachWorkScheduleRepository extends JpaRepository<CoachWorkSche
             @Param("status") CoachWorkScheduleStatus status
     );
     // Kiểm tra xem slot này có tồn tại không
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT cws FROM CoachWorkSchedule cws " +
             "WHERE cws.coach.id = :coachId AND cws.date = :date AND cws.slot.id = :slotId")
-    Optional<CoachWorkSchedule> findByCoachIdAndDateAndSlotId(
+    Optional<CoachWorkSchedule> findByCoachIdAndDateAndSlotIdForUpdate(
             @Param("coachId") int coachId,
             @Param("date") LocalDate date,
-            @Param("slotId") int slotId
-    );
+            @Param("slotId") int slotId);
+
     // Dự tính cho cron - update batch theo ngày
     @Query("SELECT cws FROM CoachWorkSchedule cws " +
             "JOIN FETCH cws.slot s " +
