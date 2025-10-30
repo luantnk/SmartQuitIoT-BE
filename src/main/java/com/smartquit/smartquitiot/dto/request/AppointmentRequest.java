@@ -17,7 +17,7 @@ public class AppointmentRequest {
     @NotNull(message = "Coach ID is required")
     int coachId;
 
-    @NotNull(message = "Slot ID is required")
+    @NotNull(message = "slot ID is required")
     int slotId;
 
     @NotNull(message = "Date is required")
