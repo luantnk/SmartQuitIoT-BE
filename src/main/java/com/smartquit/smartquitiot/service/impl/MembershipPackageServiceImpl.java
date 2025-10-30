@@ -90,7 +90,6 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
         MembershipPackage membershipPackage = membershipPackageRepository.findById(membershipPackageId)
                 .orElseThrow(() -> new RuntimeException("Membership Package Not Found"));
         Member member = memberService.getAuthenticatedMember();
-        member.getAccount().setFirstLogin(false);
         if(membershipPackage.getType().equals(MembershipPackageType.TRIAL)){
             if(member.isUsedFreeTrial()){
                 throw new RuntimeException("Membership Package is used Free Trial");
@@ -103,7 +102,6 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
             subscription.setEndDate(LocalDate.now().plusDays(membershipPackage.getDuration()));
             membershipSubscriptionRepository.save(subscription);
 
-
             member.setUsedFreeTrial(true);
             memberRepository.save(member);
 
@@ -113,9 +111,6 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
 //            Smart Quit Mobile App
             String returnUrl = "smartquit://payment/success";
             String cancelUrl = "smartquit://payment/failed";
-
-//            String returnUrl = "http://localhost:5173/payment/success";
-//            String cancelUrl = "http://localhost:5173/payment/failed";
 
             long totalAmount = membershipPackage.getPrice();
             if(duration == 12){

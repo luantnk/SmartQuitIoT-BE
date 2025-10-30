@@ -1,8 +1,14 @@
 package com.smartquit.smartquitiot.toolcalling;
 
+import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
+import com.smartquit.smartquitiot.entity.DiaryRecord;
 import com.smartquit.smartquitiot.entity.Metric;
 import com.smartquit.smartquitiot.entity.QuitPlan;
+import com.smartquit.smartquitiot.mapper.DiaryRecordMapper;
+import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
+import com.smartquit.smartquitiot.repository.DiaryRecordRepository;
 import com.smartquit.smartquitiot.repository.MetricRepository;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.service.MemberService;
@@ -14,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +30,9 @@ public class ChatbotTools {
     private final MemberService memberService;
     private final QuitPlanRepository quitPlanRepository;
     private final MetricRepository metricRepository;
+    private final QuitPlanMapper quitPlanMapper;
+    private final DiaryRecordMapper diaryRecordMapper;
+    private final DiaryRecordRepository diaryRecordRepository;
 
 
     public static String CHATBOT_PROMPT = """
@@ -62,15 +72,16 @@ public class ChatbotTools {
     public MemberDTO getMemberInformation(
             @ToolParam(description = "The unique identifier of the member") Integer memberId
     ){
-        System.out.println(memberId);
         return memberService.getMemberById(memberId);
     }
 
     @Tool(name = "getQuitPlanByMemberId",
             description = "Retrieve the quit plan information by member ID.")
-    public QuitPlan getQuitPlanByMemberId(
+    public QuitPlanResponse getQuitPlanByMemberId(
             @ToolParam(description = "The unique identifier of the member") Integer memberId){
-        return quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId);
+        QuitPlan quitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId);
+        if(quitPlan == null) return null;
+        return quitPlanMapper.toResponse(quitPlan);
     }
 
     @Tool(name = "getMetricsByMemberId",
@@ -78,5 +89,13 @@ public class ChatbotTools {
     public Metric getMetricsByMemberId(
             @ToolParam(description = "The unique identifier of the member") Integer memberId){
         return metricRepository.findByMemberId(memberId).orElse(null);
+    }
+
+    @Tool(name = "getLatestDiaryRecordByMemberId",
+            description = "Retrieve the latest diary record by member ID.")
+    public DiaryRecordDTO getLatestDiaryRecordByMemberId(
+            @ToolParam(description = "The unique identifier of the member") Integer memberId){
+        Optional<DiaryRecord> previousDayRecord = diaryRecordRepository.findTopByMemberIdOrderByDateDesc(memberId);
+        return previousDayRecord.map(diaryRecordMapper::toDiaryRecordDTO).orElse(null);
     }
 }

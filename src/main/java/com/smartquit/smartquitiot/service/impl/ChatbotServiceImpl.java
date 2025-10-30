@@ -18,6 +18,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
@@ -63,7 +64,19 @@ public class ChatbotServiceImpl implements ChatbotService {
     public AssistantMessage personalizedChat(ChatbotPayload payload) {
         MemberDTO member = memberService.getMemberById(Integer.parseInt(payload.getMemberId()));
 
-        SystemMessage systemMessage = new SystemMessage(CHATBOT_PROMPT + "with MemberId: " + member.getId());
+        String userContext = String.format("""
+                ### USER CONTEXT:
+                - Member ID: %d
+                - Name: %s
+                - Age: %d
+                - Gender: %s
+                """,
+                member.getId(),
+                member.getFirstName() + " " + member.getLastName(),
+                member.getAge(),
+                member.getGender());
+
+        SystemMessage systemMessage = new SystemMessage(CHATBOT_PROMPT + "\n" + userContext);
         UserMessage userMessage = new UserMessage(payload.getMessage());
         Prompt prompt = new Prompt(systemMessage, userMessage);
 
