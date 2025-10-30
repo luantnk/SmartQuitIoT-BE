@@ -1,11 +1,13 @@
 package com.smartquit.smartquitiot.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.smartquit.smartquitiot.enums.CancelledBy;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Getter
@@ -17,8 +19,15 @@ import java.time.LocalTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AppointmentResponse {
     int appointmentId;
-    int coachId;
+
+    // coach info
+    Integer coachId;
     String coachName;
+
+    // member info
+    Integer memberId;
+    String memberName;
+
     int slotId;
     LocalDate date;
     LocalTime startTime;
@@ -28,4 +37,6 @@ public class AppointmentResponse {
     String meetingUrl;       // ex: "/meeting/3"
     Instant joinWindowStart;
     Instant joinWindowEnd;
+    CancelledBy cancelledBy;
+    LocalDateTime cancelledAt;
 }
