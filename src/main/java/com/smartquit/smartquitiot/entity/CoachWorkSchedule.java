@@ -19,10 +19,13 @@ public class CoachWorkSchedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
     LocalDate date;
+
     @Enumerated(EnumType.STRING)
-    CoachWorkScheduleStatus status;
+    CoachWorkScheduleStatus status; //AVAILABLE,BOOKED,UNAVAILABLE
+
     @ManyToOne(fetch = FetchType.LAZY)
     Slot slot;
+
     @ManyToOne(fetch = FetchType.LAZY)
     Coach coach;
 
