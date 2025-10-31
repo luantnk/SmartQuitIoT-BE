@@ -77,7 +77,8 @@ public class PostServiceImpl implements PostService {
         for (Comment c : rootComments) {
             loadRepliesRecursively(c);
         }
-//        post.setComments(rootComments);
+        post.getComments().clear();
+        post.getComments().addAll(rootComments);
         return PostMapper.toDetailDTO(post);
     }
 
