@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +67,42 @@ public class AppInitialConfig {
                 account2.setMember(member);
                 member.setAccount(account2);
                 account2.setMember(member);
+//
+                Metric metric = new Metric();
+                metric.setStreaks(0);
+                metric.setRelapseCountInPhase(0);
+                metric.setPost_count(0);
+                metric.setComment_count(0);
+                metric.setTotal_mission_completed(0);
+                metric.setCompleted_all_mission_in_day(0);
+
+                metric.setAvgCravingLevel(0.0);
+                metric.setAvgMood(0.0);
+                metric.setAvgAnxiety(0.0);
+                metric.setAvgConfidentLevel(0.0);
+                metric.setAvgCigarettesPerDay(0.0);
+
+                metric.setCurrentCravingLevel(0);
+                metric.setCurrentMoodLevel(0);
+                metric.setCurrentConfidenceLevel(0);
+                metric.setCurrentAnxietyLevel(0);
+
+                metric.setSteps(0);
+                metric.setHeartRate(0);
+                metric.setSpo2(0);
+                metric.setActivityMinutes(0);
+                metric.setRespiratoryRate(0);
+                metric.setSleepDuration(0.0);
+                metric.setSleepQuality(0);
+
+                metric.setAnnualSaved(BigDecimal.ZERO);
+                metric.setMoneySaved(BigDecimal.ZERO);
+
+                metric.setReductionPercentage(0.0);
+                metric.setSmokeFreeDayPercentage(0.0);
+                metric.setMember(member);
+                member.setMetric(metric);
+                //
                 memberRepository.save(member);
                 log.info("Member1 account has been created");
             }
