@@ -172,6 +172,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .claim("scope", account.getRole().name())
                 .claim("username", account.getUsername())
                 .claim("accountId", account.getId())
+                .claim("memberId", account.getMember().getId())
                 .build();
         return createSignedJWT(header, claimsSet, secretKey);
     }

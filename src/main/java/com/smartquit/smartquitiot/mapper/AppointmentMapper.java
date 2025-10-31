@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.mapper;
 
 import com.smartquit.smartquitiot.dto.response.AppointmentResponse;
 import com.smartquit.smartquitiot.entity.Appointment;
+import com.smartquit.smartquitiot.entity.Slot;
 import org.springframework.stereotype.Component;
 
 import java.time.*;
@@ -26,9 +27,16 @@ public class AppointmentMapper {
         }
 
         LocalDate date = appointment.getDate();
-        Integer slotId = appointment.getSlot() != null ? appointment.getSlot().getId() : null;
-        LocalTime startTime = appointment.getSlot() != null ? appointment.getSlot().getStartTime() : null;
-        LocalTime endTime = appointment.getSlot() != null ? appointment.getSlot().getEndTime() : null;
+
+        // --- Lấy slot từ CoachWorkSchedule
+        Slot slot = null;
+        if (appointment.getCoachWorkSchedule() != null) {
+            slot = appointment.getCoachWorkSchedule().getSlot();
+        }
+
+        Integer slotId = slot != null ? slot.getId() : null;
+        LocalTime startTime = slot != null ? slot.getStartTime() : null;
+        LocalTime endTime = slot != null ? slot.getEndTime() : null;
 
         AppointmentResponse.AppointmentResponseBuilder builder = AppointmentResponse.builder()
                 .appointmentId(appointmentId != null ? appointmentId : 0)
@@ -39,7 +47,15 @@ public class AppointmentMapper {
                 .startTime(startTime)
                 .endTime(endTime);
 
-        // taạo channel và meeting url
+        // --- map member info (moved into mapper)
+        if (appointment.getMember() != null) {
+            Integer memberId = appointment.getMember().getId();
+            String mfn = appointment.getMember().getFirstName() != null ? appointment.getMember().getFirstName() : "";
+            String mln = appointment.getMember().getLastName() != null ? appointment.getMember().getLastName() : "";
+            builder.memberId(memberId).memberName((mfn + " " + mln).trim());
+        }
+
+        // tạo channel và meeting url
         if (appointmentId != null) {
             String channel = "appointment_" + appointmentId;
             String meetingUrl = "/meeting/" + appointmentId;
@@ -56,6 +72,14 @@ public class AppointmentMapper {
 
             builder.joinWindowStart(windowStartInstant)
                     .joinWindowEnd(windowEndInstant);
+        }
+
+        // --- MẤC NHẤT: map cancelled fields (nếu có)
+        if (appointment.getCancelledBy() != null) {
+            builder.cancelledBy(appointment.getCancelledBy());
+        }
+        if (appointment.getCancelledAt() != null) {
+            builder.cancelledAt(appointment.getCancelledAt());
         }
 
         return builder.build();

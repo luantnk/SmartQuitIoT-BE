@@ -8,15 +8,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.stream.Collectors;
+
 @RestController
-@RequestMapping("/member/appointments")
+@RequestMapping("/appointments")
 @RequiredArgsConstructor
 public class AppointmentController {
 
@@ -24,7 +27,8 @@ public class AppointmentController {
 
     @PostMapping
     @PreAuthorize("hasRole('MEMBER')")
-    @Operation(summary = "Member đặt lịch hẹn với coach")
+    @Operation(summary = "Member: Đặt lịch hẹn với coach",
+            description = "Member tạo appointment mới với coach.")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<GlobalResponse> bookAppointment(
             @Valid @RequestBody AppointmentRequest request,
@@ -32,67 +36,121 @@ public class AppointmentController {
 
         Number accountIdNum = jwt.getClaim("accountId");
         if (accountIdNum == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(GlobalResponse.error("Không xác định được member từ token", 404));
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
         }
-        int memberId = accountIdNum.intValue();
+        int memberAccountId = accountIdNum.intValue();
 
-        var response = appointmentService.bookAppointment(memberId, request);
-        return ResponseEntity.ok(GlobalResponse.ok("Đặt lịch thành công", response));
+        var response = appointmentService.bookAppointment(memberAccountId, request);
+        return ResponseEntity.ok(GlobalResponse.ok("Booking successful", response));
     }
 
     @DeleteMapping("/{appointmentId}")
     @PreAuthorize("hasRole('MEMBER')")
-    @Operation(summary = "Member huỷ lịch hẹn đã đặt")
+    @Operation(summary = "Member: Hủy lịch hẹn đã đặt",
+            description = "Member hủy appointment đã tạo. Appointment row sẽ bị xóa.")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<GlobalResponse> cancelAppointment(
+    public ResponseEntity<GlobalResponse> cancelByMember(
             @PathVariable int appointmentId,
             @AuthenticationPrincipal Jwt jwt) {
 
         Number accountIdNum = jwt.getClaim("accountId");
         if (accountIdNum == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(GlobalResponse.error("Không xác định được member từ token", 404));
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
         }
-        int memberId = accountIdNum.intValue();
+        int memberAccountId = accountIdNum.intValue();
 
-        appointmentService.cancelAppointment(appointmentId, memberId);
-        return ResponseEntity.ok(GlobalResponse.ok("Huỷ lịch thành công", null));
+        appointmentService.cancelAppointment(appointmentId, memberAccountId);
+        return ResponseEntity.ok(GlobalResponse.ok("Cancellation successful", null));
+    }
+
+    @DeleteMapping("/{appointmentId}/by-coach")
+    @PreAuthorize("hasRole('COACH')")
+    @Operation(summary = "Coach: Hủy lịch hẹn (từ phía coach)",
+            description = "Coach có thể hủy appointment do mình phụ trách. Appointment row sẽ bị xóa.")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> cancelByCoach(
+            @PathVariable int appointmentId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
+        }
+        int coachAccountId = accountIdNum.intValue();
+
+        appointmentService.cancelAppointmentByCoach(appointmentId, coachAccountId);
+        return ResponseEntity.ok(GlobalResponse.ok("Cancellation by coach successful", null));
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('MEMBER')")
-    @Operation(summary = "Lấy danh sách lịch hẹn của member (kèm trạng thái runtime)")
+    @PreAuthorize("hasAnyRole('MEMBER','COACH')")
+    @Operation(summary = "Lấy danh sách lịch hẹn cho user hiện tại",
+            description = "Nếu user là COACH trả danh sách coach; nếu là MEMBER trả danh sách member. Hỗ trợ filter status/date.")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<GlobalResponse> getAppointmentsForCurrentMember(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<GlobalResponse> listForCurrentUser(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "date", required = false) String date, // format: yyyy-MM-dd
+            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            Authentication authentication,
+            @AuthenticationPrincipal Jwt jwt) {
+
         Number accountIdNum = jwt.getClaim("accountId");
         if (accountIdNum == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(GlobalResponse.error("Không xác định được member từ token", 404));
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
         }
-        int memberId = accountIdNum.intValue();
+        int accountId = accountIdNum.intValue();
 
-        var responses = appointmentService.getAppointmentsByMemberId(memberId);
-        return ResponseEntity.ok(GlobalResponse.ok("Lấy danh sách lịch hẹn thành công", responses));
+        boolean isCoach = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(a -> a.equals("ROLE_COACH"));
+
+        if (isCoach) {
+            var res = appointmentService.getAppointmentsByCoachAccountId(accountId, status, date, page, size);
+            return ResponseEntity.ok(GlobalResponse.ok("Coach appointments fetched", res));
+        } else {
+            var res = appointmentService.getAppointmentsByMemberAccountId(accountId, status, date, page, size);
+            return ResponseEntity.ok(GlobalResponse.ok("Member appointments fetched", res));
+        }
+    }
+
+    @GetMapping("/{appointmentId}")
+    @PreAuthorize("hasAnyRole('MEMBER','COACH')")
+    @Operation(summary = "Chi tiết một lịch hẹn",
+            description = "Lấy thông tin chi tiết của appointment; server kiểm tra quyền truy cập.")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> getDetail(
+            @PathVariable int appointmentId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
+        }
+        int accountId = accountIdNum.intValue();
+
+        var dto = appointmentService.getAppointmentDetailForPrincipal(appointmentId, accountId);
+        return ResponseEntity.ok(GlobalResponse.ok("Appointment detail fetched", dto));
     }
 
     @PostMapping("/{appointmentId}/join-token")
     @PreAuthorize("hasAnyRole('MEMBER','COACH')")
-    @Operation(summary = "Generate Agora join token for an appointment (member or coach can request)")
+    @Operation(summary = "Tạo join-token Agora cho appointment",
+            description = "Member hoặc Coach có thể gọi để nhận token join meeting (server kiểm tra quyền và join window).")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<GlobalResponse> getJoinToken(
             @PathVariable int appointmentId,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
+            @AuthenticationPrincipal Jwt jwt) {
+
         Number accountIdNum = jwt.getClaim("accountId");
         if (accountIdNum == null) {
-            return ResponseEntity.status(401).body(GlobalResponse.error("Not found accountId in token", 401));
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
         }
         int accountId = accountIdNum.intValue();
 
         try {
             JoinTokenResponse dto = appointmentService.generateJoinTokenForAppointment(appointmentId, accountId);
-            return ResponseEntity.ok(GlobalResponse.ok("Token created", dto));
+            return ResponseEntity.ok(GlobalResponse.ok("Join token created", dto));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(GlobalResponse.error(e.getMessage(), 404));
         } catch (SecurityException e) {

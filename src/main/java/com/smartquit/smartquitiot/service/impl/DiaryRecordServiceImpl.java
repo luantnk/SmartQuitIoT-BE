@@ -59,6 +59,14 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     public DiaryRecordDTO logDiaryRecord(DiaryRecordRequest request) {
         Member member = memberService.getAuthenticatedMember();
         QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
+        Optional<DiaryRecord> isExistingTodayRecord = diaryRecordRepository.findByDateAndMemberId(request.getDate(), member.getId());
+        if (isExistingTodayRecord.isPresent()) {
+            throw new RuntimeException("You have been enter today record");
+        }
+
+        if(request.getDate().isAfter(LocalDate.now())){
+            throw new RuntimeException("You can not enter record in the future day");
+        }
         LocalDate startDate = currentQuitPlan.getStartDate();
         LocalDate currentDate = request.getDate();
         if(currentDate.isBefore(startDate)) {
@@ -87,15 +95,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         var currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
 
         double reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) /smokeAvgPerDay) * 100.0;
-
-        Optional<DiaryRecord> isExistingTodayRecord = diaryRecordRepository.findByDateAndMemberId(request.getDate(), member.getId());
-        if (isExistingTodayRecord.isPresent()) {
-            throw new RuntimeException("You have been enter today record");
-        }
-
-        if(request.getDate().isAfter(LocalDate.now())){
-            throw new RuntimeException("You can not enter record in the future day");
-        }
 
         BigDecimal amountNicotinePerCigarettesOfMemberForm = currentFormMetric.getAmountOfNicotinePerCigarettes();
         BigDecimal estimateNicotineIntake = amountNicotinePerCigarettesOfMemberForm.multiply(BigDecimal.valueOf(request.getCigarettesSmoked()));

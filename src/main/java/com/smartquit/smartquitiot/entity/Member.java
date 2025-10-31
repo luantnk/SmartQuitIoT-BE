@@ -39,7 +39,7 @@ public class Member {
     @UpdateTimestamp
     LocalDateTime modifiedAt;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "account_id")
     Account account;
 
