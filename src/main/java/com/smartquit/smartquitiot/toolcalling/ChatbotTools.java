@@ -4,11 +4,13 @@ import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.entity.DiaryRecord;
+import com.smartquit.smartquitiot.entity.HealthRecovery;
 import com.smartquit.smartquitiot.entity.Metric;
 import com.smartquit.smartquitiot.entity.QuitPlan;
 import com.smartquit.smartquitiot.mapper.DiaryRecordMapper;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.DiaryRecordRepository;
+import com.smartquit.smartquitiot.repository.HealthRecoveryRepository;
 import com.smartquit.smartquitiot.repository.MetricRepository;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.service.MemberService;
@@ -19,6 +21,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,6 +36,7 @@ public class ChatbotTools {
     private final QuitPlanMapper quitPlanMapper;
     private final DiaryRecordMapper diaryRecordMapper;
     private final DiaryRecordRepository diaryRecordRepository;
+    private final HealthRecoveryRepository healthRecoveryRepository;
 
 
     public static String CHATBOT_PROMPT = """
@@ -81,7 +85,7 @@ public class ChatbotTools {
             @ToolParam(description = "The unique identifier of the member") Integer memberId){
         QuitPlan quitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId);
         if(quitPlan == null) return null;
-        return quitPlanMapper.toResponse(quitPlan);
+        return quitPlanMapper.toQuitPlanResponse(quitPlan);
     }
 
     @Tool(name = "getMetricsByMemberId",
@@ -97,5 +101,12 @@ public class ChatbotTools {
             @ToolParam(description = "The unique identifier of the member") Integer memberId){
         Optional<DiaryRecord> previousDayRecord = diaryRecordRepository.findTopByMemberIdOrderByDateDesc(memberId);
         return previousDayRecord.map(diaryRecordMapper::toDiaryRecordDTO).orElse(null);
+    }
+
+    @Tool(name = "getHealthRecoveriesByMemberId",
+            description = "Retrieve the health recovery records by member ID.")
+    public List<HealthRecovery> getHealthRecoveriesByMemberId(
+            @ToolParam(description = "The unique identifier of the member") Integer memberId) {
+        return healthRecoveryRepository.findByMemberId(memberId);
     }
 }

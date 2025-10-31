@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.ChatbotPayload;
+import com.smartquit.smartquitiot.dto.response.ChatbotResponse;
 import com.smartquit.smartquitiot.service.ChatbotService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ public class ChatbotController {
 
     @PostMapping
     public ResponseEntity<?> chatBot(@RequestBody ChatbotPayload chatbotPayload){
-        AssistantMessage aiResponse = chatbotService.personalizedChat(chatbotPayload);
+        ChatbotResponse aiResponse = chatbotService.personalizedChat(chatbotPayload);
         simpMessagingTemplate.convertAndSend("/topic/chatbot/" + chatbotPayload.getMemberId(), aiResponse);
         return ResponseEntity.ok(aiResponse);
 
@@ -30,7 +31,7 @@ public class ChatbotController {
 
     @MessageMapping("/chatbot")
     public void chatWithAI(@Payload ChatbotPayload chatbotPayload){
-        AssistantMessage aiResponse = chatbotService.personalizedChat(chatbotPayload);
+        ChatbotResponse aiResponse = chatbotService.personalizedChat(chatbotPayload);
         simpMessagingTemplate.convertAndSend("/topic/chatbot/" + chatbotPayload.getMemberId(), aiResponse);
     }
 

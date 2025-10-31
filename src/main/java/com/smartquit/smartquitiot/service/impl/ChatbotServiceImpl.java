@@ -1,8 +1,10 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.request.ChatbotPayload;
+import com.smartquit.smartquitiot.dto.response.ChatbotResponse;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.entity.Member;
+import com.smartquit.smartquitiot.mapper.ChatbotResponseMapper;
 import com.smartquit.smartquitiot.service.ChatbotService;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.toolcalling.ChatbotTools;
@@ -33,11 +35,14 @@ public class ChatbotServiceImpl implements ChatbotService {
     private final MemberService memberService;
     private final ChatClient chatClient;
     private final ChatbotTools chatbotTools;
+    private final ChatbotResponseMapper chatbotResponseMapper;
 
     public ChatbotServiceImpl(ChatClient.Builder chatClientBuilder,
                               JdbcChatMemoryRepository chatMemoryRepository,
                               MemberService memberService,
-                              ChatbotTools chatbotTools) {
+                              ChatbotTools chatbotTools,
+                              ChatbotResponseMapper chatbotResponseMapper) {
+        this.chatbotResponseMapper = chatbotResponseMapper;
         this.chatMemoryRepository = chatMemoryRepository;
         this.memberService = memberService;
         ChatMemory chatMemory = MessageWindowChatMemory
@@ -61,7 +66,7 @@ public class ChatbotServiceImpl implements ChatbotService {
 
 
     @Override
-    public AssistantMessage personalizedChat(ChatbotPayload payload) {
+    public ChatbotResponse personalizedChat(ChatbotPayload payload) {
         MemberDTO member = memberService.getMemberById(Integer.parseInt(payload.getMemberId()));
 
         String userContext = String.format("""
@@ -80,10 +85,12 @@ public class ChatbotServiceImpl implements ChatbotService {
         UserMessage userMessage = new UserMessage(payload.getMessage());
         Prompt prompt = new Prompt(systemMessage, userMessage);
 
-        return chatClient.prompt(prompt)
+        AssistantMessage message = chatClient.prompt(prompt)
                 .tools(chatbotTools)
                 .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, member.getId()))
                 .call().chatClientResponse().chatResponse().getResult().getOutput();
+
+        return chatbotResponseMapper.toChatbotResponse(message);
 
     }
 }

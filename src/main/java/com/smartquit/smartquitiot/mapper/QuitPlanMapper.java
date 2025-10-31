@@ -33,6 +33,23 @@ public class QuitPlanMapper {
         return resp;
     }
 
+    public QuitPlanResponse toQuitPlanResponse(QuitPlan plan) {
+        if (plan == null) return null;
+
+        QuitPlanResponse resp = new QuitPlanResponse();
+        resp.setId(plan.getId());
+        resp.setName(plan.getName());
+        resp.setStatus(plan.getStatus());
+        resp.setStartDate(plan.getStartDate());
+        resp.setEndDate(plan.getEndDate());
+        resp.setUseNRT(plan.isUseNRT());
+        resp.setFtndScore(plan.getFtndScore());
+
+        resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
+
+        return resp;
+    }
+
     private FormMetricDTO toFormMetricDTO(FormMetric metric) {
         if (metric == null) return null;
 
