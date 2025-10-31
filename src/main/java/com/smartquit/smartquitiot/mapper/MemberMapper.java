@@ -29,7 +29,8 @@ public class MemberMapper {
         return memberDTO;
     }
 
-    private int calculateAge(LocalDate dob){
+    private Integer calculateAge(LocalDate dob){
+        if(dob == null) return null;
         return Period.between(dob, LocalDate.now()).getYears();
     }
 }

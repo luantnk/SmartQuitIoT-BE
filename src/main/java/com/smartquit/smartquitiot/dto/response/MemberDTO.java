@@ -22,7 +22,7 @@ public class MemberDTO {
     String avatarUrl;
     Gender gender;
     LocalDate dob;
-    int age;
+    Integer age;
     boolean isUsedFreeTrial;
     AccountDTO account;
 }
