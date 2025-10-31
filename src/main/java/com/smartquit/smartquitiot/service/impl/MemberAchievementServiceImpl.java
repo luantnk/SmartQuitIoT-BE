@@ -167,10 +167,54 @@ public class MemberAchievementServiceImpl implements MemberAchievementService {
             dto.setMemberName(memberAchievements.get(0).getMember().getFirstName() + " " + memberAchievements.get(0).getMember().getLastName());
             dto.setTotalAchievements(total);
             dto.setAchievements(achievements);
+            dto.setAvatar_url(memberAchievements.get(0).getMember().getAvatarUrl());
 
             result.add(dto);
         }
         return result;
+    }
+
+    @Override
+    public List<AchievementDTO> getMyAchievementsAtHome() {
+
+        Account account = accountService.getAuthenticatedAccount();
+
+        List<MemberAchievement> memberAchievements = memberAchievementRepository
+                .getMemberAchievementsByMember_IdOrderByAchievedAt(account.getMember().getId());
+
+
+        List<Achievement> allAchievements = achievementRepository.findAll();
+
+        Map<Integer, MemberAchievement> ownedById = new HashMap<>();
+        for (MemberAchievement ma : memberAchievements) {
+            ownedById.put(ma.getAchievement().getId(), ma);
+        }
+
+        List<AchievementDTO> result = new ArrayList<>();
+        for (Achievement a : allAchievements) {
+            AchievementDTO dto = new AchievementDTO();
+            dto.setId(a.getId());
+            dto.setName(a.getName());
+            dto.setDescription(a.getDescription());
+            dto.setIcon(a.getIcon());
+            dto.setType(a.getType().name());
+
+            MemberAchievement hit = ownedById.get(a.getId());
+            if (hit != null) {
+                dto.setUnlocked(true);
+                dto.setAchievedAt(hit.getAchievedAt());
+            } else {
+                dto.setUnlocked(false);
+                dto.setAchievedAt(null);
+            }
+            result.add(dto);
+        }
+        result.sort(Comparator.comparing(AchievementDTO::isUnlocked).reversed()
+                .thenComparing(AchievementDTO::getAchievedAt, Comparator.nullsLast(Comparator.reverseOrder())));
+
+        return result.stream()
+                .limit(4)
+                .collect(Collectors.toList());
     }
 
 

@@ -14,6 +14,7 @@ import java.util.List;
 public class TopMemberAchievementDTO {
     private int memberId;
     private String memberName;
+    private String avatar_url;
     private long totalAchievements;
     private List<AchievementDTO> achievements;
 }

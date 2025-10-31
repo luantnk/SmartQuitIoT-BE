@@ -155,7 +155,7 @@ public class PhaseServiceImpl implements PhaseService {
                     .getDurationDay());
             phase.setReason(dto.getReason());
             phase.setQuitPlan(quitPlan);
-            if(quitPlan.getStartDate().equals(LocalDate.now())){
+            if(phase.getStartDate().equals(LocalDate.now())){
                 phase.setStatus(PhaseStatus.IN_PROGRESS);
             }else{
                 phase.setStatus(PhaseStatus.CREATED);

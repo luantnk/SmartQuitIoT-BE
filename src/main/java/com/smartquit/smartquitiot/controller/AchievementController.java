@@ -43,6 +43,13 @@ public class AchievementController {
       return ResponseEntity.ok(memberAchievementService.getAllMyAchievements());
     }
 
+    @GetMapping("/my-achievements-at-home")
+    @PreAuthorize("hasAnyRole('ADMIN','MEMBER','COACH')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "This end point for get 4 my achievements of Owner ")
+    public ResponseEntity<List<AchievementDTO>> getAll4Achievement(){
+        return ResponseEntity.ok(memberAchievementService.getMyAchievementsAtHome());
+    }
     @GetMapping("/top-leader-boards")
     @PreAuthorize("hasAnyRole('ADMIN','MEMBER','COACH')")
     @SecurityRequirement(name = "Bearer Authentication")

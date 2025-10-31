@@ -13,4 +13,6 @@ public interface MemberAchievementService {
     Optional<Achievement> addMemberAchievement(AddAchievementRequest request);
     List<AchievementDTO> getAllMyAchievements();
     List<TopMemberAchievementDTO> getTop10MembersWithAchievements();
+    List<AchievementDTO> getMyAchievementsAtHome();
+
 }
