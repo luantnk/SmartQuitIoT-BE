@@ -22,12 +22,12 @@ public class Metric {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
 
-    int streaks;
+    int streaks = 0;
     int relapseCountInPhase = 0;
-    int post_count;
-    int comment_count;
-    int total_mission_completed;
-    int completed_all_mission_in_day;
+    int post_count = 0;
+    int comment_count = 0;
+    int total_mission_completed = 0;
+    int completed_all_mission_in_day = 0;
 
     //avg metrics
     double avgCravingLevel;
