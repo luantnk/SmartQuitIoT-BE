@@ -162,7 +162,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return accountRepository.save(newAccount);
     }
 
-    private String generateAccessToken(Account account) {
+   /* private String generateAccessToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                 .subject(account.getEmail())
@@ -175,7 +175,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .claim("memberId", account.getMember().getId())
                 .build();
         return createSignedJWT(header, claimsSet, secretKey);
-    }
+    }*/
+   private String generateAccessToken(Account account) {
+       JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+
+       JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
+               .subject(account.getEmail())
+               .issuer("SmartQuitIoT")
+               .issueTime(new Date())
+               .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.MINUTES).toEpochMilli()))
+               .claim("scope", account.getRole() != null ? account.getRole().name() : Role.MEMBER.name())
+               .claim("username", account.getUsername())
+               .claim("accountId", account.getId());
+
+       // Nếu account có liên kết Member thì thêm memberId vào claim
+       if (account.getMember() != null) {
+           claimsBuilder.claim("memberId", account.getMember().getId());
+       } else {
+       }
+
+       JWTClaimsSet claimsSet = claimsBuilder.build();
+       return createSignedJWT(header, claimsSet, secretKey);
+   }
+
 
     private String generateRefreshToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
