@@ -161,4 +161,30 @@ public class AppointmentController {
             return ResponseEntity.status(500).body(GlobalResponse.error("Error when creating token: " + e.getMessage(), 500));
         }
     }
+    @GetMapping("/remaining")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member: Lấy số lần đặt hẹn còn lại trong kỳ subscription hiện tại",
+            description = "Trả số lượt được phép, đã dùng và còn lại. Dựa theo subscription active (startDate..endDate).")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> getRemainingBookings(
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
+        }
+        int memberAccountId = accountIdNum.intValue();
+
+        try {
+            var dto = appointmentService.getRemainingBookingsForMember(memberAccountId);
+            return ResponseEntity.ok(GlobalResponse.ok("Remaining bookings fetched", dto));
+        } catch (IllegalArgumentException e) {
+            // lỗi do input / không tìm thấy member -> trả 400 (bad request)
+            return ResponseEntity.status(400).body(GlobalResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            // lỗi server khác
+            return ResponseEntity.status(500).body(GlobalResponse.error("Error when fetching remaining bookings: " + e.getMessage(), 500));
+        }
+    }
+
 }
