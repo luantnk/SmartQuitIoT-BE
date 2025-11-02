@@ -1,0 +1,75 @@
+
+package com.smartquit.smartquitiot.service.impl;
+import com.smartquit.smartquitiot.dto.request.FeedbackRequest;
+import com.smartquit.smartquitiot.entity.Appointment;
+import com.smartquit.smartquitiot.entity.Coach;
+import com.smartquit.smartquitiot.entity.Feedback;
+import com.smartquit.smartquitiot.repository.AppointmentRepository;
+import com.smartquit.smartquitiot.repository.CoachRepository;
+import com.smartquit.smartquitiot.repository.FeedbackRepository;
+import com.smartquit.smartquitiot.service.FeedbackService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+public class FeedbackServiceImpl implements FeedbackService {
+
+    private final FeedbackRepository feedbackRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final CoachRepository coachRepository;
+
+    @Override
+    @Transactional
+    public void createFeedback(int appointmentId, int memberAccountId, FeedbackRequest request) {
+        if (feedbackRepository.existsByAppointment_Id(appointmentId)) {
+            throw new IllegalStateException("Feedback already exists for this appointment");
+        }
+
+        Appointment appt = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        if (appt.getMember() == null || appt.getMember().getAccount() == null) {
+            throw new IllegalStateException("Appointment has no member/account");
+        }
+
+        final int ownerAccountId = appt.getMember().getAccount().getId();
+        if (ownerAccountId != memberAccountId) {
+            throw new SecurityException("Member not authorized to give feedback for this appointment");
+        }
+
+        // Only allow feedback after appointment is COMPLETED
+        if (appt.getAppointmentStatus() == null || !appt.getAppointmentStatus().name().equalsIgnoreCase("COMPLETED")) {
+            throw new IllegalStateException("Can only submit feedback for completed appointments");
+        }
+
+        // 3. create feedback
+        Feedback fb = new Feedback();
+        fb.setStar(request.getStar());
+        fb.setContent(request.getContent());
+        fb.setCreatedAt(LocalDateTime.now());
+        fb.setAppointment(appt);
+        fb.setMember(appt.getMember());
+        fb.setCoach(appt.getCoach());
+
+        feedbackRepository.save(fb);
+
+        // 4. update coach aggregates with lock
+        Coach coach = coachRepository.findByIdForUpdate(appt.getCoach().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Coach not found"));
+
+        final int oldCount = coach.getRatingCount();
+        final double oldAvg = coach.getRatingAvg();
+
+        final int newCount = oldCount + 1;
+        final double newAvg = ((oldAvg * oldCount) + request.getStar()) / (double) newCount;
+
+        coach.setRatingCount(newCount);
+        coach.setRatingAvg(newAvg);
+
+        coachRepository.save(coach);
+    }
+}
