@@ -3,9 +3,11 @@ package com.smartquit.smartquitiot.service.impl;
 import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
 import com.smartquit.smartquitiot.dto.response.AppointmentResponse;
 import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
+import com.smartquit.smartquitiot.dto.response.RemainingBookingResponse;
 import com.smartquit.smartquitiot.entity.Appointment;
 import com.smartquit.smartquitiot.entity.CoachWorkSchedule;
 import com.smartquit.smartquitiot.entity.Member;
+import com.smartquit.smartquitiot.entity.MembershipSubscription;
 import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.enums.CancelledBy;
 import com.smartquit.smartquitiot.enums.CoachWorkScheduleStatus;
@@ -13,17 +15,23 @@ import com.smartquit.smartquitiot.mapper.AppointmentMapper;
 import com.smartquit.smartquitiot.repository.AppointmentRepository;
 import com.smartquit.smartquitiot.repository.CoachWorkScheduleRepository;
 import com.smartquit.smartquitiot.repository.MemberRepository;
+import com.smartquit.smartquitiot.repository.MembershipSubscriptionRepository;
 import com.smartquit.smartquitiot.service.AgoraService;
 import com.smartquit.smartquitiot.service.AppointmentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+/**
+ * Service implementation cho Appointment.
+ * - Chú thích bằng tiếng Việt.
+ * - Các thông báo lỗi / exception messages bằng tiếng Anh (theo yêu cầu).
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -33,88 +41,112 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final MemberRepository memberRepository;
     private final AppointmentMapper appointmentMapper;
     private final AgoraService agoraService;
+    private final MembershipSubscriptionRepository membershipSubscriptionRepository; // NEW
 
+    private static final int BOOKINGS_PER_30D = 4;
+
+    /**
+     * Member đặt lịch hẹn với coach.
+     * - Trước khi book sẽ kiểm tra member còn lượt trong subscription hiện tại không.
+     */
     @Override
     @Transactional
     public AppointmentResponse bookAppointment(int accountId, AppointmentRequest request) {
 
+        // tìm member theo accountId
         Member member = memberRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Member không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         var memberId = member.getId();
         var date = request.getDate();
         var coachId = request.getCoachId();
         var slotId = request.getSlotId();
 
+        // --- CHECK 1: kiểm tra còn lượt booking hay không (dựa trên subscription active)
+        RemainingBookingResponse remaining = getRemainingBookingsForMember(accountId);
+        if (remaining == null) {
+            throw new IllegalStateException("No active subscription");
+        }
+        if (remaining.getRemaining() <= 0) {
+            throw new IllegalStateException("No remaining booking available in your subscription period");
+        }
+
         // Kiểm tra slot đã được đặt chưa (by coachId, slotId, date, miễn không phải cancel)
         if (appointmentRepository.existsActiveByCoachSlotDate(coachId, slotId, date)) {
-            throw new IllegalStateException("Slot này đã được đặt trước đó!");
+            throw new IllegalStateException("This slot has already been booked");
         }
 
         // Kiểm tra slot có trong lịch làm việc không
         CoachWorkSchedule cws = coachWorkScheduleRepository
                 .findByCoachIdAndDateAndSlotIdForUpdate(coachId, date, slotId)
-                .orElseThrow(() -> new IllegalArgumentException("Coach không có slot này trong lịch làm việc!"));
+                .orElseThrow(() -> new IllegalArgumentException("Coach does not have this slot in schedule"));
 
         if (cws.getStatus() != CoachWorkScheduleStatus.AVAILABLE) {
-            throw new IllegalStateException("Slot này hiện không khả dụng!");
+            throw new IllegalStateException("This slot is not available");
         }
 
         // Cập nhật trạng thái CWS sang BOOKED
         cws.setStatus(CoachWorkScheduleStatus.BOOKED);
         coachWorkScheduleRepository.save(cws);
 
-        // Tạo appointment mới, cập nhật appointment sang PENDING
+        // Tạo appointment mới, trạng thái PENDING
         Appointment appointment = new Appointment();
         appointment.setAppointmentStatus(AppointmentStatus.PENDING);
         appointment.setCoach(cws.getCoach());
         appointment.setMember(member);
         appointment.setDate(cws.getDate());
-        appointment.setName("Cuộc hẹn với coach " + cws.getCoach().getLastName());
+        appointment.setName("Appointment with coach " + (cws.getCoach().getLastName() != null ? cws.getCoach().getLastName() : ""));
         appointment.setCoachWorkSchedule(cws);
         appointmentRepository.save(appointment);
 
-        log.info("Member(accountId={}) (memberId={}) đã đặt slot {} với coach {} vào ngày {}",
+        log.info("Member(accountId={}) (memberId={}) booked slot {} with coach {} on date {}",
                 accountId, memberId, slotId, coachId, date);
 
         return appointmentMapper.toResponse(appointment);
     }
 
+
+    /**
+     * Member huỷ appointment.
+     * Quy tắc: member cancel -> appointment still counts as used (policy).
+     * Thời hạn huỷ: member phải huỷ trước 5 phút so với bắt đầu slot.
+     */
     @Override
     @Transactional
     public void cancelAppointment(int appointmentId, int accountId) {
-        // ktra appointment
+        // kiểm tra appointment
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Appointment không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
 
-        // ktra account
+        // kiểm tra member account
         Member member = memberRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Member không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         if (appointment.getMember() == null || appointment.getMember().getId() != member.getId()) {
-            throw new SecurityException("Bạn không có quyền huỷ lịch này");
+            throw new SecurityException("You do not have permission to cancel this appointment");
         }
 
-        // nếu đã bị huỷ rồi thì return
+        // nếu đã bị huỷ rồi thì idempotent return
         if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
-            log.info("Appointment {} đã ở trạng thái CANCELLED trước đó", appointmentId);
+            log.info("Appointment {} already in CANCELLED state", appointmentId);
             return;
         }
-
 
         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
 
         CoachWorkSchedule linkedCws = appointment.getCoachWorkSchedule();
         CoachWorkSchedule cwsForTime = linkedCws;
-        if (cwsForTime == null && appointment.getCoach() != null && appointment.getCoachWorkSchedule().getSlot() == null) {
+        if (cwsForTime == null && appointment.getCoach() != null && appointment.getCoachWorkSchedule() != null) {
+            // fallback: try fetch by coach/date/slot
             cwsForTime = coachWorkScheduleRepository.findByCoachIdAndDateAndSlotIdForUpdate(
-                    appointment.getCoach().getId(), appointment.getDate(),
+                    appointment.getCoach().getId(),
+                    appointment.getDate(),
                     appointment.getCoachWorkSchedule().getSlot() != null ? appointment.getCoachWorkSchedule().getSlot().getId() : -1
             ).orElse(null);
         }
 
         if (cwsForTime == null || cwsForTime.getSlot() == null) {
-            throw new IllegalStateException("Không thể xác định thông tin slot để kiểm tra thời hạn huỷ");
+            throw new IllegalStateException("Cannot determine slot information to validate cancellation window");
         }
 
         LocalDate apDate = appointment.getDate();
@@ -124,7 +156,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         ZonedDateTime memberLimit = startZ.minusMinutes(5);
 
         if (!nowZ.isBefore(memberLimit)) {
-            throw new IllegalStateException("Quá muộn để huỷ. Member phải huỷ trước 5 phút so với giờ bắt đầu slot.");
+            throw new IllegalStateException("Too late to cancel. Member must cancel at least 5 minutes before slot start");
         }
 
         if (linkedCws != null && linkedCws.getSlot() != null) {
@@ -139,11 +171,10 @@ public class AppointmentServiceImpl implements AppointmentService {
                 stored.setStatus(CoachWorkScheduleStatus.AVAILABLE);
                 coachWorkScheduleRepository.save(stored);
             } else {
-                // fallback: log and skip merge to avoid stale-merge issues
                 log.warn("CWS not found by forUpdate for appointment {} — fallback skipped", appointmentId);
             }
         } else {
-            log.warn("Appointment {} không có CoachWorkSchedule liên kết khi member cancel", appointmentId);
+            log.warn("Appointment {} has no linked CoachWorkSchedule when member cancels", appointmentId);
         }
 
         appointment.setAppointmentStatus(AppointmentStatus.CANCELLED);
@@ -152,10 +183,14 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointmentRepository.save(appointment);
 
-        log.info("Member(accountId={}) đã huỷ appointment {}", accountId, appointmentId);
+        log.info("Member(accountId={}) cancelled appointment {}", accountId, appointmentId);
     }
 
-
+    /**
+     * Coach huỷ appointment của họ.
+     * Quy tắc: coach cancel -> appointment refunded (không tính là used)
+     * Coach phải huỷ ít nhất 30 phút trước slot start.
+     */
     @Override
     @Transactional
     public void cancelAppointmentByCoach(int appointmentId, int coachAccountId) {
@@ -170,17 +205,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         // Idempotent
         if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
-            log.info("Appointment {} đã ở trạng thái CANCELLED trước đó (coach cancel)", appointmentId);
+            log.info("Appointment {} already in CANCELLED state (coach cancel)", appointmentId);
             return;
         }
 
         CoachWorkSchedule linkedCws = appointment.getCoachWorkSchedule();
         if (linkedCws == null || linkedCws.getSlot() == null) {
-            // Không có dữ liệu CWS/Slot -> không thể kiểm tra thời hạn huỷ an toàn
             throw new IllegalStateException("Cannot determine slot information to validate cancellation window");
         }
 
-        // TIME CHECK: coach must cancel at least 30 minutes before slot start
         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
         LocalDate apDate = appointment.getDate();
         LocalTime startTime = linkedCws.getSlot().getStartTime();
@@ -189,7 +222,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         ZonedDateTime coachLimit = startZ.minusMinutes(30);
 
         if (!nowZ.isBefore(coachLimit)) {
-            throw new IllegalStateException("Too late to cancel. Coach must cancel at least 30 minutes before slot start.");
+            throw new IllegalStateException("Too late to cancel. Coach must cancel at least 30 minutes before slot start");
         }
 
         CoachWorkSchedule stored = coachWorkScheduleRepository
@@ -203,7 +236,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             stored.setStatus(CoachWorkScheduleStatus.UNAVAILABLE);
             coachWorkScheduleRepository.save(stored);
         } else {
-            log.warn("Không tìm thấy CWS bằng forUpdate cho appointment {} — dùng linkedCws để cập nhật", appointmentId);
+            log.warn("CWS not found by forUpdate for appointment {} — using linkedCws", appointmentId);
             linkedCws.setStatus(CoachWorkScheduleStatus.UNAVAILABLE);
             coachWorkScheduleRepository.save(linkedCws);
         }
@@ -214,9 +247,12 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         appointmentRepository.save(appointment);
 
-        log.info("Coach(accountId={}) đã huỷ appointment {} — slot mark UNAVAILABLE", coachAccountId, appointmentId);
+        log.info("Coach(accountId={}) cancelled appointment {} — slot marked UNAVAILABLE", coachAccountId, appointmentId);
     }
 
+    /**
+     * Lấy danh sách appointment cho member theo filter; kèm runtime status tính từ slot.
+     */
     @Override
     public List<AppointmentResponse> getAppointmentsByMemberAccountId(int memberAccountId,
                                                                       String statusFilter,
@@ -228,7 +264,6 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         int memberId = member.getId();
-
 
         List<Appointment> all = appointmentRepository.findAllByMemberId(memberId);
 
@@ -271,7 +306,6 @@ public class AppointmentServiceImpl implements AppointmentService {
                         runtimeStatus = (cws != null && cws.getSlot() != null) ? calculateRuntimeStatus(cws) : "UNKNOWN";
                     }
 
-                    // mapper now maps member info as well
                     return appointmentMapper.toResponseWithRuntime(a, runtimeStatus);
                 })
                 .toList();
@@ -284,6 +318,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         return converted.subList(from, to);
     }
 
+    /**
+     * Lấy danh sách appointment cho coach theo filter; kèm runtime status và thông tin member.
+     */
     @Override
     public List<AppointmentResponse> getAppointmentsByCoachAccountId(int coachAccountId,
                                                                      String statusFilter,
@@ -291,7 +328,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                                                                      int page,
                                                                      int size) {
 
-        // fetch appointments by coach's account id (controller passes accountId)
+        // fetch appointments by coach's account id
         List<Appointment> all = appointmentRepository.findAllByCoachAccountId(coachAccountId);
 
         AppointmentStatus parsedStatus = null;
@@ -317,7 +354,6 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         var converted = all.stream()
                 .filter(a -> {
-                    // already guaranteed a.coach.account.id == coachAccountId by query, but extra safety:
                     if (a.getCoach() == null || a.getCoach().getAccount() == null) return false;
                     if (a.getCoach().getAccount().getId() != coachAccountId) return false;
                     if (statusFinal != null && a.getAppointmentStatus() != statusFinal) return false;
@@ -325,7 +361,6 @@ public class AppointmentServiceImpl implements AppointmentService {
                     return true;
                 })
                 .map(a -> {
-                    // runtimeStatus: CANCELLED explicit, else compute from cws
                     String runtimeStatus;
                     if (a.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
                         runtimeStatus = "CANCELLED";
@@ -336,7 +371,6 @@ public class AppointmentServiceImpl implements AppointmentService {
 
                     AppointmentResponse resp = appointmentMapper.toResponseWithRuntime(a, runtimeStatus);
 
-                    // set member info so coach can see who booked
                     if (a.getMember() != null) {
                         resp.setMemberId(a.getMember().getId());
                         String mf = a.getMember().getFirstName() != null ? a.getMember().getFirstName() : "";
@@ -348,7 +382,6 @@ public class AppointmentServiceImpl implements AppointmentService {
                 })
                 .toList();
 
-        // pagination
         if (page < 0) page = 0;
         if (size <= 0) size = 10;
         int from = page * size;
@@ -357,7 +390,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         return converted.subList(from, to);
     }
 
-
+    /**
+     * Tính runtime status dựa trên CoachWorkSchedule slot times.
+     */
     private String calculateRuntimeStatus(CoachWorkSchedule cws) {
         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -381,12 +416,15 @@ public class AppointmentServiceImpl implements AppointmentService {
             return "COMPLETED";
         }
     }
+
+    /**
+     * Lấy chi tiết appointment cho caller (member hoặc coach) sau khi kiểm tra quyền.
+     */
     @Override
     public AppointmentResponse getAppointmentDetailForPrincipal(int appointmentId, int accountId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
 
-        // accountId phải có (controller của em truyền accountId từ token)
         if (accountId <= 0) {
             throw new IllegalArgumentException("accountId missing from token — cannot verify ownership");
         }
@@ -403,8 +441,6 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new SecurityException("You do not have permission to view this appointment");
         }
 
-        // runtime status: nếu appointment đã bị CANCELLED thì trả "CANCELLED",
-        // còn không thì tính theo slot (PENDING/IN_PROGRESS/COMPLETED) hoặc UNKNOWN
         String runtimeStatus;
         if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
             runtimeStatus = "CANCELLED";
@@ -415,7 +451,6 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         AppointmentResponse resp = appointmentMapper.toResponseWithRuntime(appointment, runtimeStatus);
 
-        // bổ sung thông tin member cho response (coach cần biết ai book)
         if (appointment.getMember() != null) {
             resp.setMemberId(appointment.getMember().getId());
             String mf = appointment.getMember().getFirstName() != null ? appointment.getMember().getFirstName() : "";
@@ -426,7 +461,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         return resp;
     }
 
-
+    /**
+     * Tạo join token (Agora) cho appointment, kiểm tra quyền và join window.
+     */
     @Override
     @Transactional
     public JoinTokenResponse generateJoinTokenForAppointment(int appointmentId, int accountId) {
@@ -445,15 +482,13 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new SecurityException("You do not have permission to join this meeting");
         }
 
-        // Reject cancelled appointments
         if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException("Appointment is cancelled.");
+            throw new IllegalStateException("Appointment is cancelled");
         }
 
-        // Resolve slot via CoachWorkSchedule
         CoachWorkSchedule cws = appointment.getCoachWorkSchedule();
         if (cws == null || cws.getSlot() == null) {
-            throw new IllegalStateException("Cannot determine slot information for this appointment.");
+            throw new IllegalStateException("Cannot determine slot information for this appointment");
         }
 
         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -461,7 +496,6 @@ public class AppointmentServiceImpl implements AppointmentService {
         LocalTime start = cws.getSlot().getStartTime();
         LocalTime end = cws.getSlot().getEndTime();
 
-        // compute window using ZonedDateTime
         ZonedDateTime windowStartZ = LocalDateTime.of(apDate, start).minusMinutes(5).atZone(zone);
         ZonedDateTime windowEndZ   = LocalDateTime.of(apDate, end).plusMinutes(5).atZone(zone);
         ZonedDateTime nowZ = ZonedDateTime.now(zone);
@@ -470,10 +504,9 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new IllegalStateException("Too early to join. Join window starts at: " + windowStartZ.toString());
         }
         if (nowZ.isAfter(windowEndZ)) {
-            throw new IllegalStateException("Join window has already closed.");
+            throw new IllegalStateException("Join window has already closed");
         }
 
-        // compute ttl in seconds (from now -> window end)
         long rawTtlSeconds = Duration.between(Instant.now(), windowEndZ.toInstant()).getSeconds();
         long ttlSeconds = Math.max(30, rawTtlSeconds);
 
@@ -484,17 +517,65 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         String channel = "appointment_" + appointmentId;
 
-        // Generate a per-connection uid
-        int randomUid = java.util.concurrent.ThreadLocalRandom.current().nextInt(100_000, 2_000_000_000);
+        int randomUid = java.util.concurrent.ThreadLocalRandom.current().nextInt(100_000, 2_000_000);
 
-        log.info("Tạo join token cho appointment={} bởi accountId={} (ttl={}s) -> uid={}", appointmentId, accountId, ttlInt, randomUid);
+        log.info("Creating join token for appointment={} by accountId={} (ttl={}s) -> uid={}", appointmentId, accountId, ttlInt, randomUid);
 
-        // generate token for that uid
         String token = agoraService.generateRtcToken(channel, randomUid, ttlInt);
         long expiresAt = Instant.now().getEpochSecond() + ttlInt;
 
         return new JoinTokenResponse(channel, token, randomUid, expiresAt, ttlInt);
     }
 
+    /**
+     * Lấy số lượt đặt hẹn còn lại cho member dựa trên subscription active hiện tại.
+     * - allowed = floor((days_in_period * 4) / 30)
+     * - used = count appointment where:
+     *      appointment.date BETWEEN start..end AND
+     *      (appointmentStatus <> CANCELLED OR cancelledBy = MEMBER)
+     * - remaining = max(0, allowed - used)
+     *
+     */
+    @Override
+    public RemainingBookingResponse getRemainingBookingsForMember(int memberAccountId) {
+        Member member = memberRepository.findByAccountId(memberAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
+        int memberId = member.getId();
+
+        LocalDate today = LocalDate.now();
+
+        var subOpt = membershipSubscriptionRepository.findActiveByMemberId(memberId, today);
+        if (subOpt.isEmpty()) {
+            return RemainingBookingResponse.builder()
+                    .allowed(0)
+                    .used(0)
+                    .remaining(0)
+                    .periodStart(null)
+                    .periodEnd(null)
+                    .note("No active subscription")
+                    .build();
+        }
+
+        MembershipSubscription sub = subOpt.get();
+        LocalDate start = sub.getStartDate();
+        LocalDate end = sub.getEndDate();
+
+        long days = ChronoUnit.DAYS.between(start, end) + 1;
+        int allowed = (int) Math.floor((days * BOOKINGS_PER_30D) / 30.0);
+
+        long usedLong = appointmentRepository.countActiveByMemberIdAndDateBetween(memberId, start, end);
+        int used = (int) Math.min(usedLong, Integer.MAX_VALUE);
+
+        int remaining = Math.max(0, allowed - used);
+
+        return RemainingBookingResponse.builder()
+                .allowed(allowed)
+                .used(used)
+                .remaining(remaining)
+                .periodStart(start)
+                .periodEnd(end)
+                .note("Counting non-cancelled appointments and member-cancelled appointments as used; coach-cancelled appointments are refunded.")
+                .build();
+    }
 }

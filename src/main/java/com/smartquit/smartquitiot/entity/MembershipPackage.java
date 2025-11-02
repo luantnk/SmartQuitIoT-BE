@@ -24,11 +24,12 @@ public class MembershipPackage {
     long price;
 
     @Enumerated(EnumType.STRING)
-    MembershipPackageType type;
+    MembershipPackageType type; //TRIAL, STANDARD, PREMIUM
 
     int duration;
-    @Enumerated(EnumType.STRING)
-    DurationUnit durationUnit;
-    List<String> features;
 
+    @Enumerated(EnumType.STRING)
+    DurationUnit durationUnit; //DAY, MONTH
+
+    List<String> features;
 }

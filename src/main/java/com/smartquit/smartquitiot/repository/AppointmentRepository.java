@@ -40,4 +40,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             "LEFT JOIN FETCH a.member m " +
             "WHERE c.account.id = :accountId")
     List<Appointment> findAllByCoachAccountId(@Param("accountId") int accountId);
+
+    /**
+     * appointment.date được dùng để so sánh với subscription period.
+     */
+    @Query("SELECT COUNT(a) FROM Appointment a " +
+            "WHERE a.member.id = :memberId " +
+            "  AND a.date BETWEEN :start AND :end " +
+            "  AND ( a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED " +
+            "        OR a.cancelledBy = com.smartquit.smartquitiot.enums.CancelledBy.MEMBER )")
+    long countActiveByMemberIdAndDateBetween(@Param("memberId") int memberId,
+                                             @Param("start") LocalDate start,
+                                             @Param("end") LocalDate end);
 }

@@ -21,7 +21,7 @@ public class MembershipSubscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
     @Enumerated(EnumType.STRING)
-    MembershipSubscriptionStatus status;
+    MembershipSubscriptionStatus status; //PENDING, AVAILABLE, UNAVAILABLE, EXPIRED
     LocalDate startDate;
     LocalDate endDate;
     long orderCode;
