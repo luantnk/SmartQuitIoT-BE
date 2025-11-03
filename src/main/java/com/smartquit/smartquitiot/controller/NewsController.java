@@ -46,4 +46,11 @@ public class NewsController {
         return ResponseEntity.ok(GlobalResponse.ok(newsService.createNews(request)));
 
     }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get news detail by id")
+    public ResponseEntity<GlobalResponse<NewsDTO>> getNewsDetail(@PathVariable int id) {
+        NewsDTO news = newsService.getNewsDetail(id);
+        return ResponseEntity.ok(GlobalResponse.ok(news));
+    }
 }

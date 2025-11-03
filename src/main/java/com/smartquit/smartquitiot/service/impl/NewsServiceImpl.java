@@ -44,6 +44,14 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    public NewsDTO getNewsDetail(int id) {
+        News news = newsRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("News not found with id: " + id));
+        return newsMapper.toNewsDTO(news);
+    }
+
+
+    @Override
     public NewsDTO createNews(CreateNewsRequest createNewsRequest) {
         News news = new News();
         news.setTitle(createNewsRequest.getTitle());

@@ -26,6 +26,8 @@ public class News {
     @Enumerated(EnumType.STRING)
     NewsStatus status;
 
+    String thumbnailUrl;
+
     @CreationTimestamp
     LocalDateTime createdAt;
 

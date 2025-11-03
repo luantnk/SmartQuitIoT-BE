@@ -11,5 +11,6 @@ public interface NewsService {
 
     List<NewsDTO> getAllNews(String query);
 
+    NewsDTO getNewsDetail(int id);
     NewsDTO createNews(CreateNewsRequest createNewsRequest);
 }
