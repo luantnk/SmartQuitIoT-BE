@@ -46,10 +46,7 @@ public class Metric {
     int steps;
     int heartRate;
     int spo2;
-    int activityMinutes;
-    int respiratoryRate;
     double sleepDuration;
-    int sleepQuality;
 
     //money metrics
     BigDecimal annualSaved;

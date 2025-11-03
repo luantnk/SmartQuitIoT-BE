@@ -47,13 +47,6 @@ public class DiaryRecordRequest {
     @Max(value = 100, message = "Invalid spo2 level")
     @Min(value = 0, message = "Invalid spo2 level")
     Integer spo2;
-    @Min(value = 0, message = "Invalid activity minutes")
-    Integer activityMinutes;
-    @Min(value = 0, message = "Invalid respiratory rate")
-    Integer respiratoryRate;
     @Min(value = 0, message = "Invalid sleep duration")
     Double sleepDuration;
-    @Max(value = 100, message = "Invalid sleep quality")
-    @Min(value = 0, message = "Invalid sleep quality")
-    Integer sleepQuality;
 }

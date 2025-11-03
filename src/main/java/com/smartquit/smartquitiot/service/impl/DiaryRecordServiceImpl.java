@@ -3,9 +3,10 @@ package com.smartquit.smartquitiot.service.impl;
 import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.DiaryRecordRequest;
 import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
-import com.smartquit.smartquitiot.dto.response.NotificationDTO;
+import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.HealthRecoveryDataName;
+import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.DiaryRecordMapper;
 import com.smartquit.smartquitiot.repository.DiaryRecordRepository;
 import com.smartquit.smartquitiot.repository.HealthRecoveryRepository;
@@ -17,7 +18,6 @@ import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +42,8 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
 
     private final int PULSE_RATE_TO_NORMAL = 20; //minutes
     private final int OXYGEN_LEVEL_TO_NORMAL = 480; //minutes => 8 hours
-    private final int CARBON_MONOXIDE_TO_NORMAL = 720;; //minutes => 12 hours
+    private final int CARBON_MONOXIDE_TO_NORMAL = 720;
+    ; //minutes => 12 hours
     private final int TASTE_AND_SMELL_IMPROVEMENT = 1440; //minutes => 1 day
     private final int NICOTINE_EXPELLED_FROM_BODY = 4320; //minutes => 3 days
     private final int CIRCULATION_AND_LUNG_FUNCTION = 20160; //minutes => 14 days
@@ -56,30 +57,41 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
 
     @Transactional
     @Override
-    public DiaryRecordDTO logDiaryRecord(DiaryRecordRequest request) {
+    public GlobalResponse<DiaryRecordDTO> logDiaryRecord(DiaryRecordRequest request) {
         Member member = memberService.getAuthenticatedMember();
         QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
+        FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
+        boolean isOnPlan = currentQuitPlan.getStatus().equals(QuitPlanStatus.IN_PROGRESS) && request.getDate().isAfter(currentQuitPlan.getStartDate());
         Optional<DiaryRecord> isExistingTodayRecord = diaryRecordRepository.findByDateAndMemberId(request.getDate(), member.getId());
         if (isExistingTodayRecord.isPresent()) {
             throw new RuntimeException("You have been enter today record");
         }
 
-        if(request.getDate().isAfter(LocalDate.now())){
+        if (request.getDate().isAfter(LocalDate.now())) {
             throw new RuntimeException("You can not enter record in the future day");
         }
         LocalDate startDate = currentQuitPlan.getStartDate();
-        LocalDate currentDate = request.getDate();
-        if(currentDate.isBefore(startDate)) {
-            throw new RuntimeException("Invalid diary date");
-        }
-
-        FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
+        LocalDate recordDate = request.getDate();
         //money member spent for cigarettes package
         BigDecimal moneyPerPackage = currentFormMetric.getMoneyPerPackage();
-        int cigarettesPerPackage  = currentFormMetric.getCigarettesPerPackage();
+        int cigarettesPerPackage = currentFormMetric.getCigarettesPerPackage();
         //baseline smoked per day
         int smokeAvgPerDay = currentFormMetric.getSmokeAvgPerDay();
         double _avgDayToSmokeAll = (double) cigarettesPerPackage / smokeAvgPerDay;
+        //calculate money saved on plan
+        long dayBetween = 0;
+        var pricePerCigarettes = BigDecimal.ZERO;
+        var moneyForSmokedPerDay = BigDecimal.ZERO;
+        var currentMoneySaved = BigDecimal.ZERO;
+        double reductionPercentage = 0.0;
+
+        if (recordDate.isAfter(startDate)) {
+            dayBetween = ChronoUnit.DAYS.between(startDate, recordDate);
+            pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
+            moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
+            currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
+            reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) / smokeAvgPerDay) * 100.0;
+        }
         //Number of consumption day
         int avgDayToSmokeAll = (int) Math.ceil(_avgDayToSmokeAll);
         Calendar cal = Calendar.getInstance();
@@ -88,13 +100,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         BigDecimal packagesOfYear = BigDecimal.valueOf(numOfDays / avgDayToSmokeAll);
         //Money will be spent in a year
         BigDecimal annualSaved = packagesOfYear.multiply(moneyPerPackage);
-        //calculate money saved on plan
-        long dayBetween = ChronoUnit.DAYS.between(startDate, currentDate);
-        var pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
-        var moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
-        var currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
-
-        double reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) /smokeAvgPerDay) * 100.0;
 
         BigDecimal amountNicotinePerCigarettesOfMemberForm = currentFormMetric.getAmountOfNicotinePerCigarettes();
         BigDecimal estimateNicotineIntake = amountNicotinePerCigarettesOfMemberForm.multiply(BigDecimal.valueOf(request.getCigarettesSmoked()));
@@ -104,7 +109,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         diaryRecord.setHaveSmoked(request.getHaveSmoked());
         //sau này sẽ xử lí nếu hút trong quá trình cai thuốc sau
         diaryRecord.setCigarettesSmoked(request.getCigarettesSmoked());
-        if(!request.getTriggers().isEmpty()){
+        if (!request.getTriggers().isEmpty()) {
             diaryRecord.setTriggers(request.getTriggers());
         }
         diaryRecord.setUseNrt(request.getIsUseNrt());
@@ -117,95 +122,68 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         diaryRecord.setEstimatedNicotineIntake(estimateNicotineIntake);
         diaryRecord.setConnectIoTDevice(request.getIsConnectIoTDevice());
         diaryRecord.setReductionPercentage(reductionPercentage);
-        if(request.getIsConnectIoTDevice()){
+        if (request.getIsConnectIoTDevice()) {
             diaryRecord.setSteps(request.getSteps());
             diaryRecord.setHeartRate(request.getHeartRate());
             diaryRecord.setSpo2(request.getSpo2());
-            diaryRecord.setActivityMinutes(request.getActivityMinutes());
-            diaryRecord.setRespiratoryRate(request.getRespiratoryRate());
             diaryRecord.setSleepDuration(request.getSleepDuration());
-            diaryRecord.setSleepQuality(request.getSleepQuality());
         }
         diaryRecord.setMember(member);
 
-        Metric metric = metricRepository.findByMemberId(member.getId()).orElseGet(
-                () -> {
-                    //init metric if this is the first time member log diary record.
-                    Metric newMetric = new Metric();
-                    newMetric.setMember(member);
-                    newMetric.setStreaks(1);
-                    newMetric.setRelapseCountInPhase(0);
-                    newMetric.setAvgCravingLevel(request.getCravingLevel());
-                    newMetric.setAvgMood(request.getMoodLevel());
-                    newMetric.setAvgAnxiety(request.getAnxietyLevel());
-                    newMetric.setAvgConfidentLevel(request.getConfidenceLevel());
-                    newMetric.setCurrentAnxietyLevel(request.getAnxietyLevel());
-                    newMetric.setCurrentCravingLevel(request.getCravingLevel());
-                    newMetric.setCurrentConfidenceLevel(request.getConfidenceLevel());
-                    newMetric.setCurrentMoodLevel(request.getMoodLevel());
-                    newMetric.setAnnualSaved(annualSaved);
-                    newMetric.setReductionPercentage(reductionPercentage);
-                    newMetric.setMoneySaved(currentMoneySaved.subtract(BigDecimal.valueOf(request.getMoneySpentOnNrt())).subtract(pricePerCigarettes.multiply(BigDecimal.valueOf(request.getCigarettesSmoked()))));
-                    newMetric.setSmokeFreeDayPercentage(request.getHaveSmoked() == true ? 0.0 : 100.0);
-                    newMetric.setAvgCigarettesPerDay(request.getCigarettesSmoked());
-                    if(request.getSteps() != null){
-                        newMetric.setSteps(request.getSteps());
-                    }
-                    if(request.getHeartRate() != null){
-                        newMetric.setHeartRate(request.getHeartRate());
-                    }
-                    if(request.getSpo2() != null){
-                        newMetric.setSpo2(request.getSpo2());
-                    }
-                    if(request.getActivityMinutes() != null){
-                        newMetric.setActivityMinutes(request.getActivityMinutes());
-                    }
-                    if(request.getRespiratoryRate() != null){
-                        newMetric.setRespiratoryRate(request.getRespiratoryRate());
-                    }
-                    if(request.getSleepDuration() != null){
-                        newMetric.setSleepDuration(request.getSleepDuration());
-                    }
-                    if(request.getSleepQuality() != null){
-                        newMetric.setSleepQuality(request.getSleepQuality());
-                    }
-
-                    return metricRepository.save(newMetric);
-                }
-        );
+        Metric metric = metricRepository.findByMemberId(member.getId()).orElseGet(() -> {
+            Metric newMetric = new Metric();
+            newMetric.setMember(member);
+            newMetric.setStreaks(0);
+            newMetric.setRelapseCountInPhase(0);
+            newMetric.setAvgCravingLevel(0.0);
+            newMetric.setAvgMood(0.0);
+            newMetric.setAvgAnxiety(0.0);
+            newMetric.setAvgConfidentLevel(0.0);
+            newMetric.setCurrentAnxietyLevel(0);
+            newMetric.setCurrentCravingLevel(0);
+            newMetric.setCurrentConfidenceLevel(0);
+            newMetric.setCurrentMoodLevel(0);
+            newMetric.setAnnualSaved(BigDecimal.ZERO);
+            newMetric.setReductionPercentage(0.0);
+            newMetric.setMoneySaved(BigDecimal.ZERO);
+            newMetric.setSmokeFreeDayPercentage(0.0);
+            newMetric.setAvgCigarettesPerDay(0.0);
+            metricRepository.save(newMetric);
+            return newMetric;
+        });
 
         int streaksCount = 1;
         Optional<DiaryRecord> previousDayRecord = diaryRecordRepository.findTopByMemberIdOrderByDateDesc(member.getId());
-        if(previousDayRecord.isPresent()){
+        if (previousDayRecord.isPresent()) {
             LocalDate date = previousDayRecord.get().getDate();
             LocalDate yesterday = request.getDate().minusDays(1);
             boolean isYesterday = date.isEqual(yesterday);
-            if(isYesterday && request.getHaveSmoked() == false){
-                streaksCount = metric.getStreaks() +1;
+            if (isYesterday && request.getHaveSmoked() == false) {
+                streaksCount = metric.getStreaks() + 1;
             }
         }
 
         int smokeFreeDaysCount = 0;
         int totalCigarettesInRecords = 0;
         List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
-        for(DiaryRecord record : records){
-            if(!record.isHaveSmoked()) {
+        for (DiaryRecord record : records) {
+            if (!record.isHaveSmoked()) {
                 //count only days member did not smoke
                 smokeFreeDaysCount += 1;
             }
             totalCigarettesInRecords += record.getCigarettesSmoked();
         }
         int count = records.size(); // number of member's diary records
-        double newAvgCravingLevel = metric.getAvgCravingLevel() + (request.getCravingLevel() - metric.getAvgCravingLevel()) / (count +1);
-        double newAvgMoodLevel = metric.getAvgMood() + (request.getMoodLevel() - metric.getAvgMood()) / (count +1);
-        double newAvgConfidenceLevel = metric.getAvgConfidentLevel() + (request.getConfidenceLevel() - metric.getAvgConfidentLevel()) / (count +1);
-        double newAvgAnxietyLevel = metric.getAvgAnxiety() + (request.getAnxietyLevel() - metric.getAvgAnxiety()) / (count +1);
-        double avgCigarettesPerDay = (double) totalCigarettesInRecords /count;
-        if(Double.isNaN(avgCigarettesPerDay) || Double.isInfinite(avgCigarettesPerDay)){
+        double newAvgCravingLevel = metric.getAvgCravingLevel() + (request.getCravingLevel() - metric.getAvgCravingLevel()) / (count + 1);
+        double newAvgMoodLevel = metric.getAvgMood() + (request.getMoodLevel() - metric.getAvgMood()) / (count + 1);
+        double newAvgConfidenceLevel = metric.getAvgConfidentLevel() + (request.getConfidenceLevel() - metric.getAvgConfidentLevel()) / (count + 1);
+        double newAvgAnxietyLevel = metric.getAvgAnxiety() + (request.getAnxietyLevel() - metric.getAvgAnxiety()) / (count + 1);
+        double avgCigarettesPerDay = (double) totalCigarettesInRecords / count;
+        if (Double.isNaN(avgCigarettesPerDay) || Double.isInfinite(avgCigarettesPerDay)) {
             avgCigarettesPerDay = metric.getAvgCigarettesPerDay();
         }
         double smokeFreeDayPercentage = ((double) smokeFreeDaysCount / dayBetween) * 100.0;
-        if(Double.isNaN(smokeFreeDayPercentage) || Double.isInfinite(smokeFreeDayPercentage)){
+        if (Double.isNaN(smokeFreeDayPercentage) || Double.isInfinite(smokeFreeDayPercentage)) {
             smokeFreeDayPercentage = metric.getSmokeFreeDayPercentage();
         }
         metric.setStreaks(request.getHaveSmoked() ? 0 : streaksCount);
@@ -223,29 +201,19 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         metric.setReductionPercentage(reductionPercentage);
         metric.setSmokeFreeDayPercentage(smokeFreeDayPercentage);
 
-        if(request.getSteps() != null){
+        if (request.getSteps() != null) {
             metric.setSteps(request.getSteps());
         }
-        if(request.getHeartRate() != null){
+        if (request.getHeartRate() != null) {
             metric.setHeartRate(request.getHeartRate());
         }
-        if(request.getSpo2() != null){
+        if (request.getSpo2() != null) {
             metric.setSpo2(request.getSpo2());
         }
-        if(request.getActivityMinutes() != null){
-            metric.setActivityMinutes(request.getActivityMinutes());
-        }
-        if(request.getRespiratoryRate() != null){
-            metric.setRespiratoryRate(request.getRespiratoryRate());
-        }
-        if(request.getSleepDuration() != null){
+        if (request.getSleepDuration() != null) {
             metric.setSleepDuration(request.getSleepDuration());
         }
-        if(request.getSleepQuality() != null){
-            metric.setSleepQuality(request.getSleepQuality());
-        }
         metricRepository.save(metric);
-
 
         diaryRecord = diaryRecordRepository.save(diaryRecord);
 
@@ -253,30 +221,32 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         calculateRecoveryTime(calculateAge(member.getDob()), currentQuitPlan.getFtndScore(), request.getHaveSmoked());
 
         // add achievement streaks ( already check )
-        AddAchievementRequest addAchievementRequestStreaks = new  AddAchievementRequest();
+        AddAchievementRequest addAchievementRequestStreaks = new AddAchievementRequest();
         addAchievementRequestStreaks.setField("streaks");
         memberAchievementService.addMemberAchievement(addAchievementRequestStreaks).orElse(null);
 
 
         // add achievement money_saved ( already check )
-        AddAchievementRequest addAchievementRequestMoneySaved = new  AddAchievementRequest();
+        AddAchievementRequest addAchievementRequestMoneySaved = new AddAchievementRequest();
         addAchievementRequestMoneySaved.setField("money_saved");
         memberAchievementService.addMemberAchievement(addAchievementRequestMoneySaved).orElse(null);
 
         // add achievement money_saved ( already check )
-        AddAchievementRequest addAchievementRequestSteps = new  AddAchievementRequest();
+        AddAchievementRequest addAchievementRequestSteps = new AddAchievementRequest();
         addAchievementRequestSteps.setField("steps");
         memberAchievementService.addMemberAchievement(addAchievementRequestSteps).orElse(null);
 
+        if(isOnPlan && request.getHaveSmoked() == true){
+            return GlobalResponse.smokedOnPlan("Oh no you have smoked when you on quit plan!", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
+        }
 
-
-        return diaryRecordMapper.toDiaryRecordDTO(diaryRecord);
+        return GlobalResponse.ok("Diary record logged successfully", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
     }
 
     /*
-    * Calculate recovery time on WHO data: https://www.who.int/news-room/questions-and-answers/item/tobacco-health-benefits-of-smoking-cessation
-    * */
-    private void calculateRecoveryTime(int age, int ftndScore, boolean isSmoke){
+     * Calculate recovery time on WHO data: https://www.who.int/news-room/questions-and-answers/item/tobacco-health-benefits-of-smoking-cessation
+     * */
+    private void calculateRecoveryTime(int age, int ftndScore, boolean isSmoke) {
         Member member = memberService.getAuthenticatedMember();
         HealthRecovery pulseRateRecovery = healthRecoveryRepository.findByNameAndMemberId(HealthRecoveryDataName.PULSE_RATE, member.getId())
                 .orElseGet(() -> {
@@ -424,7 +394,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     return newRecovery;
                 });
 
-        if(isSmoke){
+        if (isSmoke) {
             updateRecoveryTimeIfSmoked(pulseRateRecovery, PULSE_RATE_TO_NORMAL, age, ftndScore);
             updateRecoveryTimeIfSmoked(oxygenLevelRecovery, OXYGEN_LEVEL_TO_NORMAL, age, ftndScore);
             updateRecoveryTimeIfSmoked(carbonMonoxideRecovery, CARBON_MONOXIDE_TO_NORMAL, age, ftndScore);
@@ -443,7 +413,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                                             int baseTimeInMinutes,
                                             int age,
                                             int ftndScore
-    ){
+    ) {
         var estimateRecoveryTimeInMinutes = calculateTimeToNormal(baseTimeInMinutes, age, ftndScore);
         recovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
         LocalDateTime newTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -451,11 +421,11 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         healthRecoveryRepository.save(recovery);
     }
 
-    private double calculateTimeToNormal(int baseTimeInMinutes, int age, int ftndScore){
+    private double calculateTimeToNormal(int baseTimeInMinutes, int age, int ftndScore) {
         return baseTimeInMinutes * (1 + 0.02 * Math.max(0, age - 30)) * (1 + 0.08 * Math.max(0, ftndScore - 3));
     }
 
-    private int calculateAge(LocalDate dob){
+    private int calculateAge(LocalDate dob) {
         return Period.between(dob, LocalDate.now()).getYears();
     }
 

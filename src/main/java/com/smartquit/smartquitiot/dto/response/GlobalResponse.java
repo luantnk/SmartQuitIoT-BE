@@ -61,4 +61,8 @@ public class GlobalResponse<T> {
     public static <T> GlobalResponse<T> notFound(String message) {
         return error(message, 404);
     }
+
+    public static <T> GlobalResponse<T> smokedOnPlan(String message, T data){
+        return new GlobalResponse<>(true, message, data, 209, System.currentTimeMillis());
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface MembershipSubscriptionRepository extends JpaRepository<MembershipSubscription , Integer> {
@@ -21,4 +22,6 @@ public interface MembershipSubscriptionRepository extends JpaRepository<Membersh
             "  AND ms.endDate >= :now " +
             "  AND ms.status = com.smartquit.smartquitiot.enums.MembershipSubscriptionStatus.AVAILABLE")
     Optional<MembershipSubscription> findActiveByMemberId(@Param("memberId") int memberId, @Param("now") LocalDate now);
+
+    List<MembershipSubscription> findByStatus(MembershipSubscriptionStatus status);
 }
