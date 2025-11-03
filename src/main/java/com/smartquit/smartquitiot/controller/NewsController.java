@@ -48,9 +48,11 @@ public class NewsController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBER')")
     @Operation(summary = "Get news detail by id")
     public ResponseEntity<GlobalResponse<NewsDTO>> getNewsDetail(@PathVariable int id) {
         NewsDTO news = newsService.getNewsDetail(id);
         return ResponseEntity.ok(GlobalResponse.ok(news));
     }
+
 }
