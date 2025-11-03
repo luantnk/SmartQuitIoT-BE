@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.entity;
 
+import com.smartquit.smartquitiot.enums.MediaType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,4 +19,6 @@ public class NewsMedia {
     String mediaUrl;
     @ManyToOne(fetch = FetchType.LAZY)
     News news;
+    @Enumerated(EnumType.STRING)
+    MediaType mediaType;
 }

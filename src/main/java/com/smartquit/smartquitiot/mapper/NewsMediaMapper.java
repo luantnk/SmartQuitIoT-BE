@@ -16,6 +16,7 @@ public class NewsMediaMapper {
         NewsMediaDTO dto = new NewsMediaDTO();
         dto.setId(newsMedia.getId());
         dto.setMediaUrl(newsMedia.getMediaUrl());
+        dto.setMediaType(newsMedia.getMediaType());
         return dto;
     }
 
