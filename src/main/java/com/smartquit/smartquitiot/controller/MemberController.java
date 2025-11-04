@@ -8,6 +8,7 @@ import com.smartquit.smartquitiot.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -39,5 +40,17 @@ public class MemberController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<MemberDTO> updateMemberProfile(@RequestBody MemberUpdateRequest request){
         return ResponseEntity.ok(memberService.updateProfile(request));
+    }
+
+    @GetMapping("/manage")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "This endpoint for get all members for admin", description = "Only admin can access this endpoint")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Page<MemberDTO>> manageMembers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search
+    ){
+        return ResponseEntity.ok(memberService.getMembers(page, size, search));
     }
 }

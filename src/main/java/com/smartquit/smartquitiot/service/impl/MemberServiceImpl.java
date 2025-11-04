@@ -8,7 +8,12 @@ import com.smartquit.smartquitiot.mapper.MemberMapper;
 import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.MemberService;
+import com.smartquit.smartquitiot.specifications.MemberSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -50,5 +55,13 @@ public class MemberServiceImpl implements MemberService {
         }
         member = memberRepository.save(member);
         return memberMapper.toMemberDTO(member);
+    }
+
+    @Override
+    public Page<MemberDTO> getMembers(int page, int size, String search) {
+        Specification<Member> spec = Specification.allOf(MemberSpecification.hasSearchString(search));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Member> memberPage = memberRepository.findAll(spec, pageable);
+        return memberPage.map(memberMapper::toMemberDTO);
     }
 }

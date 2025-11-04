@@ -38,6 +38,7 @@ public class SecurityConfig {
             Map.entry("/accounts/coach/create", HttpMethod.POST),
             Map.entry("/accounts/p", HttpMethod.GET),
             Map.entry("/members/p", HttpMethod.GET),
+            Map.entry("/members/manage", HttpMethod.GET),
             Map.entry("/members", HttpMethod.PUT),
             Map.entry("/coaches/p", HttpMethod.GET),
             Map.entry("/coaches/all", HttpMethod.GET),
