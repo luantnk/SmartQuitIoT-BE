@@ -7,11 +7,13 @@ import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.TopMemberAchievementDTO;
 import com.smartquit.smartquitiot.entity.Achievement;
 import com.smartquit.smartquitiot.entity.MemberAchievement;
+import com.smartquit.smartquitiot.service.AchievementService;
 import com.smartquit.smartquitiot.service.MemberAchievementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AchievementController {
     private final MemberAchievementService memberAchievementService;
+    private final AchievementService achievementService;
 
 
     @PostMapping("/add-member-achievement")
@@ -58,4 +61,15 @@ public class AchievementController {
         return ResponseEntity.ok(memberAchievementService.getTop10MembersWithAchievements());
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "This end point for get all achievements with pagination and search")
+    public ResponseEntity<Page<AchievementDTO>> manageAchievements(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String search
+    ){
+        return ResponseEntity.ok(achievementService.getAllAchievements(page, size, search));
+    }
 }

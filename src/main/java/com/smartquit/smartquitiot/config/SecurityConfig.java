@@ -60,7 +60,8 @@ public class SecurityConfig {
             Map.entry("/achievement/add-member-achievement", HttpMethod.POST),
             Map.entry("/achievement/all-my-achievements", HttpMethod.GET),
             Map.entry("/achievement/top-leader-boards", HttpMethod.GET),
-            Map.entry("/achievement/my-achievements-at-home", HttpMethod.GET)
+            Map.entry("/achievement/my-achievements-at-home", HttpMethod.GET),
+            Map.entry("/achievement/all", HttpMethod.GET)
 
     );
 

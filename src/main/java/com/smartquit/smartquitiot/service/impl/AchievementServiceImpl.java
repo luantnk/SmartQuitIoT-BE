@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.response.AchievementDTO;
 import com.smartquit.smartquitiot.entity.Achievement;
+import com.smartquit.smartquitiot.mapper.AchievementMapper;
 import com.smartquit.smartquitiot.repository.AchievementRepository;
 import com.smartquit.smartquitiot.service.AchievementService;
 import com.smartquit.smartquitiot.specifications.AchievementSpecification;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class AchievementServiceImpl implements AchievementService {
 
     private final AchievementRepository achievementRepository;
-
+    private final AchievementMapper achievementMapper;
 
 
     @Override
@@ -25,6 +26,6 @@ public class AchievementServiceImpl implements AchievementService {
         Pageable pageRequest = PageRequest.of(page, size);
         Specification<Achievement> spec = Specification.allOf(AchievementSpecification.hasSearchString(search));
         Page<Achievement> achievements = achievementRepository.findAll(spec, pageRequest);
-        return null;
+        return achievements.map(achievementMapper::toAchievementDTO);
     }
 }

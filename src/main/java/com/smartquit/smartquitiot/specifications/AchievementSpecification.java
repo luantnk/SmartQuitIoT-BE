@@ -11,7 +11,8 @@ public class AchievementSpecification {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%"+searchString.toLowerCase()+"%"),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), "%"+searchString.toLowerCase()+"%"));
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), "%"+searchString.toLowerCase()+"%"),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("type")), "%"+searchString.toLowerCase()+"%"));
         }));
     }
 }
