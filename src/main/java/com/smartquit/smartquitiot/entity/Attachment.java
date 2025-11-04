@@ -12,10 +12,12 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Attachment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
+
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "message_id", nullable = false)
     Message message;
+
     String attachmentUrl;
 }

@@ -45,6 +45,7 @@ public class CoachMapper {
         coachSummaryDTO.setLastName(coach.getLastName());
         coachSummaryDTO.setAvatarUrl(coach.getAvatarUrl());
         coachSummaryDTO.setRatingAvg(coach.getRatingAvg());
+        coachSummaryDTO.setAccountId(coach.getAccount().getId());
         return coachSummaryDTO;
     }
     public List<CoachSummaryDTO> toCoachSummaryDTO(List<Coach> coachList) {

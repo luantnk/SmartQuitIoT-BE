@@ -9,9 +9,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CoachSummaryDTO {
-    Integer id;
+    Integer id; // coachId
     String firstName;
     String lastName;
     String avatarUrl;
     Double ratingAvg;
+    Integer accountId; // đây là accountId không phải coachId
 }
