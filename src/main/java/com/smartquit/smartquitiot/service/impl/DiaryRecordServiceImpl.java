@@ -61,7 +61,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         Member member = memberService.getAuthenticatedMember();
         QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
         FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
-        boolean isOnPlan = currentQuitPlan.getStatus().equals(QuitPlanStatus.IN_PROGRESS) && request.getDate().isAfter(currentQuitPlan.getStartDate());
+        boolean isOnPlan = currentQuitPlan.getStatus().equals(QuitPlanStatus.IN_PROGRESS) && (request.getDate().isAfter(currentQuitPlan.getStartDate()) || request.getDate().isEqual(currentQuitPlan.getStartDate()));
         Optional<DiaryRecord> isExistingTodayRecord = diaryRecordRepository.findByDateAndMemberId(request.getDate(), member.getId());
         if (isExistingTodayRecord.isPresent()) {
             throw new RuntimeException("You have been enter today record");
