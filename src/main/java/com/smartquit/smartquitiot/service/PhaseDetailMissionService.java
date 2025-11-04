@@ -4,6 +4,7 @@ import com.smartquit.smartquitiot.dto.request.CompleteMissionRequest;
 import com.smartquit.smartquitiot.dto.response.MissionTodayResponse;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
+import com.smartquit.smartquitiot.entity.Phase;
 import com.smartquit.smartquitiot.entity.PhaseDetail;
 import com.smartquit.smartquitiot.entity.QuitPlan;
 import com.smartquit.smartquitiot.enums.MissionPhase;
@@ -19,4 +20,5 @@ public interface PhaseDetailMissionService {
 
     MissionTodayResponse getListMissionToday();
     MissionTodayResponse completePhaseDetailMissionAtHomePage(CompleteMissionRequest completeMissionRequest);
+    PhaseBatchMissionsResponse generatePhaseDetailMissionsForPhaseInScheduler(Phase phase, List<PhaseDetail> preparedDetails , QuitPlan plan, int maxPerDay, String phaseName, MissionPhase missionPhase);
 }

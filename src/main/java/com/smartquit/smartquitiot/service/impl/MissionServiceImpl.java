@@ -120,7 +120,10 @@ public class MissionServiceImpl implements MissionService {
             case "morning_smoking_frequency" -> formMetric.isMorningSmokingFrequency();
             case "minutes_after_waking_to_smoke" -> formMetric.getMinutesAfterWakingToSmoke();
             case "smoke_avg_per_day" ->  formMetric.getSmokeAvgPerDay();
-
+            case "mt_smoke_avg_per_day" -> account.getMember().getMetric().getAvgCigarettesPerDay();
+            case "steps" -> account.getMember().getMetric().getSteps();
+            case "heart_rate" -> account.getMember().getMetric().getHeartRate();
+            case "spo2" -> account.getMember().getMetric().getSpo2();
             default -> null;
         };
     }

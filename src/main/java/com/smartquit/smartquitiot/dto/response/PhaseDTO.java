@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import org.hibernate.annotations.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -27,10 +29,19 @@ public class PhaseDTO {
     private LocalDate endDate;
     private int durationDay;
     private String reason;
+    private PhaseStatus status;
+    private LocalDateTime completedAt;
+    private LocalDateTime createAt;
+    private boolean keepPhase;
     int totalMissions;
     int completedMissions;
     BigDecimal progress;
+    double avg_craving_level;
+    double avg_cigarettes;
+    double fm_cigarettes_total;
+
     JsonNode condition;
     List<PhaseDetailResponseDTO> details;
     PhaseDetailResponseDTO currentPhaseDetail;
+
 }

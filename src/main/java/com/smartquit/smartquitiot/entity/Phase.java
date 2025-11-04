@@ -35,6 +35,15 @@ public class Phase {
     int completedMissions;
     @Column(precision = 5, scale = 2)
     BigDecimal progress;
+    LocalDateTime completedAt;
+    boolean keepPhase = false;
+
+    double avg_craving_level;
+    double avg_cigarettes;
+    double fm_cigarettes_total;
+
+
+
 
     @Column(name = "condition_json", columnDefinition = "JSON", nullable = false)
     @Type(JsonType.class)
