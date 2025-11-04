@@ -100,7 +100,6 @@ public class SecurityConfig {
             corsConfiguration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
             corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
             corsConfiguration.setAllowedHeaders(List.of("*"));
-            corsConfiguration.setAllowCredentials(true);
             return corsConfiguration;
         }));
         return http.build();

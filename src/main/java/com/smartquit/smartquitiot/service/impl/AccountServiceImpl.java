@@ -102,10 +102,7 @@ public class AccountServiceImpl implements AccountService {
         metric.setSteps(0);
         metric.setHeartRate(0);
         metric.setSpo2(0);
-        metric.setActivityMinutes(0);
-        metric.setRespiratoryRate(0);
         metric.setSleepDuration(0.0);
-        metric.setSleepQuality(0);
 
         metric.setAnnualSaved(BigDecimal.ZERO);
         metric.setMoneySaved(BigDecimal.ZERO);
