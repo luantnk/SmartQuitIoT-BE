@@ -4,6 +4,7 @@ import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
 import com.smartquit.smartquitiot.dto.response.PhaseResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
+import com.smartquit.smartquitiot.dto.response.TimeResponse;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.impl.QuitPlanServiceImpl;
@@ -42,4 +43,15 @@ public class QuitPlanController {
         QuitPlanResponse response = quitPlanServiceImpl.getCurrentQuitPlan();
         return ResponseEntity.ok(response);
     }
+
+
+    @GetMapping("/time")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Get time of current quit plan ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<TimeResponse> getCurrentTimeOfQuitPlan() {
+        TimeResponse response = quitPlanServiceImpl.getCurrentTimeOfQuitPlan();
+        return ResponseEntity.ok(response);
+    }
+
 }

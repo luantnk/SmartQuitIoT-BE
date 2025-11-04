@@ -111,6 +111,18 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         return quitPlanMapper.toResponse(plan);
     }
 
+    @Override
+    public TimeResponse getCurrentTimeOfQuitPlan() {
+        Account account = accountService.getAuthenticatedAccount();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(account.getMember().getId());
+        if (plan == null) {
+            throw new RuntimeException("No Quit Plan found when using!");
+        }
+        TimeResponse timeResponse = new TimeResponse();
+        timeResponse.setStartTime(plan.getCreatedAt());
+        return timeResponse;
+    }
+
 
     private BigDecimal calculateNicotineIntakePerDay(BigDecimal amountOfNicotinePerCigarettes, int smokeAvgPerDay) {
         return amountOfNicotinePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
