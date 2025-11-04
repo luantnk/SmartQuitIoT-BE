@@ -39,7 +39,7 @@ public class MembershipSubscriptionServiceImpl implements MembershipSubscription
         List<MembershipSubscription> activeSubscriptions = membershipSubscriptionRepository
                 .findByStatus(MembershipSubscriptionStatus.AVAILABLE);
         for (MembershipSubscription subscription : activeSubscriptions) {
-            if(subscription.getEndDate().isAfter(LocalDate.now())){
+            if(subscription.getEndDate().isBefore(LocalDate.now())){
                 subscription.setStatus(MembershipSubscriptionStatus.EXPIRED);
                 membershipSubscriptionRepository.save(subscription);
             }
@@ -49,7 +49,7 @@ public class MembershipSubscriptionServiceImpl implements MembershipSubscription
         List<MembershipSubscription> pendingPayments = membershipSubscriptionRepository
                 .findByStatus(MembershipSubscriptionStatus.PENDING);
         for (MembershipSubscription subscription : pendingPayments) {
-            if(subscription.getCreatedAt().plusMinutes(10).isAfter(LocalDateTime.now())){
+            if(subscription.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now())){
                 subscription.setStatus(MembershipSubscriptionStatus.UNAVAILABLE);
                 membershipSubscriptionRepository.save(subscription);
             }
