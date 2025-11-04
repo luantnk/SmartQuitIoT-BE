@@ -235,7 +235,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     @Override
     @Transactional
     public PhaseBatchMissionsResponse generatePhaseDetailMissionsForPhase(List<PhaseDetail> preparedDetails , QuitPlan plan, int maxPerDay, String phaseName, MissionPhase missionPhase) {
-
+        log.info("generatePhaseDetailMissionsForPhase");
         Phase phase = phaseRepository.findByQuitPlan_IdAndName(plan.getId(),phaseName)
                 .orElseThrow(() -> new RuntimeException("phase not found at generatePhaseMissionsBatch"));
         PhaseBatchMissionsResponse ai = callAiForPhaseBatch(
@@ -266,6 +266,29 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
 
     }
 
+    @Override
+    @Transactional
+    public PhaseBatchMissionsResponse generatePhaseDetailMissionsForPhaseInScheduler(Phase phase,List<PhaseDetail> preparedDetails , QuitPlan plan, int maxPerDay, String phaseName, MissionPhase missionPhase) {
+        log.info("generatePhaseDetailMissionsForPhaseInScheduler");
+        PhaseBatchMissionsResponse ai = callAiForPhaseBatch(
+                phase,
+                plan,
+                preparedDetails,
+                maxPerDay,
+                missionPhase
+        );
+
+        int totalMissions = savePhaseDetailMissionsForPhase(ai);
+        phase.setTotalMissions(totalMissions);
+        phase.setCompletedMissions(0);
+        phase.setProgress(BigDecimal.ZERO);
+        phaseRepository.save(phase);
+        return ai;
+
+    }
+
+
+
     private PhaseBatchMissionsResponse callAiForPhaseBatch(
             Phase phase,
             QuitPlan plan,
@@ -274,7 +297,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
             MissionPhase missionPhase
     ) {
         String sys = SYS_PHASE.replace("{MAX_PER_DAY}", String.valueOf(maxPerDay));
-
+        log.info("callAiForPhaseBatch");
         // context user
         var userInfo = Map.of(
                 "phaseId", phase.getId(),
@@ -291,7 +314,8 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
                         .toList(),
                 "FTND", plan.getFtndScore(),
                 "smokeAvgPerDay", plan.getFormMetric().getSmokeAvgPerDay(),
-                "useNRT", plan.isUseNRT()
+                "useNRT", plan.isUseNRT(),
+                "planId", plan.getId()
         );
 
         return chatClient.prompt()

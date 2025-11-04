@@ -6,15 +6,11 @@ import com.smartquit.smartquitiot.dto.response.PhaseDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseDetailResponseDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseResponse;
 import com.smartquit.smartquitiot.entity.*;
-import com.smartquit.smartquitiot.enums.Operator;
-import com.smartquit.smartquitiot.enums.PhaseDetailMissionStatus;
-import com.smartquit.smartquitiot.enums.PhaseStatus;
-import com.smartquit.smartquitiot.enums.QuitPlanStatus;
+import com.smartquit.smartquitiot.enums.*;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.repository.SystemPhaseConditionRepository;
-import com.smartquit.smartquitiot.service.AccountService;
-import com.smartquit.smartquitiot.service.PhaseService;
+import com.smartquit.smartquitiot.service.*;
 import com.smartquit.smartquitiot.toolcalling.QuitPlanTools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -41,22 +38,25 @@ public class PhaseServiceImpl implements PhaseService {
     private final PhaseRepository phaseRepository;
     private final AccountService  accountService;
     private final QuitPlanRepository quitPlanRepository;
+    private final PhaseDetailService  phaseDetailService;
+    private final PhaseDetailMissionService phaseDetailMissionService;
     //nho lam cai schedule update status of PHASE
     @Override
     public PhaseDTO getCurrentPhaseAtHomePage() {
         Account account = accountService.getAuthenticatedAccount();
-        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
-        if (plan == null) {
-            plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
-        }
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(account.getMember().getId());
         if (plan == null) {
             throw new RuntimeException("Mission Plan Not Found at getCurrentPhaseAtHomePage tools");
         }
 
         LocalDate currentDate = LocalDate.now();
         Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS,plan.getId())
-                .orElseThrow(() -> new IllegalArgumentException("get current Phase not found at getCurrentPhaseAtHomePage"));
-
+                .orElseGet(() -> {
+                    return phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.FAILED,plan.getId()).stream()
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "No current actionable phase found (in-progress or failed-keep)"));
+                });
         int missionCompletedInCurrentPhaseDetail = 0;
         PhaseDetail currentPhaseDetail = null;
         for (PhaseDetail phaseDetail : currentPhase.getDetails()) {
@@ -68,9 +68,6 @@ public class PhaseServiceImpl implements PhaseService {
                     }
                 }
             }
-        }
-        if(currentPhaseDetail == null){
-            throw new RuntimeException("No active current Phase Detail found for current date at getCurrentPhaseAtHomePage");
         }
 
         PhaseDTO phaseDTO = new PhaseDTO();
@@ -85,15 +82,25 @@ public class PhaseServiceImpl implements PhaseService {
         phaseDTO.setProgress(currentPhase.getProgress());
         phaseDTO.setCondition(currentPhase.getCondition());
         phaseDTO.setStartDateOfQuitPlan(plan.getStartDate());
+        phaseDTO.setStatus(currentPhase.getStatus());
+        phaseDTO.setCompletedAt(currentPhase.getCompletedAt());
+        phaseDTO.setCreateAt(currentPhase.getCreatedAt());
+        phaseDTO.setKeepPhase(currentPhase.isKeepPhase());
+        phaseDTO.setAvg_cigarettes(currentPhase.getAvg_cigarettes());
+        phaseDTO.setAvg_craving_level(currentPhase.getAvg_craving_level());
+        phaseDTO.setFm_cigarettes_total(currentPhase.getFm_cigarettes_total());
 
-        PhaseDetailResponseDTO  phaseDetailResponseDTO = new PhaseDetailResponseDTO();
-        phaseDetailResponseDTO.setId(currentPhaseDetail.getId());
-        phaseDetailResponseDTO.setName(currentPhaseDetail.getName());
-        phaseDetailResponseDTO.setDate(currentPhaseDetail.getDate());
-        phaseDetailResponseDTO.setDayIndex(currentPhaseDetail.getDayIndex());
-        phaseDetailResponseDTO.setMissionCompleted(missionCompletedInCurrentPhaseDetail);
-        phaseDetailResponseDTO.setTotalMission(currentPhaseDetail.getPhaseDetailMissions().size());
-        phaseDTO.setCurrentPhaseDetail(phaseDetailResponseDTO);
+        if(currentPhaseDetail != null){
+            PhaseDetailResponseDTO  phaseDetailResponseDTO = new PhaseDetailResponseDTO();
+            phaseDetailResponseDTO.setId(currentPhaseDetail.getId());
+            phaseDetailResponseDTO.setName(currentPhaseDetail.getName());
+            phaseDetailResponseDTO.setDate(currentPhaseDetail.getDate());
+            phaseDetailResponseDTO.setDayIndex(currentPhaseDetail.getDayIndex());
+            phaseDetailResponseDTO.setMissionCompleted(missionCompletedInCurrentPhaseDetail);
+            phaseDetailResponseDTO.setTotalMission(currentPhaseDetail.getPhaseDetailMissions().size());
+            phaseDTO.setCurrentPhaseDetail(phaseDetailResponseDTO);
+        }
+
 
         return phaseDTO;
 
@@ -188,12 +195,13 @@ public class PhaseServiceImpl implements PhaseService {
 
     //update status cua plan va quit plan
     //tam thoi server ko co. nen la de 1p chay 1 lan cho de test
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     @Transactional
     @Override
     public void updateQuitPlanAndPhaseStatuses() {
+        log.info("Scheduler running.");
         LocalDate currentDate = LocalDate.now();
-
+        // con truong hop failed
         // Lấy tất cả plan đang chạy trong hệ thống
         List<QuitPlan> activePlans =
                 quitPlanRepository.findByStatusIn(List.of(QuitPlanStatus.CREATED, QuitPlanStatus.IN_PROGRESS));
@@ -227,6 +235,9 @@ public class PhaseServiceImpl implements PhaseService {
                 Phase phase = phases.get(i);
                 PhaseStatus oldStatus = phase.getStatus();
 
+                if (oldStatus == PhaseStatus.COMPLETED) {
+                    continue;
+                }
                 if (currentDate.isBefore(phase.getStartDate())) {
                     phase.setStatus(PhaseStatus.CREATED);
                 }
@@ -240,7 +251,24 @@ public class PhaseServiceImpl implements PhaseService {
 
                     Account account = currentPlan.getMember() != null ? currentPlan.getMember().getAccount() : null;
                     boolean passed = evaluateCondition(phase.getCondition(), account, phase, formMetric);
-                    phase.setStatus(passed ? PhaseStatus.COMPLETED : PhaseStatus.FAILED);
+                    if(passed){
+                        phase.setStatus(PhaseStatus.COMPLETED);
+                        phase.setCompletedAt(LocalDateTime.now());
+                        phase.setAvg_cigarettes(account.getMember().getMetric().getAvgCigarettesPerDay());
+                        phase.setAvg_craving_level(account.getMember().getMetric().getAvgCravingLevel());
+                        phase.setFm_cigarettes_total(currentPlan.getFormMetric().getSmokeAvgPerDay());
+                        phaseRepository.save(phase);
+
+                        maybeGenerateNextPhase(phases, i, currentPlan);
+                        //thongbao
+
+                    }else{
+                        phase.setStatus(PhaseStatus.FAILED);
+                        log.info(" not pass due to fail condition of phase");
+                        phaseRepository.save(phase);
+                    }
+
+
                     //thong bao
                 }
 
@@ -264,6 +292,25 @@ public class PhaseServiceImpl implements PhaseService {
     }
 
 
+    private void maybeGenerateNextPhase(List<Phase> phases, int currentIndex, QuitPlan plan) {
+        int nextIndex = currentIndex + 1;
+        if (nextIndex >= phases.size()) return; // không có phase kế tiếp
+
+        Phase next = phases.get(nextIndex);
+
+        List<PhaseDetail> preparedDetails = phaseDetailService.generatePhaseDetailsForPhase(next);
+
+        phaseDetailMissionService.generatePhaseDetailMissionsForPhaseInScheduler(
+                next,
+                preparedDetails,
+                plan,
+                4,
+                next.getName(),
+                mapPhaseNameToEnum(next)
+        );
+
+        log.info("Đã generate PhaseDetail & Missions cho phase kế tiếp: {} (ID {}).", next.getName(), next.getId());
+    }
     private boolean evaluateCondition(JsonNode node, Account account, Phase phase, FormMetric formMetric) {
         String logic = node.has("logic") ? node.get("logic").asText("AND") : "AND";
         boolean result = logic.equalsIgnoreCase("AND");
@@ -337,5 +384,25 @@ public class PhaseServiceImpl implements PhaseService {
     }
 
 
+    private MissionPhase mapPhaseNameToEnum(Phase phase) {
+        if (phase == null || phase.getName() == null) {
+            return null;
+        }
+
+        switch (phase.getName().trim().toLowerCase()) {
+            case "preparation":
+                return MissionPhase.PREPARATION;
+            case "onset":
+                return MissionPhase.ONSET;
+            case "peak craving":
+                return MissionPhase.PEAK_CRAVING;
+            case "subsiding":
+                return MissionPhase.SUBSIDING;
+            case "maintenance":
+                return MissionPhase.MAINTENANCE;
+            default:
+                throw new IllegalArgumentException("Unknown phase name: " + phase.getName());
+        }
+    }
 
 }
