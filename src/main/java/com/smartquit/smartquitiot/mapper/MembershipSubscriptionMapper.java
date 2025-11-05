@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class MembershipSubscriptionMapper {
 
     private final MembershipPackageMapper membershipPackageMapper;
+    private final MemberMapper memberMapper;
 
     public MembershipSubscriptionDTO toMembershipSubscriptionDTO(MembershipSubscription membershipSubscription){
         if(membershipSubscription == null) return null;
@@ -23,6 +24,7 @@ public class MembershipSubscriptionMapper {
         membershipSubscriptionDTO.setCreatedAt(membershipSubscription.getCreatedAt());
         membershipSubscriptionDTO.setOrderCode(membershipSubscription.getOrderCode());
         membershipSubscriptionDTO.setTotalAmount(membershipSubscription.getTotalAmount());
+        membershipSubscriptionDTO.setMember(memberMapper.toMemberDTO(membershipSubscription.getMember()));
 
         return membershipSubscriptionDTO;
     }

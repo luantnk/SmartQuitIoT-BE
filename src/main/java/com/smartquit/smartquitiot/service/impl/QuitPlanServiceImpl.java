@@ -123,6 +123,12 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         return timeResponse;
     }
 
+    @Override
+    public QuitPlanResponse getMemberQuitPlan(int memberId) {
+        QuitPlan plan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId);
+        return quitPlanMapper.toResponse(plan);
+    }
+
 
     private BigDecimal calculateNicotineIntakePerDay(BigDecimal amountOfNicotinePerCigarettes, int smokeAvgPerDay) {
         return amountOfNicotinePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));

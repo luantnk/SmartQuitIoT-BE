@@ -32,10 +32,7 @@ public class DiaryRecordDTO {
     Integer steps;
     Integer heartRate;
     Integer spo2;
-    Integer activityMinutes;
-    Integer respiratoryRate;
     Double sleepDuration;
-    Integer sleepQuality;
     BigDecimal estimatedNicotineIntake;
     Double reductionPercentage;
 }

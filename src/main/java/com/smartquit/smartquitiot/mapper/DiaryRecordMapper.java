@@ -30,10 +30,7 @@ public class DiaryRecordMapper {
             diaryRecordDTO.setSteps(diaryRecord.getSteps());
             diaryRecordDTO.setHeartRate(diaryRecord.getHeartRate());
             diaryRecordDTO.setSpo2(diaryRecord.getSpo2());
-            diaryRecordDTO.setActivityMinutes(diaryRecord.getActivityMinutes());
-            diaryRecordDTO.setRespiratoryRate(diaryRecord.getRespiratoryRate());
             diaryRecordDTO.setSleepDuration(diaryRecord.getSleepDuration());
-            diaryRecordDTO.setSleepQuality(diaryRecord.getSleepQuality());
         }
 
         return diaryRecordDTO;

@@ -8,7 +8,12 @@ import com.smartquit.smartquitiot.mapper.MembershipSubscriptionMapper;
 import com.smartquit.smartquitiot.repository.MembershipSubscriptionRepository;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.MembershipSubscriptionService;
+import com.smartquit.smartquitiot.specifications.MembershipSubscriptionSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +37,18 @@ public class MembershipSubscriptionServiceImpl implements MembershipSubscription
         return membershipSubscriptionMapper.toMembershipSubscriptionDTO(currentSubscription);
     }
 
+    @Override
+    public Page<MembershipSubscriptionDTO> getAllMembershipSubscriptions(Integer page, Integer size, String sortBy, String sortDir, Long orderCode, String status) {
+
+        Specification<MembershipSubscription> spec = Specification
+                .allOf(
+                        MembershipSubscriptionSpecification.hasSearchString(orderCode)
+                                .and(MembershipSubscriptionSpecification.hasStatus(status)));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MembershipSubscription> subscriptionsPage = membershipSubscriptionRepository.findAll(spec, pageable);
+
+        return subscriptionsPage.map(membershipSubscriptionMapper::toMembershipSubscriptionDTO);
+    }
 
     @Scheduled(fixedRate = 300000) // Runs every 5 minutes
     private void validateMembershipSubscription(){

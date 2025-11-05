@@ -13,4 +13,6 @@ public interface DiaryRecordService {
     List<DiaryRecordDTO> getDiaryRecordsForMember();
     DiaryRecordDTO getDiaryRecordById(Integer id);
     Map<String , Object> getDiaryRecordsCharts();
+    Map<String , Object> getDiaryRecordsChartsByMemberId(int memberId);
+    List<DiaryRecordDTO> getDiaryRecordsHistoryByMemberId(int memberId);
 }

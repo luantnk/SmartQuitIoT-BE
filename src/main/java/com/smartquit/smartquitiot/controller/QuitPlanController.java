@@ -7,6 +7,7 @@ import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.dto.response.TimeResponse;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.service.AccountService;
+import com.smartquit.smartquitiot.service.QuitPlanService;
 import com.smartquit.smartquitiot.service.impl.QuitPlanServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -24,14 +25,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/quit-plan")
 @RequiredArgsConstructor
 public class QuitPlanController {
-    private final QuitPlanServiceImpl  quitPlanServiceImpl;
+    private final QuitPlanService quitPlanService;
 
     @PostMapping("/create-in-first-login")
     @PreAuthorize("hasRole('MEMBER')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "When first login, this end point will create first quit plan and form metric, after that create phase,phase detail and assign missions for each phase detail ")
     public ResponseEntity<PhaseBatchMissionsResponse> createQuitPlanInFirstLogin(@RequestBody CreateQuitPlanInFirstLoginRequest req){
-        PhaseBatchMissionsResponse response = quitPlanServiceImpl.createQuitPlanInFirstLogin(req);
+        PhaseBatchMissionsResponse response = quitPlanService.createQuitPlanInFirstLogin(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -40,7 +41,7 @@ public class QuitPlanController {
     @Operation(summary = "Get information of current quit plan ")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<QuitPlanResponse> getQuitPlan() {
-        QuitPlanResponse response = quitPlanServiceImpl.getCurrentQuitPlan();
+        QuitPlanResponse response = quitPlanService.getCurrentQuitPlan();
         return ResponseEntity.ok(response);
     }
 
@@ -50,7 +51,14 @@ public class QuitPlanController {
     @Operation(summary = "Get time of current quit plan ")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<TimeResponse> getCurrentTimeOfQuitPlan() {
-        TimeResponse response = quitPlanServiceImpl.getCurrentTimeOfQuitPlan();
+        TimeResponse response = quitPlanService.getCurrentTimeOfQuitPlan();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{memberId}")
+    @Operation(summary = "Get information of current quit plan of member by memberId")
+    public ResponseEntity<QuitPlanResponse> getQuitPlanByMemberId(@PathVariable int memberId) {
+        QuitPlanResponse response = quitPlanService.getMemberQuitPlan(memberId);
         return ResponseEntity.ok(response);
     }
 

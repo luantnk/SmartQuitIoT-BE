@@ -66,4 +66,14 @@ public class MetricServiceImpl implements MetricService {
         response.put("carbonMonoxideLevel", carbonMonoxideRecovery);
         return response;
     }
+
+    @Override
+    public Map<String, Object> getHealthMetricsByMemberId(int memberId) {
+        Map<String, Object> response = new HashMap<>();
+        Metric metric = metricRepository.findByMemberId(memberId).orElse(null);
+        List<HealthRecovery> healthRecoveries = healthRecoveryRepository.findByMemberId(memberId);
+        response.put("metrics", metric);
+        response.put("healthRecoveries", healthRecoveries);
+        return response;
+    }
 }

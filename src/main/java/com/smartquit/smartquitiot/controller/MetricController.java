@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -41,6 +42,13 @@ public class MetricController {
             description = "API để lấy dữ liệu sức khỏe của member")
     public ResponseEntity<Map<String, Object>> getHealthData() {
         return ResponseEntity.ok(metricService.getHealthMetrics());
+    }
+
+    @GetMapping("/health-data/{memberId}")
+    @Operation(summary = "Get health data statistic for member",
+            description = "API để lấy dữ liệu sức khỏe của member")
+    public ResponseEntity<Map<String, Object>> getHealthDataByMemberId(@PathVariable int memberId) {
+        return ResponseEntity.ok(metricService.getHealthMetricsByMemberId(memberId));
     }
 
 }

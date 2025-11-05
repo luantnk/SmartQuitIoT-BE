@@ -465,4 +465,33 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         )).toList());
         return chartsData;
     }
+
+    @Override
+    public Map<String, Object> getDiaryRecordsChartsByMemberId(int memberId) {
+        List<DiaryRecord> records = diaryRecordRepository.findByMemberId(memberId);
+        Map<String, Object> chartsData = new HashMap<>();
+        chartsData.put("confidenceLevel", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "confidenceLevel", record.getConfidenceLevel()
+        )).toList());
+        chartsData.put("moodLevel", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "moodLevel", record.getMoodLevel()
+        )).toList());
+        chartsData.put("anxietyLevel", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "anxietyLevel", record.getAnxietyLevel()
+        )).toList());
+        chartsData.put("cravingLevel", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "cravingLevel", record.getCravingLevel()
+        )).toList());
+        return chartsData;
+    }
+
+    @Override
+    public List<DiaryRecordDTO> getDiaryRecordsHistoryByMemberId(int memberId) {
+        List<DiaryRecord> records = diaryRecordRepository.findByMemberIdOrderByDateDesc(memberId);
+        return records.stream().map(diaryRecordMapper::toListDiaryRecordDTO).toList();
+    }
 }

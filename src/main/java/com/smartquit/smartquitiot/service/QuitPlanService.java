@@ -9,4 +9,5 @@ public interface QuitPlanService {
      PhaseBatchMissionsResponse createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req);
      QuitPlanResponse getCurrentQuitPlan();
      TimeResponse getCurrentTimeOfQuitPlan();
+    QuitPlanResponse getMemberQuitPlan(int memberId);
  }

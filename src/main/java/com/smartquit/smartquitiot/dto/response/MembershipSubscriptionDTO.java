@@ -23,5 +23,6 @@ public class MembershipSubscriptionDTO {
     Long orderCode;
     Long totalAmount;
     MembershipPackageDTO membershipPackage;
+    MemberDTO member;
 
 }

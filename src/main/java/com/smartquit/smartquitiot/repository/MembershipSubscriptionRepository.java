@@ -2,6 +2,9 @@ package com.smartquit.smartquitiot.repository;
 
 import com.smartquit.smartquitiot.entity.MembershipSubscription;
 import com.smartquit.smartquitiot.enums.MembershipSubscriptionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,4 +27,6 @@ public interface MembershipSubscriptionRepository extends JpaRepository<Membersh
     Optional<MembershipSubscription> findActiveByMemberId(@Param("memberId") int memberId, @Param("now") LocalDate now);
 
     List<MembershipSubscription> findByStatus(MembershipSubscriptionStatus status);
+
+    Page<MembershipSubscription> findAll(Specification<MembershipSubscription> specification, Pageable pageable);
 }

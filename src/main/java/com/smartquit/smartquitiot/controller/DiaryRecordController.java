@@ -47,4 +47,18 @@ public class DiaryRecordController {
         return ResponseEntity.ok(diaryRecordService.getDiaryRecordsCharts());
     }
 
+    @GetMapping("/charts/{memberId}")
+    @Operation(summary = "Get diary record chart for member",
+            description = "API để lấy biểu đồ nhật ký của member")
+    public ResponseEntity<?> getDiaryRecordsChartsByMemberId(@PathVariable int memberId) {
+        return ResponseEntity.ok(diaryRecordService.getDiaryRecordsChartsByMemberId(memberId));
+    }
+
+    @GetMapping("/history/{memberId}")
+    @Operation(summary = "Get diary record history for member",
+            description = "API để lấy lịch sử nhật ký của member")
+    public ResponseEntity<?> getDiaryRecordHistoryByMemberId(@PathVariable int memberId) {
+        return ResponseEntity.ok(diaryRecordService.getDiaryRecordsHistoryByMemberId(memberId));
+    }
+
 }
