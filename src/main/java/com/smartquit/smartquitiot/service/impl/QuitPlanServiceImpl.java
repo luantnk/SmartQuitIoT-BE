@@ -1,8 +1,10 @@
 package com.smartquit.smartquitiot.service.impl;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
+import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
+import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.*;
@@ -30,6 +32,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     private final PhaseService phaseService;
     private final QuitPlanMapper quitPlanMapper;
     private final MissionRepository missionRepository;
+    private final PhaseRepository phaseRepository;
 
     @Transactional
     @Override
@@ -122,6 +125,27 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         timeResponse.setStartTime(plan.getCreatedAt());
         return timeResponse;
     }
+
+    @Override
+    public QuitPlanResponse keepPhaseOfQuitPlan(KeepPhaseOfQuitPlanRequest request) {
+        Phase phase = phaseRepository.findByIdAndQuitPlan_Id(request.getPhaseId(),request.getQuitPlanId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Phase not found for planId=" + request.getQuitPlanId() + ", phaseId=" + request.getPhaseId()));
+        Account me = accountService.getAuthenticatedAccount();
+        int ownerId = phase.getQuitPlan().getMember().getId();
+        log.info("ownerId: {} ", ownerId);
+        if (me.getMember().getId() != ownerId) {
+            throw new RuntimeException("You do not own this quit plan");
+        }
+        if(phase.getStatus() == PhaseStatus.FAILED){
+            phase.setKeepPhase(true);
+        }else{
+            throw new RuntimeException("Phase is not in Failed status so cant not keep phase of quit plan");
+        }
+
+        return quitPlanMapper.toResponse(phaseRepository.save(phase).getQuitPlan());
+    }
+
 
 
     private BigDecimal calculateNicotineIntakePerDay(BigDecimal amountOfNicotinePerCigarettes, int smokeAvgPerDay) {

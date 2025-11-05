@@ -1,12 +1,14 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
+import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
 import com.smartquit.smartquitiot.dto.response.PhaseResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.dto.response.TimeResponse;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.service.AccountService;
+import com.smartquit.smartquitiot.service.PhaseService;
 import com.smartquit.smartquitiot.service.impl.QuitPlanServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -53,5 +55,15 @@ public class QuitPlanController {
         TimeResponse response = quitPlanServiceImpl.getCurrentTimeOfQuitPlan();
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/keep-plan")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member decide keep quit plan in Failed Phase ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<QuitPlanResponse> keepPhaseOfQuitPlan(@RequestBody KeepPhaseOfQuitPlanRequest req) {
+        QuitPlanResponse response = quitPlanServiceImpl.keepPhaseOfQuitPlan(req);
+        return ResponseEntity.ok(response);
+    }
+
 
 }

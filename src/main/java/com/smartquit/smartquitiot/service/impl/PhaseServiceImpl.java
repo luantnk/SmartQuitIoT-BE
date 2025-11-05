@@ -40,6 +40,8 @@ public class PhaseServiceImpl implements PhaseService {
     private final QuitPlanRepository quitPlanRepository;
     private final PhaseDetailService  phaseDetailService;
     private final PhaseDetailMissionService phaseDetailMissionService;
+    private final NotificationService notificationService;
+
     //nho lam cai schedule update status of PHASE
     @Override
     public PhaseDTO getCurrentPhaseAtHomePage() {
@@ -259,7 +261,30 @@ public class PhaseServiceImpl implements PhaseService {
                         phase.setFm_cigarettes_total(currentPlan.getFormMetric().getSmokeAvgPerDay());
                         phaseRepository.save(phase);
 
-                        maybeGenerateNextPhase(phases, i, currentPlan);
+
+                        int nextIndex = i + 1;
+                        if (nextIndex < phases.size()) {
+                            Phase next = phases.get(nextIndex);
+                            LocalDate anchor = phase.getCompletedAt().toLocalDate();
+
+                            // Nếu completedAt == startDate của phase kế -> giữ lịch & generate bình thường
+                            if (next.getStartDate() != null && anchor.isEqual(next.getStartDate())) {
+                                maybeGenerateNextPhase(phases, i, currentPlan);
+                            } else {
+                                // Lệch nhịp (kể cả pass do keep hay các lý do khác)
+                                // -> chỉnh lại LỊCH TOÀN BỘ phần còn lại
+                               log.info("tao o day ne");
+                                List<Phase> updatedPhases = rescheduleFollowingPhases(currentPlan, i, anchor);
+                                maybeGenerateNextPhase(updatedPhases, i, currentPlan);
+                            }
+                        }
+
+                        // reset keepPhase
+                        if (phase.isKeepPhase()) {
+                            phase.setKeepPhase(false);
+                            phaseRepository.save(phase);
+                        }
+
                         //thongbao
 
                     }else{
@@ -275,6 +300,14 @@ public class PhaseServiceImpl implements PhaseService {
                 if (oldStatus != phase.getStatus()) {
                     phaseRepository.save(phase);
                     log.info("Phase {} đổi trạng thái: {} → {}", phase.getId(), oldStatus, phase.getStatus());
+
+                    if (phase.getStatus() == PhaseStatus.COMPLETED) {
+                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember(), phase, PhaseStatus.COMPLETED, 0);
+                    } else if (phase.getStatus() == PhaseStatus.IN_PROGRESS) {
+                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember(), phase, PhaseStatus.IN_PROGRESS, 0);
+                    } else if (phase.getStatus() == PhaseStatus.FAILED) {
+                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember(), phase, PhaseStatus.FAILED, 0);
+                    }
                 }
             }
 
@@ -282,14 +315,37 @@ public class PhaseServiceImpl implements PhaseService {
             boolean allCompleted = phases.stream().allMatch(p -> p.getStatus() == PhaseStatus.COMPLETED);
             if (allCompleted && currentPlan.getStatus() != QuitPlanStatus.COMPLETED) {
                 currentPlan.setStatus(QuitPlanStatus.COMPLETED);
+                notificationService.saveAndSendQuitPlanNoti(currentPlan.getMember(), currentPlan, QuitPlanStatus.COMPLETED);
                 log.info("QuitPlan {} đã hoàn thành toàn bộ.", currentPlan.getId());
             }
 
             quitPlanRepository.save(currentPlan);
         }
 
-        log.info("Đã cập nhật trạng thái cho {} quit plan(s).", activePlans.size());
+        log.info("Đã kiem tra trạng thái cho {} quit plan(s).", activePlans.size());
     }
+
+    @Transactional
+    public List<Phase> rescheduleFollowingPhases(QuitPlan plan, int completedIndex, LocalDate anchorStart) {
+        List<Phase> phases = plan.getPhases();
+        if (completedIndex >= phases.size() - 1) return phases;
+
+        LocalDate nextStart = anchorStart;
+        for (int j = completedIndex + 1; j < phases.size(); j++) {
+            Phase p = phases.get(j);
+            int dur = Math.max(1, p.getDurationDays());
+            LocalDate start = nextStart;
+            LocalDate end = start.plusDays(dur - 1);
+            p.setStartDate(start);
+            p.setEndDate(end);
+            p.setStatus(PhaseStatus.CREATED);
+            phaseRepository.save(p);
+            nextStart = end.plusDays(1);
+        }
+
+        return phases;
+    }
+
 
 
     private void maybeGenerateNextPhase(List<Phase> phases, int currentIndex, QuitPlan plan) {
