@@ -128,12 +128,15 @@ public class QuitPlanServiceImpl implements QuitPlanService {
 
     @Override
 <<<<<<< HEAD
+<<<<<<< HEAD
     public QuitPlanResponse getMemberQuitPlan(int memberId) {
         QuitPlan plan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId);
         return quitPlanMapper.toResponse(plan);
     }
 
 =======
+=======
+>>>>>>> d3e45d26f28382dfc0307531755626ff8497c440
     public QuitPlanResponse keepPhaseOfQuitPlan(KeepPhaseOfQuitPlanRequest request) {
         Phase phase = phaseRepository.findByIdAndQuitPlan_Id(request.getPhaseId(),request.getQuitPlanId())
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -154,7 +157,10 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     }
 
 
+<<<<<<< HEAD
 >>>>>>> c9057d7 (feat: update keep phase and update complete mission)
+=======
+>>>>>>> d3e45d26f28382dfc0307531755626ff8497c440
 
     private BigDecimal calculateNicotineIntakePerDay(BigDecimal amountOfNicotinePerCigarettes, int smokeAvgPerDay) {
         return amountOfNicotinePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));

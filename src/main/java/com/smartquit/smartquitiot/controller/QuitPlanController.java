@@ -9,10 +9,14 @@ import com.smartquit.smartquitiot.dto.response.TimeResponse;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.service.AccountService;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.smartquit.smartquitiot.service.QuitPlanService;
 =======
 import com.smartquit.smartquitiot.service.PhaseService;
 >>>>>>> c9057d7 (feat: update keep phase and update complete mission)
+=======
+import com.smartquit.smartquitiot.service.PhaseService;
+>>>>>>> d3e45d26f28382dfc0307531755626ff8497c440
 import com.smartquit.smartquitiot.service.impl.QuitPlanServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -60,6 +64,7 @@ public class QuitPlanController {
         return ResponseEntity.ok(response);
     }
 
+<<<<<<< HEAD
     @GetMapping("/{memberId}")
     @Operation(summary = "Get information of current quit plan of member by memberId")
     public ResponseEntity<QuitPlanResponse> getQuitPlanByMemberId(@PathVariable int memberId) {
@@ -67,6 +72,8 @@ public class QuitPlanController {
         return ResponseEntity.ok(response);
     }
 
+=======
+>>>>>>> d3e45d26f28382dfc0307531755626ff8497c440
     @PostMapping("/keep-plan")
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Member decide keep quit plan in Failed Phase ")
