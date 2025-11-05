@@ -10,13 +10,6 @@ public interface QuitPlanService {
      PhaseBatchMissionsResponse createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req);
      QuitPlanResponse getCurrentQuitPlan();
      TimeResponse getCurrentTimeOfQuitPlan();
-<<<<<<< HEAD
-<<<<<<< HEAD
     QuitPlanResponse getMemberQuitPlan(int memberId);
-=======
      QuitPlanResponse keepPhaseOfQuitPlan(KeepPhaseOfQuitPlanRequest request);
->>>>>>> c9057d7 (feat: update keep phase and update complete mission)
-=======
-     QuitPlanResponse keepPhaseOfQuitPlan(KeepPhaseOfQuitPlanRequest request);
->>>>>>> d3e45d26f28382dfc0307531755626ff8497c440
  }
