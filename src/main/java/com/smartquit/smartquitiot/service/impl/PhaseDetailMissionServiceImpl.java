@@ -133,7 +133,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
         memberAchievementService.addMemberAchievement(reqAllInDay).orElse(null);
 
         return quitPlanMapper.toResponse(newPhase.getQuitPlan());
-        
+
     }
 
     @Override

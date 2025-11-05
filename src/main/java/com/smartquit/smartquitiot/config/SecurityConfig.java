@@ -63,8 +63,9 @@ public class SecurityConfig {
             Map.entry("/achievement/my-achievements-at-home", HttpMethod.GET),
             Map.entry("/quit-plan/time", HttpMethod.GET),
             Map.entry("/achievement/all", HttpMethod.GET),
-            Map.entry("/quit-plan/time", HttpMethod.GET)
-
+            Map.entry("/quit-plan/time", HttpMethod.GET),
+            Map.entry("/quit-plan//keep-plan", HttpMethod.POST)
+            
     );
 
     @Bean
