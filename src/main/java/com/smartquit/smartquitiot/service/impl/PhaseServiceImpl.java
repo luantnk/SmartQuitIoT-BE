@@ -209,7 +209,7 @@ public class PhaseServiceImpl implements PhaseService {
                 quitPlanRepository.findByStatusIn(List.of(QuitPlanStatus.CREATED, QuitPlanStatus.IN_PROGRESS));
 
         if (activePlans.isEmpty()) {
-            log.info("Không có QuitPlan CREATED/IN_PROGRESS để cập nhật.");
+//            log.info("Không có QuitPlan CREATED/IN_PROGRESS để cập nhật.");
             return;
         }
 
@@ -289,7 +289,7 @@ public class PhaseServiceImpl implements PhaseService {
 
                     }else{
                         phase.setStatus(PhaseStatus.FAILED);
-                        log.info(" not pass due to fail condition of phase");
+//                        log.info(" not pass due to fail condition of phase");
                         phaseRepository.save(phase);
                     }
 
@@ -322,7 +322,11 @@ public class PhaseServiceImpl implements PhaseService {
             quitPlanRepository.save(currentPlan);
         }
 
+<<<<<<< HEAD
         log.info("Đã kiem tra trạng thái cho {} quit plan(s).", activePlans.size());
+=======
+//        log.info("Đã cập nhật trạng thái cho {} quit plan(s).", activePlans.size());
+>>>>>>> b8873c7 (feat: config for ws , add beans)
     }
 
     @Transactional

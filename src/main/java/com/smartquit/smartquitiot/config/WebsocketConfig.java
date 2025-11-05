@@ -11,20 +11,26 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+/** Lưu ý cho ae xài file chung này
+ * WebSocket STOMP config :
+ * - SockJS xoá (clients sử dụng native WebSocket).
+ * - Gĩu setAllowedOriginPatterns(...) như hiện tại
+ */
 @Configuration
 @EnableWebSocketMessageBroker
-@RequiredArgsConstructor
 public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    @Value("${allowed.url}")
-    private String clientDomain;
-
-    @Qualifier("jwtChannelInterceptor")
+    private final String clientDomain;
     private final ChannelInterceptor jwtChannelInterceptor;
+
+    public WebsocketConfig(@Value("${allowed.url}") String clientDomain,
+                           @Qualifier("jwtChannelInterceptor") ChannelInterceptor jwtChannelInterceptor) {
+        this.clientDomain = clientDomain;
+        this.jwtChannelInterceptor = jwtChannelInterceptor;
+    }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // broadcast topics and per-user queues
         registry.enableSimpleBroker("/topic", "/queue");
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");
@@ -33,8 +39,7 @@ public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(clientDomain.split(","))
-                .withSockJS();
+                .setAllowedOriginPatterns(clientDomain.split(","));
     }
 
     @Override

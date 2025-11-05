@@ -244,4 +244,33 @@ public class ScheduleServiceImpl implements ScheduleService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<LocalDate> getWorkdaysByMonth(int accountId, int year, int month) {
+        // Resolve coach by accountId (FE gửi accountId)
+        var coachOpt = coachRepository.findByAccountId(accountId);
+        if (coachOpt.isEmpty()) {
+            throw new IllegalArgumentException("Not exist account");
+        }
+        int coachId = coachOpt.get().getId();
+
+        YearMonth requested = YearMonth.of(year, month);
+        LocalDate start = requested.atDay(1);           // bắt đầu từ ngày 1 của tháng (kể cả quá khứ)
+        LocalDate end = requested.atEndOfMonth();      // tới cuối tháng
+
+        // Lấy tất cả CoachWorkSchedule trong khoảng và lọc theo coachId
+        List<CoachWorkSchedule> schedules = coachWorkScheduleRepository.findAllByDateBetweenWithCoach(start, end);
+
+        return schedules.stream()
+                .filter(Objects::nonNull)
+                .filter(cws -> cws.getCoach() != null && cws.getCoach().getId() == coachId)
+                .map(CoachWorkSchedule::getDate)
+                .filter(Objects::nonNull)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+
+
 }

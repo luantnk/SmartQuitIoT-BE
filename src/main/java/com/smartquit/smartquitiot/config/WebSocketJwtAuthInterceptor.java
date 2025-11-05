@@ -8,29 +8,15 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * ChannelInterceptor cho WebSocket STOMP:
- * - Đọc header "Authorization" khi CONNECT
- * - Decode token bằng JwtDecoder (CustomJwtDecoder bạn đã có)
- * - Thiết lập accessor.setUser(authentication) để STOMP session có principal
- * - Thiết lập SecurityContextHolder cho luồng xử lý message, và clear sau khi gửi xong
- *
- */
-@Component("jwtChannelInterceptor")
 public class WebSocketJwtAuthInterceptor implements ChannelInterceptor {
-
     private static final Logger log = LoggerFactory.getLogger(WebSocketJwtAuthInterceptor.class);
-
     private final JwtDecoder jwtDecoder;
 
     public WebSocketJwtAuthInterceptor(JwtDecoder jwtDecoder) {
@@ -39,85 +25,99 @@ public class WebSocketJwtAuthInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         try {
-            // Thực hiện khi client CONNECT (lần đầu) hoặc có header auth gửi trong message
-            if (StompCommand.CONNECT.equals(accessor.getCommand()) || StompCommand.SEND.equals(accessor.getCommand())) {
-                List<String> authHeaders = accessor.getNativeHeader("Authorization");
-                if (authHeaders != null && !authHeaders.isEmpty()) {
-                    String raw = authHeaders.get(0);
-                    String token = raw.startsWith("Bearer ") ? raw.substring(7) : raw;
-                    if (token != null && !token.isBlank()) {
-                        Jwt jwt = jwtDecoder.decode(token);
+            StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+            if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                // read possible header names
+                String raw = accessor.getFirstNativeHeader("Authorization");
+                if (raw == null) raw = accessor.getFirstNativeHeader("authorization");
+                if (raw == null) raw = accessor.getFirstNativeHeader("Auth");
 
-                        // lấy principal name: ưu tiên claim "accountId", fallback subject, fallback username claim
-                        String principalName = null;
-                        Object accIdObj = jwt.getClaims().get("accountId");
-                        if (accIdObj != null) {
-                            principalName = String.valueOf(accIdObj);
+                if (raw == null) {
+                    // sometimes nativeHeaders nested under "nativeHeaders"
+                    Object nh = accessor.getMessageHeaders().get("nativeHeaders");
+                    if (nh instanceof Map<?, ?>) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, List<String>> map = (Map<String, List<String>>) nh;
+                        for (String k : List.of("Authorization","authorization","Auth","auth","token","accessToken")) {
+                            List<String> vals = map.get(k);
+                            if (vals != null && !vals.isEmpty()) { raw = vals.get(0); break; }
                         }
-                        if (principalName == null || principalName.isEmpty()) {
-                            principalName = jwt.getSubject();
-                        }
-                        if (principalName == null) {
-                            Object username = jwt.getClaims().get("username");
-                            principalName = username != null ? String.valueOf(username) : "anonymous";
-                        }
-
-                        // lấy roles/scope từ claim (project của bạn dùng "scope" claim string)
-                        Collection<SimpleGrantedAuthority> authorities = parseAuthoritiesFromJwt(jwt);
-
-                        Authentication auth = new UsernamePasswordAuthenticationToken(principalName, token, authorities);
-
-                        // gán user cho STOMP session
-                        accessor.setUser(auth);
-
-                        // Đặt Authentication vào SecurityContext tạm thời để service có thể dùng SecurityContextHolder
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-
-                        // log ngắn gọn
-                        log.debug("WebSocket CONNECT/SEND authenticated principal={} authorities={}", principalName, authorities);
                     }
                 }
+
+                if (raw == null) {
+                    log.debug("WS CONNECT without Authorization header (anonymous session).");
+                    return message; // allow anonymous if you want — or return null to reject
+                }
+
+                String token = raw.startsWith("Bearer ") ? raw.substring(7).trim() : raw.trim();
+                if (token.isEmpty()) {
+                    log.debug("Empty token in CONNECT");
+                    return null; // reject CONNECT frame
+                }
+
+                // decode token -> if expired/invalid, reject CONNECT quickly
+                Jwt jwt;
+                try {
+                    jwt = jwtDecoder.decode(token);
+                } catch (Exception ex) {
+                    log.warn("WS CONNECT token invalid/expired: {}", ex.getMessage());
+                    // reject CONNECT so FE sees failure (recommended during dev)
+                    return null;
+                }
+
+                // Build principalName: prefer accountId claim (numeric) else sub
+                String principalName = null;
+                Object accClaim = jwt.getClaims().get("accountId");
+                if (accClaim == null) accClaim = jwt.getClaims().get("account_id");
+                if (accClaim != null) principalName = String.valueOf(accClaim);
+                if (principalName == null || principalName.isBlank()) principalName = jwt.getSubject();
+
+                // parse scope/roles -> SimpleGrantedAuthority
+                Collection<SimpleGrantedAuthority> authorities = parseAuthorities(jwt);
+
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(principalName, token, authorities);
+                accessor.setUser(auth);
+                log.debug("WS CONNECT: principal={} set on session", principalName);
+
+                // *** NEW: persist token/principal into session attributes so later SEND frames can read them ***
+                try {
+                    Map<String, Object> sessionAttrs = accessor.getSessionAttributes();
+                    if (sessionAttrs != null) {
+                        sessionAttrs.put("Authorization", token);
+                        sessionAttrs.put("principalName", principalName);
+                        // also useful: raw jwt claims if you need quick access
+                        sessionAttrs.put("jwt_claims_sub", jwt.getSubject());
+                    }
+                } catch (Exception e) {
+                    log.debug("Failed to write session attributes for WS CONNECT: {}", e.getMessage());
+                }
+
+                // --- optional dev-only: if you want to force a specific principal when token lacks accountId ---
+                // if (principalName == null || principalName.isBlank()) {
+                //     accessor.setUser(new UsernamePasswordAuthenticationToken("3", token, List.of(new SimpleGrantedAuthority("ROLE_COACH"))));
+                //     log.debug("WS CONNECT: forced principal=3 for dev testing");
+                // }
             }
         } catch (Exception ex) {
-            // nếu decode lỗi: không block toàn bộ kết nối; client sẽ gặp lỗi khi subscribe/send nếu cần auth
-            log.warn("WebSocket JWT decode failed: {}", ex.getMessage());
+            log.warn("WS auth interceptor error (CONNECT): {}", ex.getMessage());
+            // failing here: either allow anonymous or reject; safer to reject
+            return null;
         }
         return message;
     }
 
-    @Override
-    public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-        // clear SecurityContextHolder nếu principal ở accessor chính là authentication hiện tại
+    private Collection<SimpleGrantedAuthority> parseAuthorities(Jwt jwt) {
         try {
-            StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-            Authentication principal = (Authentication) accessor.getUser();
-            Authentication current = SecurityContextHolder.getContext().getAuthentication();
-            if (principal != null && principal.equals(current)) {
-                SecurityContextHolder.clearContext();
-                log.debug("Cleared SecurityContext after STOMP message processing for principal={}", principal.getName());
-            }
-        } catch (Exception e) {
-            // ignore
-        }
-    }
-
-    private Collection<SimpleGrantedAuthority> parseAuthoritiesFromJwt(Jwt jwt) {
-        // Project đặt claim "scope" = ROLE_NAME trong token generation.
-        try {
-            Object scopeObj = jwt.getClaims().get("scope");
+            Object scope = jwt.getClaims().get("scope");
             List<String> roles = new ArrayList<>();
-            if (scopeObj instanceof String s) {
-                // có thể là "MEMBER" hoặc "ROLE_MEMBER"
-                String str = s.trim();
-                if (!str.isEmpty()) {
-                    roles.addAll(Arrays.asList(str.split("[,\\s]+")));
-                }
-            } else if (scopeObj instanceof Collection<?> coll) {
+            if (scope instanceof String s && !s.isBlank()) {
+                roles.addAll(Arrays.asList(s.split("[,\\s]+")));
+            } else if (scope instanceof Collection<?> coll) {
                 for (Object o : coll) if (o != null) roles.add(String.valueOf(o));
             }
-
             return roles.stream()
                     .filter(Objects::nonNull)
                     .map(String::trim)

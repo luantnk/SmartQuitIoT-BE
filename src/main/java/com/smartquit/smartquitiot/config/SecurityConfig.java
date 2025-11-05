@@ -21,8 +21,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
@@ -107,6 +109,25 @@ public class SecurityConfig {
             corsConfiguration.setAllowedHeaders(List.of("*"));
             return corsConfiguration;
         }));
+//        http.cors(cors -> cors.configurationSource(request -> {
+//            CorsConfiguration corsConfiguration = new CorsConfiguration();
+//            // split & trim same biến allowedOrigins
+//            List<String> patterns = Arrays.stream(allowedOrigins.split(","))
+//                    .map(String::trim)
+//                    .filter(s -> !s.isEmpty())
+//                    .collect(Collectors.toList());
+//            // if empty, set dev defaults or throw
+//            if (patterns.isEmpty()) {
+//                patterns = List.of("http://localhost:5173");
+//            }
+//            corsConfiguration.setAllowedOriginPatterns(patterns);
+//            corsConfiguration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+//            corsConfiguration.setAllowedHeaders(List.of("*"));
+//            corsConfiguration.setAllowCredentials(true);
+//            return corsConfiguration;
+//        }));
+
+
         return http.build();
     }
 

@@ -159,9 +159,28 @@ public class AccountServiceImpl implements AccountService {
             throw new RuntimeException("No authenticated user found");
         }
         String subject = auth.getName();
-        return accountRepository.findByUsernameOrEmail(subject, subject)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+//        log.debug("[Auth] principal from SecurityContext: {}", subject);
+
+        if (subject == null || subject.isBlank()) {
+            throw new RuntimeException("Authenticated principal name is empty");
+        }
+
+        // 1) Try username/email first (preserve current behavior)
+        var byName = accountRepository.findByUsernameOrEmail(subject, subject);
+        if (byName.isPresent()) return byName.get();
+
+        // 2) If not found, and subject looks numeric => try id
+        try {
+            int id = Integer.parseInt(subject);
+            return accountRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Account not found by id: " + id));
+        } catch (NumberFormatException ignored) {
+            // not numeric
+        }
+
+        throw new RuntimeException("Account not found: " + subject);
     }
+
 
 
     private String getDefaultAvatar(String firstName, String lastName){

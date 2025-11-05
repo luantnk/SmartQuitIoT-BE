@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
+
+    private static final Logger log = LoggerFactory.getLogger(MessageServiceImpl.class); // ADDED: logger
 
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
@@ -132,26 +136,33 @@ public class MessageServiceImpl implements MessageService {
         final Message savedFinal = saved;
         final String clientMessageIdFinal = req.getClientMessageId();
 
+        // ADDED: debug log before register synchronization
+        log.info("[MSG] prepared to broadcast after commit convId={} msgId={} clientMessageId={}",
+                convId, savedFinal.getId(), clientMessageIdFinal);
+
         // broadcast AFTER COMMIT
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     try {
-                        if (messagingTemplate != null) {
-                            messagingTemplate.convertAndSend("/topic/conversations/" + convId,
-                                    MessageMapper.toResponse(savedFinal, clientMessageIdFinal));
-                        }
+                        MessageDTO payload = MessageMapper.toResponse(savedFinal, clientMessageIdFinal);
+                        log.info("[MSG] afterCommit broadcasting to /topic/conversations/{} payload={}", convId, payload); // ADDED
+                        messagingTemplate.convertAndSend("/topic/conversations/" + convId, payload);
+                        log.info("[MSG] broadcast done convId={} clientMessageId={}", convId, clientMessageIdFinal); // ADDED
                     } catch (Exception ex) {
-                        // log properly in production
-                        ex.printStackTrace();
+                        // ADDED: proper error log
+                        log.error("[MSG] broadcast error convId={} clientMessageId={}", convId, clientMessageIdFinal, ex);
                     }
                 }
             });
         } else {
-            if (messagingTemplate != null) {
-                messagingTemplate.convertAndSend("/topic/conversations/" + conv.getId(),
-                        MessageMapper.toResponse(saved, req.getClientMessageId()));
+            try {
+                MessageDTO payload = MessageMapper.toResponse(saved, req.getClientMessageId());
+                log.info("[MSG] no-tx broadcasting to /topic/conversations/{} payload={}", conv.getId(), payload); // ADDED
+                messagingTemplate.convertAndSend("/topic/conversations/" + conv.getId(), payload);
+            } catch (Exception ex) {
+                log.error("[MSG] no-tx broadcast error convId={}", conv.getId(), ex); // ADDED
             }
         }
 
