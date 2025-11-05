@@ -59,4 +59,11 @@ public interface CoachWorkScheduleRepository extends JpaRepository<CoachWorkSche
             @Param("statuses") List<CoachWorkScheduleStatus> statuses
     );
 
+    @Query("SELECT DISTINCT cws.date FROM CoachWorkSchedule cws " +
+            "WHERE cws.coach.id = :coachId AND cws.date BETWEEN :start AND :end")
+    List<LocalDate> findDistinctDatesByCoachIdAndDateBetween(
+            @Param("coachId") int coachId,
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end);
+
 }

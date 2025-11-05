@@ -13,4 +13,6 @@ public interface ScheduleService {
     List<ScheduleByDayResponse> getSchedulesByMonth(int year, int month);
     void updateScheduleByDate(LocalDate date, ScheduleUpdateRequest request);
     List<SlotAvailableResponse> getAvailableSlots(int coachId, LocalDate date);
+    List<LocalDate> getWorkdaysByMonth(int accountId, int year, int month);
+
 }
