@@ -15,6 +15,7 @@ public class NotificationMapper {
         dto.setTitle(notification.getTitle());
         dto.setContent(notification.getContent());
         dto.setRead(notification.isRead());
+        dto.setDeleted(notification.isDeleted());
         dto.setUrl(notification.getUrl());
         dto.setDeepLink(notification.getDeepLink());
         dto.setType(notification.getNotificationType().name());

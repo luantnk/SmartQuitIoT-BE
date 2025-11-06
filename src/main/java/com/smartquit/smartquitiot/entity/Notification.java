@@ -25,7 +25,7 @@ public class Notification {
     @Column(columnDefinition = "TEXT")
     String content;
     boolean isRead = false;
-
+    boolean isDeleted = false;
     //điều hướng web
     String url;
 
