@@ -12,10 +12,7 @@ import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.enums.CancelledBy;
 import com.smartquit.smartquitiot.enums.CoachWorkScheduleStatus;
 import com.smartquit.smartquitiot.mapper.AppointmentMapper;
-import com.smartquit.smartquitiot.repository.AppointmentRepository;
-import com.smartquit.smartquitiot.repository.CoachWorkScheduleRepository;
-import com.smartquit.smartquitiot.repository.MemberRepository;
-import com.smartquit.smartquitiot.repository.MembershipSubscriptionRepository;
+import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.AgoraService;
 import com.smartquit.smartquitiot.service.AppointmentService;
 import jakarta.transaction.Transactional;
@@ -25,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -42,6 +40,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentMapper appointmentMapper;
     private final AgoraService agoraService;
     private final MembershipSubscriptionRepository membershipSubscriptionRepository; // NEW
+    private final FeedbackRepository feedbackRepository; // add to fields
 
     private static final int BOOKINGS_PER_30D = 4;
 
@@ -297,7 +296,6 @@ public class AppointmentServiceImpl implements AppointmentService {
                     return true;
                 })
                 .map(a -> {
-                    // runtimeStatus: if appointment was cancelled, surface CANCELLED explicitly
                     String runtimeStatus;
                     if (a.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
                         runtimeStatus = "CANCELLED";
@@ -305,7 +303,6 @@ public class AppointmentServiceImpl implements AppointmentService {
                         CoachWorkSchedule cws = a.getCoachWorkSchedule();
                         runtimeStatus = (cws != null && cws.getSlot() != null) ? calculateRuntimeStatus(cws) : "UNKNOWN";
                     }
-
                     return appointmentMapper.toResponseWithRuntime(a, runtimeStatus);
                 })
                 .toList();
@@ -315,7 +312,23 @@ public class AppointmentServiceImpl implements AppointmentService {
         int from = page * size;
         if (from >= converted.size()) return List.of();
         int to = Math.min(converted.size(), from + size);
-        return converted.subList(from, to);
+
+        // create a modifiable copy of the sublist so we can set hasRated safely
+        List<AppointmentResponse> pageList = new ArrayList<>(converted.subList(from, to));
+
+        // simple per-appointment check (fine for small scale)
+        for (AppointmentResponse r : pageList) {
+            try {
+                boolean exists = feedbackRepository.existsByAppointment_Id(r.getAppointmentId());
+                r.setHasRated(exists);
+            } catch (Exception e) {
+                // defensive: if repo fails, leave hasRated = false and continue
+                log.warn("Failed to check feedback for appointment {}: {}", r.getAppointmentId(), e.getMessage());
+                r.setHasRated(false);
+            }
+        }
+
+        return pageList;
     }
 
     /**
