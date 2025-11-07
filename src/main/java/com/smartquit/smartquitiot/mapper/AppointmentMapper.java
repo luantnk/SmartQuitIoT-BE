@@ -74,7 +74,7 @@ public class AppointmentMapper {
                     .joinWindowEnd(windowEndInstant);
         }
 
-        // --- MẤC NHẤT: map cancelled fields (nếu có)
+        // --- map cancelled fields
         if (appointment.getCancelledBy() != null) {
             builder.cancelledBy(appointment.getCancelledBy());
         }
