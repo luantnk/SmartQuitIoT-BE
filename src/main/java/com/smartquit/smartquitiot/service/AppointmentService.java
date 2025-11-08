@@ -25,4 +25,6 @@ public interface AppointmentService {
     JoinTokenResponse generateJoinTokenForAppointment(int appointmentId, int accountId);
 
     RemainingBookingResponse getRemainingBookingsForMember(int memberAccountId);
+
+    void completeAppointmentByCoach(int appointmentId, int coachAccountId);
 }

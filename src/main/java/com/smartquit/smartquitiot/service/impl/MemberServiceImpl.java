@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.mapper.MemberMapper;
@@ -9,12 +10,16 @@ import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.specifications.MemberSpecification;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,5 +68,11 @@ public class MemberServiceImpl implements MemberService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Member> memberPage = memberRepository.findAll(spec, pageable);
         return memberPage.map(memberMapper::toMemberDTO);
+    }
+
+    @Override
+    public List<MemberListItemDTO> getListMembers() {
+        List<Member> all = memberRepository.findAllByAccount_IsActiveTrueAndAccount_IsBannedFalse();
+        return all.stream().map(memberMapper::toMemberListItemDTO).collect(Collectors.toList());
     }
 }
