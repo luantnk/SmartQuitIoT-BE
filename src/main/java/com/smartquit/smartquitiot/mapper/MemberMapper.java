@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.mapper;
 
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
 import com.smartquit.smartquitiot.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -32,5 +33,20 @@ public class MemberMapper {
     private Integer calculateAge(LocalDate dob){
         if(dob == null) return null;
         return Period.between(dob, LocalDate.now()).getYears();
+    }
+    public MemberListItemDTO toMemberListItemDTO(Member member) {
+        MemberListItemDTO memberListItemDTO = new MemberListItemDTO();
+        memberListItemDTO.setId(member.getId());
+        memberListItemDTO.setFirstName(member.getFirstName());
+        memberListItemDTO.setLastName(member.getLastName());
+        memberListItemDTO.setGender(member.getGender());
+        memberListItemDTO.setDob(member.getDob());
+        memberListItemDTO.setAge(calculateAge(member.getDob()));
+        memberListItemDTO.setAvatarUrl(member.getAvatarUrl());
+        memberListItemDTO.setUsedFreeTrial(member.isUsedFreeTrial());
+        memberListItemDTO.setStreaks(member.getMetric().getStreaks());
+        memberListItemDTO.setReductionPercentage(member.getMetric().getReductionPercentage());
+        memberListItemDTO.setSmokeFreeDayPercentage(member.getMetric().getSmokeFreeDayPercentage());
+        return memberListItemDTO;
     }
 }
