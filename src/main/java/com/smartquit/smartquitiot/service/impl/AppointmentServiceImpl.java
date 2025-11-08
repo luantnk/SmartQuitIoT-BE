@@ -299,6 +299,8 @@ public class AppointmentServiceImpl implements AppointmentService {
                     String runtimeStatus;
                     if (a.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
                         runtimeStatus = "CANCELLED";
+                    } else if (a.getAppointmentStatus() == AppointmentStatus.COMPLETED) {
+                        runtimeStatus = "COMPLETED";
                     } else {
                         CoachWorkSchedule cws = a.getCoachWorkSchedule();
                         runtimeStatus = (cws != null && cws.getSlot() != null) ? calculateRuntimeStatus(cws) : "UNKNOWN";
@@ -377,7 +379,9 @@ public class AppointmentServiceImpl implements AppointmentService {
                     String runtimeStatus;
                     if (a.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
                         runtimeStatus = "CANCELLED";
-                    } else {
+                    } else if (a.getAppointmentStatus() == AppointmentStatus.COMPLETED) {
+                        runtimeStatus = "COMPLETED";
+                    }else {
                         CoachWorkSchedule cws = a.getCoachWorkSchedule();
                         runtimeStatus = (cws != null && cws.getSlot() != null) ? calculateRuntimeStatus(cws) : "UNKNOWN";
                     }
@@ -457,6 +461,8 @@ public class AppointmentServiceImpl implements AppointmentService {
         String runtimeStatus;
         if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
             runtimeStatus = "CANCELLED";
+        } else if (appointment.getAppointmentStatus() == AppointmentStatus.COMPLETED) {
+            runtimeStatus = "COMPLETED";
         } else {
             CoachWorkSchedule cws = appointment.getCoachWorkSchedule();
             runtimeStatus = (cws != null && cws.getSlot() != null) ? calculateRuntimeStatus(cws) : "UNKNOWN";
@@ -591,4 +597,57 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .note("Counting non-cancelled appointments and member-cancelled appointments as used; coach-cancelled appointments are refunded.")
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void completeAppointmentByCoach(int appointmentId, int coachAccountId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        // quyền: phải là coach phụ trách appointment
+        if (appointment.getCoach() == null
+                || appointment.getCoach().getAccount() == null
+                || appointment.getCoach().getAccount().getId() != coachAccountId) {
+            throw new SecurityException("You do not have permission to complete this appointment");
+        }
+
+        // nếu đã CANCELLED thì không cho
+        if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot complete a cancelled appointment");
+        }
+
+        // nếu đã COMPLETED thì idempotent return
+        if (appointment.getAppointmentStatus() == AppointmentStatus.COMPLETED) {
+            log.info("Appointment {} is already COMPLETED", appointmentId);
+            return;
+        }
+
+        // lấy thông tin slot để kiểm tra thời gian
+        CoachWorkSchedule linkedCws = appointment.getCoachWorkSchedule();
+        if (linkedCws == null || linkedCws.getSlot() == null) {
+            throw new IllegalStateException("Cannot determine slot information to validate manual completion window");
+        }
+
+        ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
+        LocalDate apDate = appointment.getDate();
+        LocalTime startTime = linkedCws.getSlot().getStartTime();
+        ZonedDateTime startZ = LocalDateTime.of(apDate, startTime).atZone(zone);
+
+        // business rule: cho phép completed sau 10' slot start
+        final int MANUAL_COMPLETE_MINUTES = 10;
+        ZonedDateTime allowedCompleteAt = startZ.plusMinutes(MANUAL_COMPLETE_MINUTES);
+        ZonedDateTime nowZ = ZonedDateTime.now(zone);
+
+        if (nowZ.isBefore(allowedCompleteAt)) {
+            throw new IllegalStateException("Too early to complete. Manual completion allowed from: " + allowedCompleteAt.toString());
+        }
+
+        appointment.setAppointmentStatus(AppointmentStatus.COMPLETED);
+
+
+        appointmentRepository.save(appointment);
+
+        log.info("Coach(accountId={}) manually completed appointment {}", coachAccountId, appointmentId);
+    }
+
 }
