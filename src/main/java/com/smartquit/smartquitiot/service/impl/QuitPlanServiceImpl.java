@@ -1,21 +1,30 @@
 package com.smartquit.smartquitiot.service.impl;
+import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
+import com.smartquit.smartquitiot.enums.NotificationType;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.*;
+import com.vladmihalcea.hibernate.type.json.JsonType;
+import jakarta.persistence.Column;
+import jakarta.persistence.OneToOne;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -33,7 +42,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     private final QuitPlanMapper quitPlanMapper;
     private final MissionRepository missionRepository;
     private final PhaseRepository phaseRepository;
-
+    private final NotificationService  notificationService;
     @Transactional
     @Override
     public PhaseBatchMissionsResponse createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req) {
@@ -128,7 +137,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
 
     @Override
     public QuitPlanResponse getMemberQuitPlan(int memberId) {
-        QuitPlan plan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(memberId);
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(memberId);
         return quitPlanMapper.toResponse(plan);
     }
 
@@ -149,6 +158,70 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         }
 
         return quitPlanMapper.toResponse(phaseRepository.save(phase).getQuitPlan());
+    }
+
+    @Override
+    @Transactional
+    public PhaseBatchMissionsResponse createNewQuitPlan(CreateNewQuitPlanRequest req) {
+        Account account = accountService.getAuthenticatedAccount();
+        List<Mission> allMissions = missionRepository.findAll();
+        if(allMissions.isEmpty()) {
+            throw new RuntimeException("Mission library is empty, Need insert missions library!");
+        }
+
+        QuitPlan oldQuitPlan = quitPlanRepository.findByMember_IdAndIsActiveTrue(account.getMember().getId());
+        oldQuitPlan.setActive(false);
+        if(oldQuitPlan.getStatus() == QuitPlanStatus.IN_PROGRESS || oldQuitPlan.getStatus() == QuitPlanStatus.CREATED) {
+            oldQuitPlan.setStatus(QuitPlanStatus.CANCELED);
+        }
+        quitPlanRepository.save(oldQuitPlan);
+        FormMetric newFormMetric = cloneFormMetric(oldQuitPlan.getFormMetric());
+        if(newFormMetric == null) {
+            throw new RuntimeException("newFormMetric get from clone old metric is null!");
+        }
+            //get response from ai
+            PhaseResponse phaseResponse = phaseService.generatePhases
+                    (newFormMetric.getSmokeAvgPerDay(),newFormMetric.getNumberOfYearsOfSmoking(),
+                            req.getStartDate(), oldQuitPlan.getFtndScore(), account);
+
+            // save quit plan
+            QuitPlan newQuitPlan = new QuitPlan();
+            newQuitPlan.setFormMetric(newFormMetric);
+            newQuitPlan.setName(req.getQuitPlanName());
+            newQuitPlan.setFtndScore(oldQuitPlan.getFtndScore());
+            newQuitPlan.setMember(account.getMember());
+            newQuitPlan.setStartDate(req.getStartDate());
+            LocalDate currentDate = LocalDate.now();
+
+            if(req.getStartDate().equals(currentDate)){
+                newQuitPlan.setStatus(QuitPlanStatus.IN_PROGRESS);
+            }else{
+                newQuitPlan.setStatus(QuitPlanStatus.CREATED);
+            }
+
+            newQuitPlan.setEndDate(phaseResponse.getEndDateOfQuitPlan());
+            //save quit plan and form metric
+            quitPlanRepository.save(newQuitPlan);
+
+            //save phase and system phase condition
+            phaseService.savePhasesAndSystemPhaseCondition(phaseResponse, newQuitPlan);
+            //tao phase detail
+            List<PhaseDetail> preparedDetails = phaseDetailService.generateInitialPhaseDetails(newQuitPlan,"Preparation");
+
+            PhaseBatchMissionsResponse phaseBatchMissionsResponse = phaseDetailMissionService.generatePhaseDetailMissionsForPhase
+                    (preparedDetails,newQuitPlan, 4, "Preparation", MissionPhase.PREPARATION);
+            if(phaseBatchMissionsResponse != null) {
+                notificationService.saveAndPublish(account.getMember(), NotificationType.QUIT_PLAN,
+                        "Created New Quit Plan!",
+                        "New Quit Plan already created for you! Can do it better than you think <3",
+                        null, null,null
+                        );
+                return phaseBatchMissionsResponse;
+            }else {
+                throw new RuntimeException("phaseBatchMissionsResponse is null!");
+            }
+
+
     }
 
     private BigDecimal calculateNicotineIntakePerDay(BigDecimal amountOfNicotinePerCigarettes, int smokeAvgPerDay) {
@@ -196,5 +269,25 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     }
 
 
+    private FormMetric cloneFormMetric(FormMetric oldSrc) {
+        if (oldSrc == null) return null;
+        FormMetric fm = new FormMetric();
+        fm.setSmokeAvgPerDay(oldSrc.getSmokeAvgPerDay());
+        fm.setNumberOfYearsOfSmoking(oldSrc.getNumberOfYearsOfSmoking());
+        fm.setCigarettesPerPackage(oldSrc.getCigarettesPerPackage());
+        fm.setMinutesAfterWakingToSmoke(oldSrc.getMinutesAfterWakingToSmoke());
+        fm.setSmokingInForbiddenPlaces(oldSrc.isSmokingInForbiddenPlaces());
+        fm.setCigaretteHateToGiveUp(oldSrc.isCigaretteHateToGiveUp());
+        fm.setMorningSmokingFrequency(oldSrc.isMorningSmokingFrequency());
+        fm.setSmokeWhenSick(oldSrc.isSmokeWhenSick());
+        fm.setMoneyPerPackage(oldSrc.getMoneyPerPackage());
+        fm.setEstimatedMoneySavedOnPlan(oldSrc.getEstimatedMoneySavedOnPlan());
+        fm.setAmountOfNicotinePerCigarettes(oldSrc.getAmountOfNicotinePerCigarettes());
+        fm.setEstimatedNicotineIntakePerDay(oldSrc.getEstimatedNicotineIntakePerDay());
+        fm.setInterests(oldSrc.getInterests());
+        fm.setTriggered(oldSrc.getTriggered());
+
+        return fm;
+    }
 
 }

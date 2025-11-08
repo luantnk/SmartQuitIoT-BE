@@ -141,6 +141,39 @@ public class PhaseServiceImpl implements PhaseService {
         return phaseResponse;
     }
 
+    @Override
+    public PhaseResponse generatePhases(int smokeAvgPerDay, int numberOfYearsSmoking, LocalDate startDate, int FTND, Account account) {
+        //rules
+        String userInfo = """
+                    User profile:
+                    - Age: %s
+                    - Gender: %s
+                    - smokeAvgPerDay: %d
+                    - yearsSmoking: %d
+                    - FTND: %d
+                    - StartDate: %s
+                """.formatted(
+                calculateAge(account.getMember().getDob()),
+                account.getMember().getGender(),
+                smokeAvgPerDay,
+                numberOfYearsSmoking,
+                FTND,
+                startDate);
+        // response from ai
+        PhaseResponse phaseResponse = chatClient.prompt()
+                .system(SYSTEM_PROMPT)
+                .user(userInfo)
+                .tools(quitPlanTools)
+                .call()
+                .entity(PhaseResponse.class);
+
+        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
+            throw new IllegalStateException("AI did not return any phases");
+        }
+
+        return phaseResponse;
+    }
+
 
 
     @Override

@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service;
 
+import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
@@ -10,6 +11,7 @@ public interface QuitPlanService {
      PhaseBatchMissionsResponse createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req);
      QuitPlanResponse getCurrentQuitPlan();
      TimeResponse getCurrentTimeOfQuitPlan();
-    QuitPlanResponse getMemberQuitPlan(int memberId);
+     QuitPlanResponse getMemberQuitPlan(int memberId);
      QuitPlanResponse keepPhaseOfQuitPlan(KeepPhaseOfQuitPlanRequest request);
- }
+    PhaseBatchMissionsResponse createNewQuitPlan(CreateNewQuitPlanRequest req);
+}

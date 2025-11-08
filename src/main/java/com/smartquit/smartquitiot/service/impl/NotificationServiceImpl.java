@@ -54,9 +54,9 @@ public class NotificationServiceImpl implements NotificationService {
         n.setNotificationType(type);
         n.setTitle(title);
         n.setContent(content);
-        n.setIcon(icon);
-        n.setUrl(url);       // web route
-        n.setDeepLink(deepLink); // mobile deep link
+        n.setIcon(icon != null ? icon : DEFAULT_QUIT_PLAN_ICON);
+        n.setUrl(url != null ? url : "notifications/default");       // web route
+        n.setDeepLink(deepLink != null ? deepLink : "smartquit://default"); // mobile deep link
 
         Notification saved = notificationRepository.save(n);
         NotificationDTO dto = notificationMapper.mapToNotificationDTO(saved);
