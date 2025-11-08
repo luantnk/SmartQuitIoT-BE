@@ -86,6 +86,14 @@ public class QuitPlanMapper {
         dto.setTotalMissions(phase.getTotalMissions());
         dto.setCompletedMissions(phase.getCompletedMissions());
         dto.setProgress(phase.getProgress());
+        dto.setStatus(phase.getStatus());
+        dto.setCompletedAt(phase.getCompletedAt());
+        dto.setFm_cigarettes_total(phase.getFm_cigarettes_total());
+        dto.setAvg_cigarettes(phase.getAvg_cigarettes());
+        dto.setAvg_craving_level(phase.getAvg_craving_level());
+        dto.setKeepPhase(phase.isKeepPhase());
+        dto.setCreateAt(phase.getCreatedAt());
+
         if (phase.getDetails() != null) {
             List<PhaseDetailResponseDTO> details = phase.getDetails().stream()
                     .map(this::toPhaseDetailDTO)

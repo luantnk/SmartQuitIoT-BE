@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.smartquit.smartquitiot.entity.QuitPlan;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
@@ -19,6 +20,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormMetricDTO {
 
     int id;
