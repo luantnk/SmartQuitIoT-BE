@@ -13,6 +13,7 @@ import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.*;
 import com.vladmihalcea.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.OneToOne;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -223,6 +224,22 @@ public class QuitPlanServiceImpl implements QuitPlanService {
 
 
     }
+
+    @Override
+    public List<QuitPlanResponse> getHistory() {
+        Account account = accountService.getAuthenticatedAccount();
+        List<QuitPlan> quitPlans = quitPlanRepository.findAllByMember_IdOrderByCreatedAtDesc(account.getMember().getId());
+        return quitPlanMapper.toViewAll(quitPlans);
+    }
+
+    @Override
+    public QuitPlanResponse getSpecific(int id) {
+        Account account = accountService.getAuthenticatedAccount();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndId(account.getMember().getId(), id)
+                .orElseThrow(() -> new EntityNotFoundException("QuitPlan not found or not belong to this member!"));
+        return quitPlanMapper.toResponse(plan);
+    }
+
 
     private BigDecimal calculateNicotineIntakePerDay(BigDecimal amountOfNicotinePerCigarettes, int smokeAvgPerDay) {
         return amountOfNicotinePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));

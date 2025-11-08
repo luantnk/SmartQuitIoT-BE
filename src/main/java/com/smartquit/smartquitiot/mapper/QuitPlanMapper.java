@@ -5,6 +5,7 @@ import com.smartquit.smartquitiot.entity.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class QuitPlanMapper {
@@ -44,7 +45,8 @@ public class QuitPlanMapper {
         resp.setEndDate(plan.getEndDate());
         resp.setUseNRT(plan.isUseNRT());
         resp.setFtndScore(plan.getFtndScore());
-
+        resp.setCreatedAt(plan.getCreatedAt());
+        resp.setActive(plan.isActive());
         resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
 
         return resp;
@@ -134,4 +136,24 @@ public class QuitPlanMapper {
         dto.setStatus(mission.getStatus());
         return dto;
     }
+    public List<QuitPlanResponse> toViewAll(List<QuitPlan> quitPlans) {
+        if (quitPlans == null || quitPlans.isEmpty()) return List.of();
+
+        return quitPlans.stream().map(plan -> {
+            QuitPlanResponse resp = new QuitPlanResponse();
+            resp.setId(plan.getId());
+            resp.setName(plan.getName());
+            resp.setStatus(plan.getStatus());
+            resp.setStartDate(plan.getStartDate());
+            resp.setEndDate(plan.getEndDate());
+            resp.setUseNRT(plan.isUseNRT());
+            resp.setFtndScore(plan.getFtndScore());
+            resp.setCreatedAt(plan.getCreatedAt());
+            resp.setActive(plan.isActive());
+           // resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
+            return resp;
+        }).collect(Collectors.toList());
+    }
+
+
 }

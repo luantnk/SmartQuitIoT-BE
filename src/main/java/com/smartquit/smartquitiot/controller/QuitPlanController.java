@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/quit-plan")
@@ -76,5 +78,22 @@ public class QuitPlanController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/all-quit-plan")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member get all my quit plan to view HISTORY ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<List<QuitPlanResponse>> getAllQuitPLan() {
+        List<QuitPlanResponse> response = quitPlanService.getHistory();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/specific/{id}")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member get owner quit plan by Id ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<QuitPlanResponse> getSpecificQuitPlanById(@PathVariable int id) {
+        QuitPlanResponse response = quitPlanService.getSpecific(id);
+        return ResponseEntity.ok(response);
+    }
 
 }
