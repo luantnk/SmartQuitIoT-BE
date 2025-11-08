@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
@@ -63,6 +64,15 @@ public class QuitPlanController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<QuitPlanResponse> keepPhaseOfQuitPlan(@RequestBody KeepPhaseOfQuitPlanRequest req) {
         QuitPlanResponse response = quitPlanService.keepPhaseOfQuitPlan(req);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/create-new")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member choose create NEW QUIT PLAN ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<PhaseBatchMissionsResponse> createNew(@RequestBody CreateNewQuitPlanRequest req) {
+        PhaseBatchMissionsResponse response = quitPlanService.createNewQuitPlan(req);
         return ResponseEntity.ok(response);
     }
 
