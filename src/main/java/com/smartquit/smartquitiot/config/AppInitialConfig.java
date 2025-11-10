@@ -61,7 +61,7 @@ public class AppInitialConfig {
                 Member member = new Member();
                 member.setFirstName("mem");
                 member.setLastName("mem");
-                member.setAvatarUrl("https://cdn.smartquit.io.vn/avatars/member1.png");
+                member.setAvatarUrl("https://ui-avatars.com/api/?background=00D09E&color=fff&size=250&name=member1");
                 member.setGender(Gender.MALE);
                 member.setDob(LocalDate.of(2001, 5, 12));
                 account2.setMember(member);

@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
@@ -14,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -66,5 +69,31 @@ public class QuitPlanController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/create-new")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member choose create NEW QUIT PLAN ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<PhaseBatchMissionsResponse> createNew(@RequestBody CreateNewQuitPlanRequest req) {
+        PhaseBatchMissionsResponse response = quitPlanService.createNewQuitPlan(req);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/all-quit-plan")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member get all my quit plan to view HISTORY ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<List<QuitPlanResponse>> getAllQuitPLan() {
+        List<QuitPlanResponse> response = quitPlanService.getHistory();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/specific/{id}")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member get owner quit plan by Id ")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<QuitPlanResponse> getSpecificQuitPlanById(@PathVariable int id) {
+        QuitPlanResponse response = quitPlanService.getSpecific(id);
+        return ResponseEntity.ok(response);
+    }
 
 }

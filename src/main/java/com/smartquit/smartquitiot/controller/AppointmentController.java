@@ -187,4 +187,34 @@ public class AppointmentController {
         }
     }
 
+    @PutMapping("/{appointmentId}/complete")
+    @PreAuthorize("hasRole('COACH')")
+    @Operation(summary = "Coach: Mark appointment completed manually",
+            description = "Coach có thể đánh dấu appointment COMPLETED thủ công nếu thỏa điều kiện (start + MIN minutes <= now).")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> completeByCoach(
+            @PathVariable int appointmentId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
+        }
+        int coachAccountId = accountIdNum.intValue();
+
+        try {
+            appointmentService.completeAppointmentByCoach(appointmentId, coachAccountId);
+            return ResponseEntity.ok(GlobalResponse.ok("Appointment marked as COMPLETED", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(GlobalResponse.error(e.getMessage(), 404));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(GlobalResponse.error(e.getMessage(), 403));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(403).body(GlobalResponse.error(e.getMessage(), 403));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(GlobalResponse.error("Error when completing appointment: " + e.getMessage(), 500));
+        }
+    }
+
+
 }

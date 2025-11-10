@@ -22,13 +22,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ConversationServiceImpl implements ConversationService {
+public class    ConversationServiceImpl implements ConversationService {
 
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final ParticipantRepository participantRepository;
     private final AccountRepository accountRepository;
-    private final AccountService accountService; // <-- dùng service thay resolveCurrentAccount
+    private final AccountService accountService;
 
     @Override
     @Transactional(readOnly = true)

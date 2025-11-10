@@ -20,6 +20,7 @@ public class NotificationDTO {
     private String title;
     private String content;
     private boolean isRead;
+    private boolean isDeleted;
     private String url;
     private String deepLink;
     private String icon;

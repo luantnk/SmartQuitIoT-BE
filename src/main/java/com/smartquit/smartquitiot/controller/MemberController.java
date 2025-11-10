@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.service.MemberService;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/members")
@@ -53,4 +56,19 @@ public class MemberController {
     ){
         return ResponseEntity.ok(memberService.getMembers(page, size, search));
     }
+
+
+        @GetMapping("/summary")
+        @PreAuthorize("hasRole('COACH')")
+        @Operation(
+                summary = "API dành cho coach: Lấy danh sách member (tóm tắt)",
+                description = "Trả về danh sách summary (rút gọn) dành cho Coach. " +
+                        "Mục đích: gồm tên, avatar, tuổi, và tóm tắt các chỉ số chính (streaks, % smoke-free, % reduction)."
+        )
+        @SecurityRequirement(name = "Bearer Authentication")
+        public ResponseEntity<List<MemberListItemDTO>> getMembersForCoach(
+        ) {
+            List<MemberListItemDTO> result = memberService.getListMembers();
+            return ResponseEntity.ok(result);
+        }
 }

@@ -5,6 +5,7 @@ import com.smartquit.smartquitiot.entity.*;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class QuitPlanMapper {
@@ -44,7 +45,8 @@ public class QuitPlanMapper {
         resp.setEndDate(plan.getEndDate());
         resp.setUseNRT(plan.isUseNRT());
         resp.setFtndScore(plan.getFtndScore());
-
+        resp.setCreatedAt(plan.getCreatedAt());
+        resp.setActive(plan.isActive());
         resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
 
         return resp;
@@ -86,6 +88,14 @@ public class QuitPlanMapper {
         dto.setTotalMissions(phase.getTotalMissions());
         dto.setCompletedMissions(phase.getCompletedMissions());
         dto.setProgress(phase.getProgress());
+        dto.setStatus(phase.getStatus());
+        dto.setCompletedAt(phase.getCompletedAt());
+        dto.setFm_cigarettes_total(phase.getFm_cigarettes_total());
+        dto.setAvg_cigarettes(phase.getAvg_cigarettes());
+        dto.setAvg_craving_level(phase.getAvg_craving_level());
+        dto.setKeepPhase(phase.isKeepPhase());
+        dto.setCreateAt(phase.getCreatedAt());
+
         if (phase.getDetails() != null) {
             List<PhaseDetailResponseDTO> details = phase.getDetails().stream()
                     .map(this::toPhaseDetailDTO)
@@ -126,4 +136,24 @@ public class QuitPlanMapper {
         dto.setStatus(mission.getStatus());
         return dto;
     }
+    public List<QuitPlanResponse> toViewAll(List<QuitPlan> quitPlans) {
+        if (quitPlans == null || quitPlans.isEmpty()) return List.of();
+
+        return quitPlans.stream().map(plan -> {
+            QuitPlanResponse resp = new QuitPlanResponse();
+            resp.setId(plan.getId());
+            resp.setName(plan.getName());
+            resp.setStatus(plan.getStatus());
+            resp.setStartDate(plan.getStartDate());
+            resp.setEndDate(plan.getEndDate());
+            resp.setUseNRT(plan.isUseNRT());
+            resp.setFtndScore(plan.getFtndScore());
+            resp.setCreatedAt(plan.getCreatedAt());
+            resp.setActive(plan.isActive());
+           // resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
+            return resp;
+        }).collect(Collectors.toList());
+    }
+
+
 }

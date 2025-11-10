@@ -9,17 +9,18 @@ import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -27,20 +28,26 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
 
-    private static final Logger log = LoggerFactory.getLogger(MessageServiceImpl.class); // ADDED: logger
+    private static final Logger log = LoggerFactory.getLogger(MessageServiceImpl.class);
 
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final ParticipantRepository participantRepository;
     private final AccountRepository accountRepository;
+    private final MemberRepository memberRepository; // NEW: resolve memberId -> account
     private final SimpMessagingTemplate messagingTemplate;
-    private final AccountService accountService; // <-- inject standardized service
+    private final AccountService accountService; // resolves authenticated account
 
     @Override
     @Transactional
     public MessageDTO sendMessage(MessageCreateRequest req) {
-        Account sender = accountService.getAuthenticatedAccount(); // standardized
+        Account sender = accountService.getAuthenticatedAccount();
         if (sender == null) throw new IllegalStateException("Unauthenticated");
+
+        // Ai xài api này thì lưu ý
+        if (req.getConversationId() == null && req.getTargetMemberId() == null && req.getTargetUserId() == null) {
+            throw new IllegalArgumentException("Either conversationId or (targetMemberId or targetUserId) must be provided");
+        }
 
         Conversation conv;
 
@@ -52,17 +59,15 @@ public class MessageServiceImpl implements MessageService {
             if (!isParticipant) {
                 if (conv.getType() == ConversationType.DIRECT) {
                     // avoid duplicates: check again by account id
-                    boolean already = conv.getParticipants() == null
-                            ? false
-                            : conv.getParticipants().stream()
-                            .anyMatch(p -> p.getAccount() != null && p.getAccount().getId() == sender.getId());
+                    boolean already = conv.getParticipants() != null &&
+                            conv.getParticipants().stream()
+                                    .anyMatch(p -> p.getAccount() != null && Objects.equals(p.getAccount().getId(), sender.getId()));
 
                     if (!already) {
                         Participant p = new Participant();
                         p.setConversation(conv);
                         p.setAccount(sender);
                         participantRepository.save(p);
-                        // ensure list initialized
                         if (conv.getParticipants() == null) conv.setParticipants(new java.util.ArrayList<>());
                         conv.getParticipants().add(p);
                     }
@@ -70,14 +75,34 @@ public class MessageServiceImpl implements MessageService {
                     throw new SecurityException("You are not a participant of this group conversation");
                 }
             }
-        } else if (req.getTargetUserId() != null) {
-            if (req.getTargetUserId().equals(sender.getId())) {
+        } else {
+            // resolve targetAccountId: priority -> targetMemberId (member -> account) -> targetUserId (accountId)
+            Integer targetAccountId;
+            if (req.getTargetMemberId() != null) {
+                Member targetMember = memberRepository.findById(req.getTargetMemberId())
+                        .orElseThrow(() -> new IllegalArgumentException("Target member not found: " + req.getTargetMemberId()));
+
+                if (targetMember.getAccount() == null) {
+                    throw new IllegalArgumentException("Target member has no account linked");
+                }
+                targetAccountId = targetMember.getAccount().getId();
+            } else {
+                // legacy: assume targetUserId is accountId
+                targetAccountId = req.getTargetUserId();
+            }
+
+            if (targetAccountId == null) {
+                throw new IllegalArgumentException("Resolved target account is null");
+            }
+
+            if (targetAccountId.equals(sender.getId())) {
                 throw new IllegalArgumentException("Cannot send message to yourself");
             }
-            Account target = accountRepository.findById(req.getTargetUserId())
-                    .orElseThrow(() -> new IllegalArgumentException("Target user not found"));
 
-            Optional<Conversation> convOpt = conversationRepository.findDirectConversationBetween(sender.getId(), target.getId());
+            Account target = accountRepository.findById(targetAccountId)
+                    .orElseThrow(() -> new IllegalArgumentException("Target account not found: " + targetAccountId));
+
+            Optional<Conversation> convOpt = conversationRepository.findDirectConversationBetween(sender.getId(), targetAccountId);
             if (convOpt.isPresent()) {
                 conv = convOpt.get();
             } else {
@@ -102,11 +127,9 @@ public class MessageServiceImpl implements MessageService {
                 c.getParticipants().add(p2);
                 conv = c;
             }
-        } else {
-            throw new IllegalArgumentException("Either conversationId or targetUserId must be provided");
         }
 
-        // create and save message
+        // Create and save message
         Message msg = new Message();
         msg.setConversation(conv);
         msg.setSender(sender);
@@ -136,7 +159,6 @@ public class MessageServiceImpl implements MessageService {
         final Message savedFinal = saved;
         final String clientMessageIdFinal = req.getClientMessageId();
 
-        // ADDED: debug log before register synchronization
         log.info("[MSG] prepared to broadcast after commit convId={} msgId={} clientMessageId={}",
                 convId, savedFinal.getId(), clientMessageIdFinal);
 
@@ -147,11 +169,10 @@ public class MessageServiceImpl implements MessageService {
                 public void afterCommit() {
                     try {
                         MessageDTO payload = MessageMapper.toResponse(savedFinal, clientMessageIdFinal);
-                        log.info("[MSG] afterCommit broadcasting to /topic/conversations/{} payload={}", convId, payload); // ADDED
+                        log.info("[MSG] afterCommit broadcasting to /topic/conversations/{} payload={}", convId, payload);
                         messagingTemplate.convertAndSend("/topic/conversations/" + convId, payload);
-                        log.info("[MSG] broadcast done convId={} clientMessageId={}", convId, clientMessageIdFinal); // ADDED
+                        log.info("[MSG] broadcast done convId={} clientMessageId={}", convId, clientMessageIdFinal);
                     } catch (Exception ex) {
-                        // ADDED: proper error log
                         log.error("[MSG] broadcast error convId={} clientMessageId={}", convId, clientMessageIdFinal, ex);
                     }
                 }
@@ -159,10 +180,10 @@ public class MessageServiceImpl implements MessageService {
         } else {
             try {
                 MessageDTO payload = MessageMapper.toResponse(saved, req.getClientMessageId());
-                log.info("[MSG] no-tx broadcasting to /topic/conversations/{} payload={}", conv.getId(), payload); // ADDED
+                log.info("[MSG] no-tx broadcasting to /topic/conversations/{} payload={}", conv.getId(), payload);
                 messagingTemplate.convertAndSend("/topic/conversations/" + conv.getId(), payload);
             } catch (Exception ex) {
-                log.error("[MSG] no-tx broadcast error convId={}", conv.getId(), ex); // ADDED
+                log.error("[MSG] no-tx broadcast error convId={}", conv.getId(), ex);
             }
         }
 

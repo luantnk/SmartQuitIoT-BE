@@ -44,7 +44,7 @@ public class AccountServiceImpl implements AccountService {
     private final CoachMapper coachMapper;
     private final EmailService emailService;
     @NonFinal
-    @Value("${smartquit.default.avatar.url}")
+    @Value("${smartquit.default.avatar.url}") // smartquit.default.avatar.url=https://ui-avatars.com/api/?background=00D09E&color=fff&size=250&name=
     private String defaultAvatar;
 
     private static final long OTP_VALID_DURATION_MINUTES = 5;

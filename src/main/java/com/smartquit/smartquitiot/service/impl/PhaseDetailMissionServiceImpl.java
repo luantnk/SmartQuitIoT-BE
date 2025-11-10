@@ -114,7 +114,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
                     NotificationType.MISSION,
                     "Done all missions for " + missionDate + "!",
                     "You completed every mission on " + missionDate + ". Keep the streak alive!",
-                    "icon_url",
+                    "https://res.cloudinary.com/dsuxhxkya/image/upload/v1762324029/logo_wxhjsa.png",
                     url,
                     deepLink
             );

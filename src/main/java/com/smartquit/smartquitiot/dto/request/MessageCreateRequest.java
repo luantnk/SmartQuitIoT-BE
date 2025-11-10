@@ -12,7 +12,10 @@ public class MessageCreateRequest {
     private Integer conversationId;
 
     // target user (coach or member) when creating a new direct conversation
-    private Integer targetUserId;
+    // có 2 cách truyền: truyền targetUserId hoặc là targetMemberId
+    private Integer targetUserId; // là accountId
+
+    private Integer targetMemberId; // là memberId
 
     @NotNull
     private MessageType messageType;

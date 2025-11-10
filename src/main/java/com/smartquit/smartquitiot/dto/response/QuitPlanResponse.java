@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -19,7 +20,9 @@ public class QuitPlanResponse {
     QuitPlanStatus status;
     LocalDate startDate;
     LocalDate endDate;
+    LocalDateTime createdAt;
     boolean useNRT;
+    boolean active;
     int ftndScore;
     FormMetricDTO formMetricDTO;
     List<PhaseDTO> phases;
