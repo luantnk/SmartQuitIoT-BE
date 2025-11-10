@@ -72,7 +72,8 @@ public class SecurityConfig {
             Map.entry("/form-metric", HttpMethod.GET),
             Map.entry("/form-metric", HttpMethod.POST),
             Map.entry("/quit-plan/all-quit-plan", HttpMethod.GET),
-            Map.entry("/quit-plan/specific/{id}", HttpMethod.GET)
+            Map.entry("/quit-plan/specific/{id}", HttpMethod.GET),
+            Map.entry("/phase/redo", HttpMethod.POST)
     );
 
     @Bean

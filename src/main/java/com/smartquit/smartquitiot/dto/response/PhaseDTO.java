@@ -33,6 +33,7 @@ public class PhaseDTO {
     private LocalDateTime completedAt;
     private LocalDateTime createAt;
     private boolean keepPhase;
+    private boolean redo;
     int totalMissions;
     int completedMissions;
     BigDecimal progress;

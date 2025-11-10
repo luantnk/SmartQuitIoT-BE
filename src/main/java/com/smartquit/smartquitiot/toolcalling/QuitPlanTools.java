@@ -73,9 +73,9 @@ public class QuitPlanTools {
         phases.put("Subsiding", sub);
         // Maintenance
         int main;
-        if (yearsSmoking > 10 || age >= 50) main = 90;
-        else if (yearsSmoking > 5) main = 60;
-        else main = 30;
+        if (yearsSmoking > 10 || age >= 50) main = 30;
+        else if (yearsSmoking > 5) main = 25;
+        else main = 20;
         if ("FEMALE".equalsIgnoreCase(gender)) main += 7;
         phases.put("Maintenance", main);
         return phases;

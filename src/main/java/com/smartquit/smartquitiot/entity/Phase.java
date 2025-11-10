@@ -37,6 +37,7 @@ public class Phase {
     BigDecimal progress;
     LocalDateTime completedAt;
     boolean keepPhase = false;
+    boolean redo = false; // phase này được chọn làm lại
 
     double avg_craving_level;
     double avg_cigarettes;

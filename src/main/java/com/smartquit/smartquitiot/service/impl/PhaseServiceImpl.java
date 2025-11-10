@@ -2,11 +2,14 @@ package com.smartquit.smartquitiot.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
+import com.smartquit.smartquitiot.dto.request.RedoPhaseRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseDetailResponseDTO;
 import com.smartquit.smartquitiot.dto.response.PhaseResponse;
+import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.*;
+import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.repository.SystemPhaseConditionRepository;
@@ -24,7 +27,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import static com.smartquit.smartquitiot.toolcalling.QuitPlanTools.SYSTEM_PROMPT;
 
@@ -41,7 +46,7 @@ public class PhaseServiceImpl implements PhaseService {
     private final PhaseDetailService  phaseDetailService;
     private final PhaseDetailMissionService phaseDetailMissionService;
     private final NotificationService notificationService;
-
+    private final QuitPlanMapper  quitPlanMapper;
     //nho lam cai schedule update status of PHASE
     @Override
     public PhaseDTO getCurrentPhaseAtHomePage() {
@@ -174,6 +179,83 @@ public class PhaseServiceImpl implements PhaseService {
         return phaseResponse;
     }
 
+    @Override
+    public QuitPlanResponse redoPhaseInFailed(RedoPhaseRequest redoPhaseRequest) {
+
+        Phase oldPhase = phaseRepository.findById(redoPhaseRequest.getPhaseId())
+                .orElseThrow(() -> new IllegalArgumentException("Phase not found: " + redoPhaseRequest.getPhaseId()));
+
+        QuitPlan plan = oldPhase.getQuitPlan();
+        if (plan == null) {
+            throw new IllegalStateException("Phase has no QuitPlan");
+        }
+        if(oldPhase.getStatus() != PhaseStatus.FAILED){
+            throw new IllegalStateException("Phase not failed to redo");
+        }
+        oldPhase.setRedo(true);
+        phaseRepository.save(oldPhase); //set thành old
+        LocalDate anchorStart = redoPhaseRequest.getAnchorStart() != null
+                ? redoPhaseRequest.getAnchorStart()
+                : LocalDate.now();
+
+        Phase freshPhase = new Phase();
+        freshPhase.setQuitPlan(plan);
+        freshPhase.setName(oldPhase.getName());
+        freshPhase.setDurationDays(Math.max(1, oldPhase.getDurationDays()));
+        freshPhase.setSystemPhaseCondition(oldPhase.getSystemPhaseCondition());
+        freshPhase.setCondition(oldPhase.getCondition());            // JSON điều kiện
+        freshPhase.setReason(oldPhase.getReason());
+        freshPhase.setTotalMissions(0);
+        freshPhase.setCompletedMissions(0);
+        freshPhase.setProgress(BigDecimal.ZERO);
+        freshPhase.setKeepPhase(false);
+        freshPhase.setRedo(false);
+        freshPhase.setStatus(anchorStart.equals(LocalDate.now())
+                ? PhaseStatus.IN_PROGRESS : PhaseStatus.CREATED);
+        freshPhase.setAvg_craving_level(0d);
+        freshPhase.setAvg_cigarettes(0d);
+        freshPhase.setFm_cigarettes_total(0d);
+
+        LocalDate start = anchorStart;
+        LocalDate end   = start.plusDays(freshPhase.getDurationDays() - 1);
+        freshPhase.setStartDate(start);
+        freshPhase.setEndDate(end);
+
+        // Gắn vào list phases ngay sau phase cũ
+        List<Phase> phases = plan.getPhases();
+        // sort lại phase
+        phases.sort(Comparator.comparing(Phase::getStartDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Phase::getId));
+        int oldIdx = -1;
+        for (int i = 0; i < phases.size(); i++) {
+            if (Objects.equals(phases.get(i).getId(), oldPhase.getId())) {
+                oldIdx = i;
+                break;
+            }
+        }
+        if (oldIdx == -1) throw new IllegalStateException("Old phase is not in plan phases list");
+
+        // Chèn fresh ngay sau old
+        phases.add(oldIdx + 1, freshPhase);
+        // lưu fresh
+        freshPhase = phaseRepository.save(freshPhase);
+
+        // 5) RESCHEDULE các phase phía sau FRESH trước khi generate
+        LocalDate nextStart = freshPhase.getEndDate().plusDays(1);
+        // completedIndex là chỉ số của fresh sau khi chèn: oldIdx + 1
+        List<Phase> updated = rescheduleFollowingPhases(plan, oldIdx + 1, nextStart);
+
+        List<PhaseDetail> preparedDetails = phaseDetailService.generatePhaseDetailsForPhase(freshPhase);
+        phaseDetailMissionService.generatePhaseDetailMissionsForPhaseInScheduler(
+                freshPhase,
+                preparedDetails,
+                plan,
+                4,
+                freshPhase.getName(),
+                mapPhaseNameToEnum(freshPhase)
+        );
+        return quitPlanMapper.toResponse(plan);
+    }
 
 
     @Override
@@ -265,11 +347,22 @@ public class PhaseServiceImpl implements PhaseService {
             }
 
             FormMetric formMetric = currentPlan.getFormMetric();
-            List<Phase> phases = currentPlan.getPhases();
-            for (int i = 0; i < phases.size(); i++) {
-                Phase phase = phases.get(i);
+            //List<Phase> phases = currentPlan.getPhases();
+            //sap xep lai truong hop redo
+            List<Phase> ordered = currentPlan.getPhases().stream()
+                    .filter(p -> !p.isRedo())
+                    .sorted(Comparator.comparing(Phase::getStartDate)
+                            .thenComparing(Phase::getId))
+                    .toList();
+            for (Phase p : ordered) {
+                log.info("ss {}",p.getId());
+            }
+            for (int i = 0; i < ordered.size(); i++) {
+                Phase phase = ordered.get(i);
                 PhaseStatus oldStatus = phase.getStatus();
-
+                if(phase.isRedo()){
+                    continue;
+                }
                 if (oldStatus == PhaseStatus.COMPLETED) {
                     continue;
                 }
@@ -278,7 +371,7 @@ public class PhaseServiceImpl implements PhaseService {
                 }
                 else if (!currentDate.isAfter(phase.getEndDate())) {
                     // Trong khung thời gian phase
-                    if (i == 0 || phases.get(i - 1).getStatus() == PhaseStatus.COMPLETED) {
+                    if (i == 0 || ordered.get(i - 1).getStatus() == PhaseStatus.COMPLETED) {
                         phase.setStatus(PhaseStatus.IN_PROGRESS);
                     }
                 }
@@ -296,13 +389,13 @@ public class PhaseServiceImpl implements PhaseService {
 
 
                         int nextIndex = i + 1;
-                        if (nextIndex < phases.size()) {
-                            Phase next = phases.get(nextIndex);
+                        if (nextIndex < ordered.size()) {
+                            Phase next = ordered.get(nextIndex);
                             LocalDate anchor = phase.getCompletedAt().toLocalDate();
 
                             // Nếu completedAt == startDate của phase kế -> giữ lịch & generate bình thường
                             if (next.getStartDate() != null && anchor.isEqual(next.getStartDate())) {
-                                maybeGenerateNextPhase(phases, i, currentPlan);
+                                maybeGenerateNextPhase(ordered, i, currentPlan);
                             } else {
                                 // Lệch nhịp (kể cả pass do keep hay các lý do khác)
                                 // -> chỉnh lại LỊCH TOÀN BỘ phần còn lại
@@ -345,7 +438,7 @@ public class PhaseServiceImpl implements PhaseService {
             }
 
             // Nếu tất cả phase COMPLETED thì plan COMPLETED
-            boolean allCompleted = phases.stream().allMatch(p -> p.getStatus() == PhaseStatus.COMPLETED);
+            boolean allCompleted = ordered.stream().allMatch(p -> p.getStatus() == PhaseStatus.COMPLETED);
             if (allCompleted && currentPlan.getStatus() != QuitPlanStatus.COMPLETED) {
                 currentPlan.setStatus(QuitPlanStatus.COMPLETED);
                 notificationService.saveAndSendQuitPlanNoti(currentPlan.getMember(), currentPlan, QuitPlanStatus.COMPLETED);
@@ -357,7 +450,7 @@ public class PhaseServiceImpl implements PhaseService {
 
 
     }
-
+    //nho set end date cua quit plan
     @Transactional
     public List<Phase> rescheduleFollowingPhases(QuitPlan plan, int completedIndex, LocalDate anchorStart) {
         List<Phase> phases = plan.getPhases();
@@ -375,7 +468,13 @@ public class PhaseServiceImpl implements PhaseService {
             phaseRepository.save(p);
             nextStart = end.plusDays(1);
         }
-
+        LocalDate planEnd = phases.stream()
+                .map(Phase::getEndDate)
+                .filter(Objects::nonNull)
+                .max(LocalDate::compareTo)
+                .orElse(null);
+        plan.setEndDate(planEnd);
+        quitPlanRepository.save(plan);
         return phases;
     }
 

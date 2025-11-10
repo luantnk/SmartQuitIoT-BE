@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.request.RedoPhaseRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseDTO;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
@@ -9,9 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,5 +27,17 @@ public class PhaseController {
         PhaseDTO response = phaseService.getCurrentPhaseAtHomePage();
         return ResponseEntity.ok(response);
     }
+
+
+    //home page
+    @PostMapping("/redo")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member redo phase failed")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<QuitPlanResponse> redPhase(@RequestBody RedoPhaseRequest redoPhaseRequest) {
+        QuitPlanResponse response = phaseService.redoPhaseInFailed(redoPhaseRequest);
+        return ResponseEntity.ok(response);
+    }
+
 
 }

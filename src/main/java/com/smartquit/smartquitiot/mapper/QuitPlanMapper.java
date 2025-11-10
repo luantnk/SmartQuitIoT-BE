@@ -95,7 +95,7 @@ public class QuitPlanMapper {
         dto.setAvg_craving_level(phase.getAvg_craving_level());
         dto.setKeepPhase(phase.isKeepPhase());
         dto.setCreateAt(phase.getCreatedAt());
-
+        dto.setRedo(phase.isRedo());
         if (phase.getDetails() != null) {
             List<PhaseDetailResponseDTO> details = phase.getDetails().stream()
                     .map(this::toPhaseDetailDTO)

@@ -7,7 +7,7 @@ public enum Operator {
         return switch (s.trim()) {
             case "<"  -> LT;
             case "<=" -> LE;
-            case "==" -> EQ;
+            case "=" -> EQ;
             case ">=" -> GE;
             case ">"  -> GT;
             default   -> Operator.valueOf(s.toUpperCase());
