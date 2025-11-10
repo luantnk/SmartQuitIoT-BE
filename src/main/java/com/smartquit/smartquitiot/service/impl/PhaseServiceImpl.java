@@ -19,7 +19,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -322,11 +321,7 @@ public class PhaseServiceImpl implements PhaseService {
             quitPlanRepository.save(currentPlan);
         }
 
-<<<<<<< HEAD
         log.info("Đã kiem tra trạng thái cho {} quit plan(s).", activePlans.size());
-=======
-//        log.info("Đã cập nhật trạng thái cho {} quit plan(s).", activePlans.size());
->>>>>>> b8873c7 (feat: config for ws , add beans)
     }
 
     @Transactional
