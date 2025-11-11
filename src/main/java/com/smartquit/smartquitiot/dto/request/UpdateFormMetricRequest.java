@@ -17,14 +17,14 @@ public class UpdateFormMetricRequest {
     int numberOfYearsOfSmoking;
     int cigarettesPerPackage;
     int minutesAfterWakingToSmoke;
-    boolean smokingInForbiddenPlaces = false;
-    boolean cigaretteHateToGiveUp = false;
-    boolean morningSmokingFrequency = false;
-    boolean smokeWhenSick = false;
+    boolean smokingInForbiddenPlaces;
+    boolean cigaretteHateToGiveUp;
+    boolean morningSmokingFrequency;
+    boolean smokeWhenSick;
     BigDecimal moneyPerPackage;
-    BigDecimal estimatedMoneySavedOnPlan;
+ //   BigDecimal estimatedMoneySavedOnPlan;
     BigDecimal amountOfNicotinePerCigarettes;
-    BigDecimal estimatedNicotineIntakePerDay;
+ //   BigDecimal estimatedNicotineIntakePerDay;
     List<String> interests;
     List<String> triggered;// xem o create quit plan request
 }

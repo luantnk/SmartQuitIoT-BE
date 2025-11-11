@@ -100,9 +100,9 @@ public class FormMetricServiceImpl implements FormMetricService {
         fm.setMorningSmokingFrequency(req.isMorningSmokingFrequency());
         fm.setSmokeWhenSick(req.isSmokeWhenSick());
         fm.setMoneyPerPackage(req.getMoneyPerPackage());
-        fm.setEstimatedMoneySavedOnPlan(req.getEstimatedMoneySavedOnPlan());
+//        fm.setEstimatedMoneySavedOnPlan(req.getEstimatedMoneySavedOnPlan());
         fm.setAmountOfNicotinePerCigarettes(req.getAmountOfNicotinePerCigarettes());
-        fm.setEstimatedNicotineIntakePerDay(req.getEstimatedNicotineIntakePerDay());
+//        fm.setEstimatedNicotineIntakePerDay(req.getEstimatedNicotineIntakePerDay());
         fm.setInterests(new ArrayList<>(newInterestNames));
         fm.setTriggered(new ArrayList<>(newTriggers));
 
@@ -142,12 +142,6 @@ public class FormMetricServiceImpl implements FormMetricService {
         resp.setFntd_score(ftndScore);
         return resp;
     }
-
-
-    //Helpers
-    private boolean notEq(int a, int b) { return a != b; }
-    private boolean notEqBool(boolean a, boolean b) { return a != b; }
-    private boolean notEqBig(BigDecimal a, BigDecimal b) { return !Objects.equals(a, b); }
 
 
     private int calculateFTNDScore(int minutesAfterWakingToSmoke,

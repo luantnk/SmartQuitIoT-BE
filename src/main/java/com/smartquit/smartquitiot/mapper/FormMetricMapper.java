@@ -6,13 +6,15 @@ import com.smartquit.smartquitiot.dto.response.UpdateFormMetricResponse;
 import com.smartquit.smartquitiot.entity.FormMetric;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 
 @Component
 public class FormMetricMapper {
 
 
     public FormMetricDTO toDTO(FormMetric formMetric) {
-
         FormMetricDTO formMetricDTO = new FormMetricDTO();
         formMetricDTO.setId(formMetric.getId());
         formMetricDTO.setSmokeAvgPerDay(formMetric.getSmokeAvgPerDay());
@@ -21,7 +23,8 @@ public class FormMetricMapper {
         formMetricDTO.setMinutesAfterWakingToSmoke(formMetric.getMinutesAfterWakingToSmoke());
         formMetricDTO.setSmokingInForbiddenPlaces(formMetric.isSmokingInForbiddenPlaces());
         formMetricDTO.setCigaretteHateToGiveUp(formMetric.isCigaretteHateToGiveUp());
-        formMetricDTO.setMorningSmokingFrequency(formMetric.isSmokeWhenSick());
+        formMetricDTO.setMorningSmokingFrequency(formMetric.isMorningSmokingFrequency());
+        formMetricDTO.setSmokeWhenSick(formMetric.isSmokeWhenSick());
         formMetricDTO.setMoneyPerPackage(formMetric.getMoneyPerPackage());
         formMetricDTO.setEstimatedMoneySavedOnPlan(formMetric.getEstimatedMoneySavedOnPlan());
         formMetricDTO.setEstimatedNicotineIntakePerDay(formMetric.getEstimatedNicotineIntakePerDay());
