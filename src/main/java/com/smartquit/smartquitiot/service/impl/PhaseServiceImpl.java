@@ -447,9 +447,6 @@ public class PhaseServiceImpl implements PhaseService {
 
             quitPlanRepository.save(currentPlan);
         }
-
-        log.info("Đã kiem tra trạng thái cho {} quit plan(s).", activePlans.size());
-
     }
     //nho set end date cua quit plan
     @Transactional
