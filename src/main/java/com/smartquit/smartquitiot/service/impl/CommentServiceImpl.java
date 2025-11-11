@@ -24,16 +24,17 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CommentServiceImpl implements CommentService {
+public class    CommentServiceImpl implements CommentService {
 
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
     private final CommentRepository commentRepository;
     private final CommentMediaRepository commentMediaRepository;
     private final AccountService accountService;
+    private final MemberRepository memberRepository;
     private final MetricRepository metricRepository;
     private final MemberAchievementService memberAchievementService;
-
+    private final CoachRepository coachRepository;
     @Override
     @Transactional
     public PostDetailDTO.CommentDTO createComment(Integer postId, CommentCreateRequest request) {
@@ -157,12 +158,33 @@ public class CommentServiceImpl implements CommentService {
         for (Comment c : rootComments) {
             loadRepliesRecursively(c);
         }
+
         List<PostDetailDTO.CommentDTO> commentDTOs = new ArrayList<>();
+
         for (Comment c : rootComments) {
-            commentDTOs.add(CommentMapper.toDTO(c));
+            Account acc = c.getAccount();
+            String avatarUrl = null;
+
+            if (acc.getRole() == Role.MEMBER) {
+                Member mem = memberRepository.findByAccountId(acc.getId())
+                        .orElseThrow(() -> new RuntimeException("Member not found with account id: " + acc.getId()));
+                avatarUrl = mem.getAvatarUrl();
+            } else if (acc.getRole() == Role.COACH) {
+                Coach coach = coachRepository.findByAccountId(acc.getId())
+                        .orElseThrow(() -> new RuntimeException("Coach not found with account id: " + acc.getId()));
+                avatarUrl = coach.getAvatarUrl();
+            } else if (acc.getRole() == Role.ADMIN) {
+                avatarUrl = "https://ui-avatars.com/api/?background=333&color=fff&name=Admin";
+            }
+
+            PostDetailDTO.CommentDTO dto = CommentMapper.toDTO(c);
+            dto.getAccount().setAvatarUrl(avatarUrl);
+            commentDTOs.add(dto);
         }
+
         return commentDTOs;
     }
+
 
 
     private void loadRepliesRecursively(Comment parent) {

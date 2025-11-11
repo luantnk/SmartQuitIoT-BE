@@ -32,7 +32,6 @@ public class CommentMapper {
             }
         }
         dto.setMedia(mediaDTOs);
-
         // Replies (recursive)
         List<PostDetailDTO.CommentDTO> replyDTOs = new ArrayList<>();
         if (comment.getReplies() != null) {

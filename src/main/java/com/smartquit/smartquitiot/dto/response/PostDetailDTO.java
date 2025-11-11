@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostDetailDTO {
     private Integer id;
     private String title;
@@ -27,6 +29,7 @@ public class PostDetailDTO {
     @Getter @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class AccountDTO {
         private Integer id;
         private String username;
@@ -46,6 +49,7 @@ public class PostDetailDTO {
     @Getter @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class PostMediaDTO {
         private Integer id;
         private String mediaUrl;
@@ -56,11 +60,13 @@ public class PostDetailDTO {
     @Getter @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class CommentDTO {
         private Integer id;
         private String content;
         private String createdAt;
         private AccountDTO account;
+        private String avatarUrl;
         private List<PostMediaDTO> media;
         private List<CommentDTO> replies;
     }
