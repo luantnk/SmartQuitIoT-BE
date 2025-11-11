@@ -28,9 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -247,5 +247,28 @@ public class AccountServiceImpl implements AccountService {
         account.setResetToken(null);
         account.setResetTokenExpiryTime(null);
         accountRepository.save(account);
+    }
+
+    @Override
+    public Map<String, Object> getAccountStatistics() {
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime currentMonthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime currentMonthEnd = currentMonthStart.plusMonths(1).minusSeconds(1);
+        LocalDateTime previousMonthStart = currentMonthStart.minusMonths(1);
+        LocalDateTime previousMonthEnd = currentMonthStart.minusSeconds(1);
+
+        List<Account> currentMonthAccounts = accountRepository.findByRoleAndCreatedAtBetween(Role.MEMBER, currentMonthStart, currentMonthEnd);
+        List<Account> previousMonthAccounts = accountRepository.findByRoleAndCreatedAtBetween(Role.MEMBER, previousMonthStart, previousMonthEnd);
+
+        int totalAccount = accountRepository.findByRole(Role.MEMBER).size();
+
+        int dif = currentMonthAccounts.size() - previousMonthAccounts.size();
+        double percentageChange = previousMonthAccounts.size() == 0 ? 100.0 : (dif / (double) previousMonthAccounts.size()) * 100.0;
+        Map<String, Object> response = new HashMap<>();
+        response.put("totalMember", totalAccount);
+        response.put("growthPercentage", percentageChange);
+        response.put("currentMonthUsers", currentMonthAccounts.size());
+        return response;
     }
 }

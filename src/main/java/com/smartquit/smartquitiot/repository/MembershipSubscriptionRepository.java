@@ -29,4 +29,6 @@ public interface MembershipSubscriptionRepository extends JpaRepository<Membersh
     List<MembershipSubscription> findByStatus(MembershipSubscriptionStatus status);
 
     Page<MembershipSubscription> findAll(Specification<MembershipSubscription> specification, Pageable pageable);
+
+    int countByStatus(MembershipSubscriptionStatus status);
 }

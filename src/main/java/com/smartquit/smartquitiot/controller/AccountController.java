@@ -71,4 +71,10 @@ public class AccountController {
         accountService.resetPassword(request);
         return ResponseEntity.ok(new MessageResponse("Your password has been reset successfully."));
     }
+
+    @GetMapping("/statistics")
+    @Operation(summary = "Get account statistics")
+    public ResponseEntity<?> getAccountStatistics() {
+        return ResponseEntity.ok(accountService.getAccountStatistics());
+    }
 }

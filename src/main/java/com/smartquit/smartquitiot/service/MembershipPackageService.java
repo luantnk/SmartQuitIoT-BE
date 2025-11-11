@@ -7,6 +7,7 @@ import com.smartquit.smartquitiot.dto.response.MembershipPackagePlan;
 import com.smartquit.smartquitiot.dto.response.MembershipSubscriptionDTO;
 
 import java.util.List;
+import java.util.Map;
 
 public interface MembershipPackageService {
     List<MembershipPackageDTO> getMembershipPackages();
@@ -16,4 +17,6 @@ public interface MembershipPackageService {
     GlobalResponse<?> createMembershipPackagePayment(int membershipPackageId, int duration);
 
     MembershipSubscriptionDTO processMembershipPackagePayment(PaymentProcessRequest request);
+
+    Map<String, Object> getMembershipStatistics();
 }

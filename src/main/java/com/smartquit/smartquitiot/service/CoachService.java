@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.util.Map;
 
 public interface    CoachService {
 
@@ -17,4 +18,5 @@ public interface    CoachService {
     Page<CoachDTO> getAllCoaches(int page, int size, String searchString, Sort.Direction sortBy);
     CoachDTO getCoachById(int id);
     CoachDTO updateProfile(int coachId, CoachUpdateRequest request);
+    Map<String, Object> getCoachStatistics();
 }

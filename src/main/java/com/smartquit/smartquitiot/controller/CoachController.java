@@ -80,4 +80,9 @@ public class CoachController {
         var slots = scheduleService.getAvailableSlots(coachId, date);
         return ResponseEntity.ok(GlobalResponse.ok("Fetched available slots successfully", slots));
     }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<?> getCoachStatistics() {
+        return ResponseEntity.ok(coachService.getCoachStatistics());
+    }
 }
