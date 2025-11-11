@@ -32,7 +32,9 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -221,5 +223,32 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
             }
         }
         return membershipSubscriptionMapper.toMembershipSubscriptionDTO(pendingSubscription);
+    }
+
+    @Override
+    public Map<String, Object> getMembershipStatistics() {
+        int totalMembershipPackage = membershipPackageRepository.findAll().size();
+        int totalSubscriptions = membershipSubscriptionRepository.findAll().size();
+        int activeSubscriptions = membershipSubscriptionRepository.countByStatus(MembershipSubscriptionStatus.AVAILABLE);
+        List<MembershipSubscription> subscriptions = membershipSubscriptionRepository.findByStatus(MembershipSubscriptionStatus.AVAILABLE);
+        Map<MembershipPackage, Long> frequencyMap = subscriptions.stream()
+                .collect(Collectors.groupingBy(
+                        MembershipSubscription::getMembershipPackage,
+                        Collectors.counting()
+                ));
+
+        Map.Entry<MembershipPackage, Long> maxEntry = frequencyMap.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .orElse(null);
+
+
+        Map<String, Object> response = Map.of(
+                "totalMembershipPackage", totalMembershipPackage,
+                "totalSubscriptions", totalSubscriptions,
+                "activeSubscriptions", activeSubscriptions,
+                "mostPopularPackage", maxEntry != null ? maxEntry.getKey().getName() : null
+        );
+
+        return response;
     }
 }

@@ -19,6 +19,7 @@
     import org.springframework.stereotype.Service;
 
     import java.util.List;
+    import java.util.Map;
 
     @Service
     @RequiredArgsConstructor
@@ -77,5 +78,14 @@
             }
             coach = coachRepository.save(coach);
             return coachMapper.toCoachDTO(coach);
+        }
+
+        @Override
+        public Map<String, Object> getCoachStatistics() {
+            int totalCoaches = coachRepository.findAll().size();
+            Map<String, Object> map = Map.of(
+                    "totalCoaches", totalCoaches
+            );
+            return map;
         }
     }

@@ -20,6 +20,7 @@ import com.smartquit.smartquitiot.repository.AccountRepository;
 import com.smartquit.smartquitiot.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
@@ -90,6 +92,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse refreshToken(RefreshTokenRequest request) throws ParseException, JOSEException {
+        log.info("Refreshing token...");
         SignedJWT signedJWT = verifyAndParseToken(request.getRefreshToken(), refreshTokenKey);
         JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
         if (claims.getExpirationTime().before(new Date())) {
@@ -100,6 +103,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Account account = accountRepository.findByEmail(subject)
                 .orElseThrow(() -> new RuntimeException("Account not found for this token"));
         String newAccessToken = generateAccessToken(account);
+        log.info("Token refreshed successfully for account");
         return AuthenticationResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(request.getRefreshToken())

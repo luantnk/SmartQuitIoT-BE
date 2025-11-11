@@ -53,4 +53,10 @@ public class MembershipPackageController {
         return ResponseEntity.ok(GlobalResponse.created("Membership payment success", membershipPackageService.processMembershipPackagePayment(request)));
     }
 
+    @GetMapping("/statistics")
+    @Operation(summary = "Get membership statistics")
+    public ResponseEntity<?> getMembershipStatistics() {
+        return ResponseEntity.ok(membershipPackageService.getMembershipStatistics());
+    }
+
 }
