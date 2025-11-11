@@ -556,6 +556,10 @@ public class PhaseServiceImpl implements PhaseService {
             case "craving_level_avg" -> account.getMember().getMetric().getAvgCravingLevel();
             case "avg_cigarettes" -> account.getMember().getMetric().getAvgCigarettesPerDay();
             case "fm_cigarettes_total" -> formMetric.getSmokeAvgPerDay();
+            case "avg_mood" -> account.getMember().getMetric().getAvgMood();
+            case "avg_anxiety" -> account.getMember().getMetric().getAvgAnxiety();
+            case "avg_confident" -> account.getMember().getMetric().getAvgConfidentLevel();
+
             default -> null;
         };
     }
