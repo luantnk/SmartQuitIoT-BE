@@ -7,6 +7,7 @@ import com.smartquit.smartquitiot.dto.response.PostDetailDTO;
 import com.smartquit.smartquitiot.dto.response.PostSummaryDTO;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MediaType;
+import com.smartquit.smartquitiot.enums.PostStatus;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.mapper.PostMapper;
 import com.smartquit.smartquitiot.repository.AccountRepository;
@@ -56,7 +57,7 @@ public class PostServiceImpl implements PostService {
     public List<PostSummaryDTO> getAllPosts(String query) {
         List<Post> posts;
         if (!StringUtils.hasText(query)) {
-            posts = postRepository.findAllByOrderByCreatedAtDesc();
+            posts = postRepository.findByStatusOrderByCreatedAtDesc(PostStatus.PUBLISHED);
         }
         else {
             posts = postRepository.searchPosts(query.trim());

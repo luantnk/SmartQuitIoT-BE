@@ -21,4 +21,5 @@ public interface PhaseDetailMissionService {
     MissionTodayResponse getListMissionToday();
     MissionTodayResponse completePhaseDetailMissionAtHomePage(CompleteMissionRequest completeMissionRequest);
     PhaseBatchMissionsResponse generatePhaseDetailMissionsForPhaseInScheduler(Phase phase, List<PhaseDetail> preparedDetails , QuitPlan plan, int maxPerDay, String phaseName, MissionPhase missionPhase);
+    MissionTodayResponse getListMissionTodayByMemberId(int memberId);
 }

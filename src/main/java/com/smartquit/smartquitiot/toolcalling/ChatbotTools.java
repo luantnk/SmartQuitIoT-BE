@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.toolcalling;
 
 import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
+import com.smartquit.smartquitiot.dto.response.MissionTodayResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.entity.DiaryRecord;
 import com.smartquit.smartquitiot.entity.HealthRecovery;
@@ -14,6 +15,7 @@ import com.smartquit.smartquitiot.repository.HealthRecoveryRepository;
 import com.smartquit.smartquitiot.repository.MetricRepository;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.service.MemberService;
+import com.smartquit.smartquitiot.service.PhaseDetailMissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
@@ -37,6 +39,7 @@ public class ChatbotTools {
     private final DiaryRecordMapper diaryRecordMapper;
     private final DiaryRecordRepository diaryRecordRepository;
     private final HealthRecoveryRepository healthRecoveryRepository;
+    private final PhaseDetailMissionService phaseDetailMissionService;
 
 
     public static String CHATBOT_PROMPT = """
@@ -108,5 +111,12 @@ public class ChatbotTools {
     public List<HealthRecovery> getHealthRecoveriesByMemberId(
             @ToolParam(description = "The unique identifier of the member") Integer memberId) {
         return healthRecoveryRepository.findByMemberId(memberId);
+    }
+
+    @Tool(name = "getMissionsTodayByMemberId",
+            description = "Retrieve today's missions for the member by their ID.")
+    public MissionTodayResponse getMissionsTodayByMemberId(
+            @ToolParam(description = "The unique identifier of the member") Integer memberId) {
+        return phaseDetailMissionService.getListMissionTodayByMemberId(memberId);
     }
 }
