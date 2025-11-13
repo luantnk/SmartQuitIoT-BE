@@ -32,17 +32,17 @@ public class Notification {
     //điều hướng mobile
     String deepLink;   // ví dụ: smartquit://achievement/42
 
-    // gợi ý: một số UI icon
+    // gợi ý: một số UI ico n
     String icon = "https://res.cloudinary.com/dhmmm2sq1/image/upload/v1761473137/logo_gb1xi7.png";
 
     @Enumerated(EnumType.STRING)
-    NotificationType notificationType;
+    NotificationType notificationType; // ACHIEVEMENT, SYSTEM, PHASE, QUIT_PLAN,MISSION,APPOINTMENT_BOOKED,APPOINTMENT_CANCELLED,APPOINTMENT_REMINDER
 
     @CreationTimestamp
     LocalDateTime createdAt;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    Member member;
+    Account account;
 
 }

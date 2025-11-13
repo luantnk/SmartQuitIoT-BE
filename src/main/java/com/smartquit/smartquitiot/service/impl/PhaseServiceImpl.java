@@ -428,11 +428,11 @@ public class PhaseServiceImpl implements PhaseService {
                     log.info("Phase {} đổi trạng thái: {} → {}", phase.getId(), oldStatus, phase.getStatus());
 
                     if (phase.getStatus() == PhaseStatus.COMPLETED) {
-                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember(), phase, PhaseStatus.COMPLETED, 0);
+                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember().getAccount(), phase, PhaseStatus.COMPLETED, 0);
                     } else if (phase.getStatus() == PhaseStatus.IN_PROGRESS) {
-                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember(), phase, PhaseStatus.IN_PROGRESS, 0);
+                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember().getAccount(), phase, PhaseStatus.IN_PROGRESS, 0);
                     } else if (phase.getStatus() == PhaseStatus.FAILED) {
-                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember(), phase, PhaseStatus.FAILED, 0);
+                        notificationService.saveAndSendPhaseNoti(currentPlan.getMember().getAccount(), phase, PhaseStatus.FAILED, 0);
                     }
                 }
             }
@@ -441,7 +441,7 @@ public class PhaseServiceImpl implements PhaseService {
             boolean allCompleted = ordered.stream().allMatch(p -> p.getStatus() == PhaseStatus.COMPLETED);
             if (allCompleted && currentPlan.getStatus() != QuitPlanStatus.COMPLETED) {
                 currentPlan.setStatus(QuitPlanStatus.COMPLETED);
-                notificationService.saveAndSendQuitPlanNoti(currentPlan.getMember(), currentPlan, QuitPlanStatus.COMPLETED);
+                notificationService.saveAndSendQuitPlanNoti(currentPlan.getMember().getAccount(), currentPlan, QuitPlanStatus.COMPLETED);
                 log.info("QuitPlan {} đã hoàn thành toàn bộ.", currentPlan.getId());
             }
 

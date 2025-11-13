@@ -110,7 +110,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
             String deepLink = "smartquit://achievement/" + req.getPhaseId();
 
             notificationService.saveAndPublish(
-                    account.getMember(),
+                    account,
                     NotificationType.MISSION,
                     "Done all missions for " + missionDate + "!",
                     "You completed every mission on " + missionDate + ". Keep the streak alive!",
