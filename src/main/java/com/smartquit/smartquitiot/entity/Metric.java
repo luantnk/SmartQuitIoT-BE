@@ -35,6 +35,7 @@ public class Metric {
     double avgAnxiety;
     double avgConfidentLevel;
     double avgCigarettesPerDay;
+    double avgNicotineMgPerDay;
 
     //current metrics
     int currentCravingLevel;

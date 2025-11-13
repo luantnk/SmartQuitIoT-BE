@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.service;
 
 import com.smartquit.smartquitiot.dto.request.*;
 import com.smartquit.smartquitiot.dto.response.CoachDTO;
+import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.VerifyOtpResponse;
 import com.smartquit.smartquitiot.entity.Account;
@@ -25,4 +26,8 @@ public interface AccountService {
     void resetPassword(ResetPasswordRequest request);
 
     Map<String, Object> getAccountStatistics();
+
+    GlobalResponse<String> activeAccountById(int accountId);
+
+    GlobalResponse<String> banAccountById(int accountId);
 }

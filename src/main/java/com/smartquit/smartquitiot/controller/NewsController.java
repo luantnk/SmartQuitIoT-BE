@@ -48,11 +48,29 @@ public class NewsController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBER')")
     @Operation(summary = "Get news detail by id")
     public ResponseEntity<GlobalResponse<NewsDTO>> getNewsDetail(@PathVariable int id) {
         NewsDTO news = newsService.getNewsDetail(id);
         return ResponseEntity.ok(GlobalResponse.ok(news));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete a news item by id")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Void> deleteNews(@PathVariable int id) {
+        newsService.deleteNews(id);
+        return ResponseEntity.ok().build();
+
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update a news item")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse<NewsDTO>> updateNews(@PathVariable int id,@RequestBody CreateNewsRequest request) {
+        return ResponseEntity.ok(GlobalResponse.ok(newsService.updateNews(id, request)));
+
     }
 
 }
