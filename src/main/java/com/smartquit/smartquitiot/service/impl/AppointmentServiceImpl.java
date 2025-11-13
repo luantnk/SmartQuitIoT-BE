@@ -4,17 +4,16 @@ import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
 import com.smartquit.smartquitiot.dto.response.AppointmentResponse;
 import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
 import com.smartquit.smartquitiot.dto.response.RemainingBookingResponse;
-import com.smartquit.smartquitiot.entity.Appointment;
-import com.smartquit.smartquitiot.entity.CoachWorkSchedule;
-import com.smartquit.smartquitiot.entity.Member;
-import com.smartquit.smartquitiot.entity.MembershipSubscription;
+import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.enums.CancelledBy;
 import com.smartquit.smartquitiot.enums.CoachWorkScheduleStatus;
+import com.smartquit.smartquitiot.enums.NotificationType;
 import com.smartquit.smartquitiot.mapper.AppointmentMapper;
 import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.AgoraService;
 import com.smartquit.smartquitiot.service.AppointmentService;
+import com.smartquit.smartquitiot.service.NotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +39,9 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentMapper appointmentMapper;
     private final AgoraService agoraService;
     private final MembershipSubscriptionRepository membershipSubscriptionRepository; // NEW
-    private final FeedbackRepository feedbackRepository; // add to fields
-
+    private final FeedbackRepository feedbackRepository;
+    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
     private static final int BOOKINGS_PER_30D = 4;
 
     /**
@@ -100,6 +100,50 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         log.info("Member(accountId={}) (memberId={}) booked slot {} with coach {} on date {}",
                 accountId, memberId, slotId, coachId, date);
+
+        // Phần notification
+        try {
+            Account coachAccount = cws.getCoach().getAccount();
+            if (coachAccount != null) {
+                String deepLink = "smartquit://appointment/" + appointment.getId();
+                String url = "appointments/" + appointment.getId();
+
+                boolean already = notificationRepository
+                        .existsByAccount_IdAndNotificationTypeAndDeepLinkAndIsDeletedFalse(
+                                coachAccount.getId(),
+                                NotificationType.APPOINTMENT_BOOKED,
+                                deepLink
+                        );
+                if (!already) {
+                    String title = "New booking: appointment #" + appointment.getId();
+                    String content = String.format("Member %s requested an appointment on %s at %s",
+                            (member.getFirstName() != null ? member.getFirstName() : "Member"),
+                            appointment.getDate(),
+                            (cws.getSlot() != null ? cws.getSlot().getStartTime().toString() : "unknown time")
+                    );
+                    try {
+                        notificationService.saveAndPublish(
+                                coachAccount,
+                                NotificationType.APPOINTMENT_BOOKED,
+                                title,
+                                content,
+                                null,
+                                url,
+                                deepLink
+                        );
+                    } catch (Exception ex) {
+                        log.warn("Failed to publish appointment booked notification for appointment {}: {}", appointment.getId(), ex.getMessage());
+                    }
+                } else {
+                    log.debug("Booked noti already exists for appointment {}", appointment.getId());
+                }
+            } else {
+                log.warn("Coach account missing for appointment {} — skip booked notification", appointment.getId());
+            }
+        } catch (Exception ex) {
+            log.error("Error while sending booked notification for appointment {}: {}", appointment.getId(), ex.getMessage(), ex);
+        }
+
 
         return appointmentMapper.toResponse(appointment);
     }
@@ -183,6 +227,49 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointmentRepository.save(appointment);
 
         log.info("Member(accountId={}) cancelled appointment {}", accountId, appointmentId);
+        // Phần thông báo
+        try {
+            CoachWorkSchedule linked = appointment.getCoachWorkSchedule();
+            if (linked != null && linked.getCoach() != null && linked.getCoach().getAccount() != null) {
+                Account coachAccount = linked.getCoach().getAccount();
+                String deepLink = "smartquit://appointment/" + appointment.getId();
+                String url = "appointments/" + appointment.getId();
+
+                boolean already = notificationRepository
+                        .existsByAccount_IdAndNotificationTypeAndDeepLinkAndIsDeletedFalse(
+                                coachAccount.getId(),
+                                NotificationType.APPOINTMENT_CANCELLED,
+                                deepLink
+                        );
+                if (!already) {
+                    String title = "Appointment cancelled: #" + appointment.getId();
+                    String content = String.format("Member %s cancelled the appointment scheduled at %s",
+                            (appointment.getMember() != null && appointment.getMember().getFirstName() != null) ? appointment.getMember().getFirstName() : "Member",
+                            (linked.getSlot() != null ? linked.getSlot().getStartTime().toString() : "unknown time")
+                    );
+                    try {
+                        notificationService.saveAndPublish(
+                                coachAccount,
+                                NotificationType.APPOINTMENT_CANCELLED,
+                                title,
+                                content,
+                                null,
+                                url,
+                                deepLink
+                        );
+                    } catch (Exception ex) {
+                        log.warn("Failed to publish appointment cancelled (member) notification for appointment {}: {}", appointment.getId(), ex.getMessage());
+                    }
+                } else {
+                    log.debug("Cancel noti already exists for appointment {}", appointment.getId());
+                }
+            } else {
+                log.warn("No coach account found for appointment {} — skip cancel notification", appointment.getId());
+            }
+        } catch (Exception ex) {
+            log.error("Error while sending cancel (member) notification for appointment {}: {}", appointment.getId(), ex.getMessage(), ex);
+        }
+
     }
 
     /**
@@ -247,6 +334,49 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointmentRepository.save(appointment);
 
         log.info("Coach(accountId={}) cancelled appointment {} — slot marked UNAVAILABLE", coachAccountId, appointmentId);
+        // Phần thông báo
+        try {
+            if (appointment.getMember() != null && appointment.getMember().getAccount() != null) {
+                Account memberAccount = appointment.getMember().getAccount();
+                String deepLink = "smartquit://appointment/" + appointment.getId();
+                String url = "appointments/" + appointment.getId();
+
+                boolean already = notificationRepository
+                        .existsByAccount_IdAndNotificationTypeAndDeepLinkAndIsDeletedFalse(
+                                memberAccount.getId(),
+                                NotificationType.APPOINTMENT_CANCELLED,
+                                deepLink
+                        );
+                if (!already) {
+                    String title = "Your appointment was cancelled";
+                    String content = String.format("Coach %s cancelled appointment #%d scheduled at %s. We will assist you to rebook.",
+                            (appointment.getCoach()!=null && appointment.getCoach().getLastName()!=null) ? appointment.getCoach().getLastName() : "Coach",
+                            appointment.getId(),
+                            (appointment.getCoachWorkSchedule()!=null && appointment.getCoachWorkSchedule().getSlot()!=null) ? appointment.getCoachWorkSchedule().getSlot().getStartTime().toString() : "unknown time"
+                    );
+                    try {
+                        notificationService.saveAndPublish(
+                                memberAccount,
+                                NotificationType.APPOINTMENT_CANCELLED,
+                                title,
+                                content,
+                                null,
+                                url,
+                                deepLink
+                        );
+                    } catch (Exception ex) {
+                        log.warn("Failed to publish appointment cancelled (coach) notification for appointment {}: {}", appointment.getId(), ex.getMessage());
+                    }
+                } else {
+                    log.debug("Cancel noti already exists for appointment {} to member", appointment.getId());
+                }
+            } else {
+                log.warn("Member account missing for appointment {} — skip coach-cancel notification", appointment.getId());
+            }
+        } catch (Exception ex) {
+            log.error("Error while sending cancel (coach) notification for appointment {}: {}", appointment.getId(), ex.getMessage(), ex);
+        }
+
     }
 
     /**

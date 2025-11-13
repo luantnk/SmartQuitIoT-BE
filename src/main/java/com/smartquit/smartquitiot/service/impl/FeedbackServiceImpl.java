@@ -1,14 +1,18 @@
 
 package com.smartquit.smartquitiot.service.impl;
 import com.smartquit.smartquitiot.dto.request.FeedbackRequest;
+import com.smartquit.smartquitiot.dto.response.FeedbackResponse;
 import com.smartquit.smartquitiot.entity.Appointment;
 import com.smartquit.smartquitiot.entity.Coach;
 import com.smartquit.smartquitiot.entity.Feedback;
+import com.smartquit.smartquitiot.mapper.FeedbackMapper;
 import com.smartquit.smartquitiot.repository.AppointmentRepository;
 import com.smartquit.smartquitiot.repository.CoachRepository;
 import com.smartquit.smartquitiot.repository.FeedbackRepository;
 import com.smartquit.smartquitiot.service.FeedbackService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,4 +76,20 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         coachRepository.save(coach);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FeedbackResponse> getFeedbacksByCoachId(int coachId, Pageable pageable) {
+        Page<Feedback> page = feedbackRepository.findAllByCoach_Id(coachId, pageable);
+        return page.map(FeedbackMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FeedbackResponse> getFeedbacksForCoachAccount(int accountId, Pageable pageable) {
+        Coach coach = coachRepository.findByAccountId(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Coach not found for accountId: " + accountId));
+        return getFeedbacksByCoachId(coach.getId(), pageable);
+    }
+
 }

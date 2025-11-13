@@ -91,7 +91,7 @@ public class AppointmentController {
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "date", required = false) String date, // format: yyyy-MM-dd
             @RequestParam(value = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = "size", required = false, defaultValue = "100") int size,
             Authentication authentication,
             @AuthenticationPrincipal Jwt jwt) {
 

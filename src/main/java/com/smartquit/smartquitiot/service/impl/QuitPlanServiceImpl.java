@@ -212,7 +212,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             PhaseBatchMissionsResponse phaseBatchMissionsResponse = phaseDetailMissionService.generatePhaseDetailMissionsForPhase
                     (preparedDetails,newQuitPlan, 4, "Preparation", MissionPhase.PREPARATION);
             if(phaseBatchMissionsResponse != null) {
-                notificationService.saveAndPublish(account.getMember(), NotificationType.QUIT_PLAN,
+                notificationService.saveAndPublish(account.getMember().getAccount(), NotificationType.QUIT_PLAN,
                         "Created New Quit Plan!",
                         "New Quit Plan already created for you! Can do it better than you think <3",
                         null, null,null

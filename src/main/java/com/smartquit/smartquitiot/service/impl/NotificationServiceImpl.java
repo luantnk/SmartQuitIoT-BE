@@ -7,7 +7,6 @@ import com.smartquit.smartquitiot.enums.NotificationType;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.NotificationMapper;
-import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.repository.NotificationRepository;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.NotificationService;
@@ -22,6 +21,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationDTO saveAndPublish(
-            Member member,
+            Account account,
             NotificationType type,
             String title,
             String content,
@@ -50,7 +51,7 @@ public class NotificationServiceImpl implements NotificationService {
             String deepLink
     ) {
         Notification n = new Notification();
-        n.setMember(member);
+        n.setAccount(account);
         n.setNotificationType(type);
         n.setTitle(title);
         n.setContent(content);
@@ -61,16 +62,27 @@ public class NotificationServiceImpl implements NotificationService {
         Notification saved = notificationRepository.save(n);
         NotificationDTO dto = notificationMapper.mapToNotificationDTO(saved);
 
-        String topic = String.format(TOPIC_NOTIFICATIONS_FMT, member.getId());
-        messagingTemplate.convertAndSend(topic, dto);
+        String topic = String.format(TOPIC_NOTIFICATIONS_FMT, account.getId());
+        // Phần này để đảm bảo Transaction kịp commit nha Hải Linh
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    messagingTemplate.convertAndSend(topic, dto);
+                }
+            });
+        } else {
+            // fallback (no transaction active)
+            messagingTemplate.convertAndSend(topic, dto);
+        }
 
         return dto;
     }
 
 
     @Override
-    public NotificationDTO saveAndSendAchievementNoti(Member member, Achievement achievement) {
-        log.info("saveAndSendAchievementNotification for member {}", member.getId());
+    public NotificationDTO saveAndSendAchievementNoti(Account account, Achievement achievement) {
+        log.info("saveAndSendAchievementNotification for account {}", account.getId());
 
         String title = "New achievement unlocked: " + achievement.getName();
         String content = (achievement.getDescription() != null && !achievement.getDescription().isBlank())
@@ -81,7 +93,7 @@ public class NotificationServiceImpl implements NotificationService {
         String deepLink = "smartquit://achievement/" + achievement.getId();
 
         return saveAndPublish(
-                member,
+                account,
                 NotificationType.ACHIEVEMENT,
                 title,
                 content,
@@ -93,7 +105,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationDTO saveAndSendPhaseNoti(
-            Member member,
+            Account account,
             Phase phase,
             PhaseStatus toStatus,
             int newMissionsCount
@@ -111,7 +123,7 @@ public class NotificationServiceImpl implements NotificationService {
         String deepLink = "smartquit://phase/" + phase.getId();
 
         return saveAndPublish(
-                member,
+                account,
                 NotificationType.PHASE,
                 title,
                 content,
@@ -122,7 +134,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationDTO saveAndSendQuitPlanNoti(Member member, QuitPlan plan, QuitPlanStatus toStatus) {
+    public NotificationDTO saveAndSendQuitPlanNoti(Account account, QuitPlan plan, QuitPlanStatus toStatus) {
         String title = "Quit Plan " + toStatus.name();
         String content = switch (toStatus) {
             case IN_PROGRESS -> "Your quit plan has started: " + plan.getName();
@@ -135,7 +147,7 @@ public class NotificationServiceImpl implements NotificationService {
         String deepLink = "smartquit://quit-plan/" + plan.getId();
 
         return saveAndPublish(
-                member,
+                account,
                 NotificationType.QUIT_PLAN,
                 title,
                 content,
@@ -154,10 +166,10 @@ public class NotificationServiceImpl implements NotificationService {
         );
 
 
-        Integer memberId = accountService.getAuthenticatedAccount().getMember().getId();
+        Integer accountId = accountService.getAuthenticatedAccount().getId();
 
         Specification<Notification> spec = Specification.allOf(
-                (root, query, cb) -> cb.equal(root.get("member").get("id"), memberId),
+                (root, query, cb) -> cb.equal(root.get("account").get("id"), accountId),
                 (root, q, cb) -> cb.isFalse(root.get("isDeleted")),
                 hasRead(request.getIsRead()),
                 hasType(request.getType())
@@ -170,8 +182,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     @Override
     public void markReadById(int notificationId) {
-        int memberId = accountService.getAuthenticatedAccount().getMember().getId();
-        int updated = notificationRepository.markOneRead(notificationId, memberId);
+        int accountId = accountService.getAuthenticatedAccount().getId();
+        int updated = notificationRepository.markOneRead(notificationId, accountId);
         if (updated == 0) {
             throw new IllegalArgumentException("Notification not found or already deleted");
         }
@@ -180,22 +192,22 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     @Override
     public int markAllRead() {
-        int memberId = accountService.getAuthenticatedAccount().getMember().getId();
-        return notificationRepository.markAllRead(memberId);
+        int accountId = accountService.getAuthenticatedAccount().getId();
+        return notificationRepository.markAllRead(accountId);
     }
 
     @Transactional
     @Override
     public int deleteAll() {
-        int memberId = accountService.getAuthenticatedAccount().getMember().getId();
-        return notificationRepository.deleteAll(memberId);
+        int accountId = accountService.getAuthenticatedAccount().getId();
+        return notificationRepository.deleteAll(accountId);
     }
 
     @Transactional
     @Override
     public void deleteOne(int notificationId) {
-        int memberId = accountService.getAuthenticatedAccount().getMember().getId();
-        int updated = notificationRepository.deleteOne(notificationId, memberId);
+        int accountId = accountService.getAuthenticatedAccount().getId();
+        int updated = notificationRepository.deleteOne(notificationId, accountId);
         if (updated == 0) {
             throw new IllegalArgumentException("Notification not found or already deleted");
         }

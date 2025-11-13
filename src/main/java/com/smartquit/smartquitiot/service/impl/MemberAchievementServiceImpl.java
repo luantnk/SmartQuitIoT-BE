@@ -85,7 +85,7 @@ public class MemberAchievementServiceImpl implements MemberAchievementService {
 
         if(highest != null){
             log.info("highest name: " + highest.getName());
-            notificationService.saveAndSendAchievementNoti(account.getMember(), highest);
+            notificationService.saveAndSendAchievementNoti(account, highest);
         }
 
 
