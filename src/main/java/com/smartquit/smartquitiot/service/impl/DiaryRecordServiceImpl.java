@@ -178,6 +178,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         double newAvgConfidenceLevel = metric.getAvgConfidentLevel() + (request.getConfidenceLevel() - metric.getAvgConfidentLevel()) / (count + 1);
         double newAvgAnxietyLevel = metric.getAvgAnxiety() + (request.getAnxietyLevel() - metric.getAvgAnxiety()) / (count + 1);
         double avgCigarettesPerDay = (double) totalCigarettesInRecords / count;
+        double avgNicotineMgPerDay = (estimateNicotineIntake.doubleValue() + (metric.getAvgNicotineMgPerDay() * count)) / (count + 1);
         if (Double.isNaN(avgCigarettesPerDay) || Double.isInfinite(avgCigarettesPerDay)) {
             avgCigarettesPerDay = metric.getAvgCigarettesPerDay();
         }
@@ -185,11 +186,15 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         if (Double.isNaN(smokeFreeDayPercentage) || Double.isInfinite(smokeFreeDayPercentage)) {
             smokeFreeDayPercentage = metric.getSmokeFreeDayPercentage();
         }
+        if(Double.isNaN(avgNicotineMgPerDay) || Double.isInfinite(avgNicotineMgPerDay)){
+            avgNicotineMgPerDay = metric.getAvgNicotineMgPerDay();
+        }
         metric.setStreaks(request.getHaveSmoked() ? 0 : streaksCount);
         metric.setAvgCravingLevel(newAvgCravingLevel);
         metric.setAvgMood(newAvgMoodLevel);
         metric.setAvgConfidentLevel(newAvgConfidenceLevel);
         metric.setAvgAnxiety(newAvgAnxietyLevel);
+        metric.setAvgNicotineMgPerDay(avgNicotineMgPerDay);
         metric.setCurrentAnxietyLevel(request.getAnxietyLevel());
         metric.setCurrentCravingLevel(request.getCravingLevel());
         metric.setCurrentConfidenceLevel(request.getConfidenceLevel());
@@ -282,7 +287,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newRecovery.setName(HealthRecoveryDataName.PULSE_RATE);
                     newRecovery.setMember(member);
                     newRecovery.setValue(isSmoke ? BigDecimal.valueOf(80.0) : BigDecimal.valueOf(100.0));
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(PULSE_RATE_TO_NORMAL, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(PULSE_RATE_TO_NORMAL, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -297,7 +302,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newRecovery.setName(HealthRecoveryDataName.OXYGEN_LEVEL);
                     newRecovery.setMember(member);
                     newRecovery.setValue(isSmoke ? BigDecimal.valueOf(90.0) : BigDecimal.valueOf(100.0));
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(OXYGEN_LEVEL_TO_NORMAL, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(OXYGEN_LEVEL_TO_NORMAL, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -312,7 +317,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newRecovery.setName(HealthRecoveryDataName.CARBON_MONOXIDE_LEVEL);
                     newRecovery.setMember(member);
                     newRecovery.setValue(isSmoke ? BigDecimal.valueOf(92.0) : BigDecimal.valueOf(100.0));
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(CARBON_MONOXIDE_TO_NORMAL, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(CARBON_MONOXIDE_TO_NORMAL, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -327,7 +332,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newRecovery.setName(HealthRecoveryDataName.TASTE_AND_SMELL);
                     newRecovery.setMember(member);
                     newRecovery.setValue(isSmoke ? BigDecimal.valueOf(96.0) : BigDecimal.valueOf(100.0));
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(TASTE_AND_SMELL_IMPROVEMENT, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(TASTE_AND_SMELL_IMPROVEMENT, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -342,7 +347,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     newRecovery.setName(HealthRecoveryDataName.NICOTINE_EXPELLED_FROM_BODY);
                     newRecovery.setMember(member);
                     newRecovery.setValue(isSmoke ? BigDecimal.valueOf(95.0) : BigDecimal.valueOf(100.0));
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(NICOTINE_EXPELLED_FROM_BODY, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(NICOTINE_EXPELLED_FROM_BODY, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -356,7 +361,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.CIRCULATION);
                     newRecovery.setMember(member);
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(CIRCULATION_AND_LUNG_FUNCTION, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(CIRCULATION_AND_LUNG_FUNCTION, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -370,7 +375,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.BREATHING);
                     newRecovery.setMember(member);
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(COUGHING_AND_BREATHING, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(COUGHING_AND_BREATHING, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -384,7 +389,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.REDUCED_RISK_OF_HEART_DISEASE);
                     newRecovery.setMember(member);
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(REDUCED_RISK_OF_HEART_DISEASE, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(REDUCED_RISK_OF_HEART_DISEASE, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -398,7 +403,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.DECREASED_RISK_OF_HEART_ATTACK);
                     newRecovery.setMember(member);
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(STROKE_RISK_REDUCTION, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(STROKE_RISK_REDUCTION, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -412,7 +417,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.IMMUNITY_AND_LUNG_FUNCTION);
                     newRecovery.setMember(member);
-                    var estimateRecoveryTimeInMinutes = calculateTimeToNormal(LUNG_CANCER_RISK_REDUCTION, age, ftndScore);
+                    var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(LUNG_CANCER_RISK_REDUCTION, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
                     LocalDateTime estimateTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);

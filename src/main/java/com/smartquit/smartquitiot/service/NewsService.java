@@ -13,4 +13,8 @@ public interface NewsService {
 
     NewsDTO getNewsDetail(int id);
     NewsDTO createNews(CreateNewsRequest createNewsRequest);
+
+    NewsDTO updateNews(int id,CreateNewsRequest updateRequest);
+
+    void deleteNews(int id);
 }

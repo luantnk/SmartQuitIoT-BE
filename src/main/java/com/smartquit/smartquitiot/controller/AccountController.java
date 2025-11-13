@@ -77,4 +77,20 @@ public class AccountController {
     public ResponseEntity<?> getAccountStatistics() {
         return ResponseEntity.ok(accountService.getAccountStatistics());
     }
+
+    @PutMapping("/activate/{accountId}")
+    @Operation(summary = "Activate account by ID")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> activateAccountById(@PathVariable int accountId) {
+        return ResponseEntity.ok(accountService.activeAccountById(accountId));
+    }
+
+    @PutMapping("/ban/{accountId}")
+    @Operation(summary = "Ban account by ID")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> banAccountById(@PathVariable int accountId) {
+        return ResponseEntity.ok(accountService.banAccountById(accountId));
+    }
 }

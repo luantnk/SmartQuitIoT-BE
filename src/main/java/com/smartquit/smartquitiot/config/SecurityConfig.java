@@ -39,6 +39,8 @@ public class SecurityConfig {
     private static final List<Map.Entry<String, HttpMethod>> SECURED_URLS = List.of(
             Map.entry("/accounts/coach/create", HttpMethod.POST),
             Map.entry("/accounts/p", HttpMethod.GET),
+            Map.entry("/accounts/activate/{accountId}", HttpMethod.PUT),
+            Map.entry("/accounts/ban/{accountId}", HttpMethod.PUT),
             Map.entry("/members/p", HttpMethod.GET),
             Map.entry("/members/manage", HttpMethod.GET),
             Map.entry("/members", HttpMethod.PUT),
@@ -60,6 +62,8 @@ public class SecurityConfig {
             Map.entry("/metrics/health-data", HttpMethod.GET),
             Map.entry("/missions", HttpMethod.GET),
             Map.entry("/news", HttpMethod.POST),
+            Map.entry("/news/{id}", HttpMethod.DELETE),
+            Map.entry("/news/{id}", HttpMethod.PUT),
             Map.entry("/achievement/add-member-achievement", HttpMethod.POST),
             Map.entry("/achievement/all-my-achievements", HttpMethod.GET),
             Map.entry("/achievement/top-leader-boards", HttpMethod.GET),

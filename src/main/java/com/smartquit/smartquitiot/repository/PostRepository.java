@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.repository;
 
 import com.smartquit.smartquitiot.entity.Post;
+import com.smartquit.smartquitiot.enums.PostStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,8 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     List<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     List<Post> findAllByOrderByCreatedAtDesc();
+
+    List<Post> findByStatusOrderByCreatedAtDesc(PostStatus status);
 
     @EntityGraph(attributePaths = {"account", "media"})
     @Query("SELECT p FROM Post p WHERE p.id = :postId")

@@ -8,7 +8,10 @@ import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.*;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.*;
-import com.smartquit.smartquitiot.service.*;
+import com.smartquit.smartquitiot.service.AccountService;
+import com.smartquit.smartquitiot.service.MemberAchievementService;
+import com.smartquit.smartquitiot.service.NotificationService;
+import com.smartquit.smartquitiot.service.PhaseDetailMissionService;
 import com.smartquit.smartquitiot.toolcalling.MissionTools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -167,6 +170,42 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
         }
         if (phaseDetailMissionResponseDTOS.isEmpty()) {
             throw new IllegalArgumentException("List Phase Detail Mission to day is empty at getListMissionToday");
+        }
+        missionTodayResponse.setPhaseDetailMissionResponseDTOS(phaseDetailMissionResponseDTOS);
+        missionTodayResponse.setPhaseId(currentPhase.getId());
+
+        return missionTodayResponse;
+    }
+
+    @Override
+    public MissionTodayResponse getListMissionTodayByMemberId(int memberId) {
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(memberId, QuitPlanStatus.CREATED);
+        if (plan == null) {
+            plan = quitPlanRepository.findByMember_IdAndStatus(memberId, QuitPlanStatus.IN_PROGRESS);
+        }
+        if (plan == null) {
+            throw new RuntimeException("Mission Plan Not Found at getCurrentPhaseAtHomePage tools");
+        }
+
+        LocalDate currentDate = LocalDate.now();
+        Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS, plan.getId())
+                .orElseThrow(() -> new IllegalArgumentException("get current Phase not found at getCurrentPhaseAtHomePage"));
+
+        MissionTodayResponse missionTodayResponse = new MissionTodayResponse();
+        List<PhaseDetailMissionResponseDTO> phaseDetailMissionResponseDTOS = new ArrayList<>();
+        for (PhaseDetail phaseDetail : currentPhase.getDetails()) {
+            if (phaseDetail.getDate() != null && phaseDetail.getDate().isEqual(currentDate)) {
+                for (PhaseDetailMission mission : phaseDetail.getPhaseDetailMissions()) {
+                    PhaseDetailMissionResponseDTO phaseDetailMissionResponseDTO = new PhaseDetailMissionResponseDTO();
+                    phaseDetailMissionResponseDTO.setId(mission.getId());
+                    phaseDetailMissionResponseDTO.setStatus(mission.getStatus());
+                    phaseDetailMissionResponseDTO.setName(mission.getName());
+                    phaseDetailMissionResponseDTO.setDescription(mission.getDescription());
+                    phaseDetailMissionResponseDTO.setCode(mission.getCode());
+                    phaseDetailMissionResponseDTO.setCompletedAt(mission.getCompletedAt());
+                    phaseDetailMissionResponseDTOS.add(phaseDetailMissionResponseDTO);
+                }
+            }
         }
         missionTodayResponse.setPhaseDetailMissionResponseDTOS(phaseDetailMissionResponseDTOS);
         missionTodayResponse.setPhaseId(currentPhase.getId());
