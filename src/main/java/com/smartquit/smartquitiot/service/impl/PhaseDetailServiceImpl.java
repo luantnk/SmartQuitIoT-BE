@@ -8,6 +8,7 @@ import com.smartquit.smartquitiot.repository.MissionRepository;
 import com.smartquit.smartquitiot.repository.PhaseDetailRepository;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
 import com.smartquit.smartquitiot.service.PhaseDetailService;
+import com.smartquit.smartquitiot.service.ReminderQueueService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ import java.util.List;
 public class PhaseDetailServiceImpl implements PhaseDetailService {
     private final PhaseRepository phaseRepository;
     private final PhaseDetailRepository phaseDetailRepository;
-
+    private final ReminderQueueService reminderQueueService;
 
     //sinh phase detail cho 1 phase bat ky, xoa cu tao moi
     @Override
@@ -55,7 +56,11 @@ public class PhaseDetailServiceImpl implements PhaseDetailService {
             dayIndex++;
         }
 
-        return phaseDetailRepository.saveAll(details);
+        List<PhaseDetail> savedDetails = phaseDetailRepository.saveAll(details);
+        //add reminder
+        reminderQueueService.createDailyRemindersForPhase(phase, savedDetails);
+
+        return savedDetails;
     }
 
     @Override
@@ -65,7 +70,7 @@ public class PhaseDetailServiceImpl implements PhaseDetailService {
                 .findByQuitPlan_IdAndName(quitPlan.getId(), phaseName)
                 .orElseThrow(() -> new IllegalStateException("Không tìm thấy phase Preparation"));
 
-        return generatePhaseDetailsForPhase(phase);
+        return  generatePhaseDetailsForPhase(phase);
     }
 
 }

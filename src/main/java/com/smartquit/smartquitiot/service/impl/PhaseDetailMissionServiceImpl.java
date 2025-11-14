@@ -106,8 +106,8 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
         if (allDoneThatDay) {
             metric.setCompleted_all_mission_in_day(metric.getCompleted_all_mission_in_day() + 1);
 
-            String url = "notifications/achievements/" + req.getPhaseId();
-            String deepLink = "smartquit://achievement/" + req.getPhaseId();
+            String url = "notifications/phase/" + req.getPhaseId();
+            String deepLink = "smartquit://phase/" + req.getPhaseId();
 
             notificationService.saveAndPublish(
                     account.getMember(),
@@ -140,10 +140,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     public MissionTodayResponse getListMissionToday() {
 
         Account account = accountService.getAuthenticatedAccount();
-        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
-        if (plan == null) {
-            plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
-        }
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(account.getMember().getId());
         if (plan == null) {
             throw new RuntimeException("Mission Plan Not Found at getCurrentPhaseAtHomePage tools");
         }
@@ -268,17 +265,6 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
                 maxPerDay,
                 missionPhase
         );
-//        if (ai != null && ai.getItems() != null && !ai.getItems().isEmpty()) {
-//            for (int i = 0; i < ai.getItems().size() && i < preparedDetails.size(); i++) {
-//                var dto = ai.getItems().get(i);
-//                PhaseDetail pd = preparedDetails.get(i);
-//                if (dto.getPhaseDetailId() == null) {
-//                    log.warn("duma getPhaseDetailId null roi");
-//                    dto.setPhaseDetailId(pd.getId());
-//                    dto.setPhaseDetailName(pd.getName());
-//                }
-//            }
-//        }
 
         int totalMissions = savePhaseDetailMissionsForPhase(ai);
         phase.setTotalMissions(totalMissions);

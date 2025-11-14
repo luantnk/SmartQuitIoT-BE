@@ -29,6 +29,7 @@ import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.smartquit.smartquitiot.toolcalling.QuitPlanTools.SYSTEM_PROMPT;
@@ -115,68 +116,178 @@ public class PhaseServiceImpl implements PhaseService {
 
     @Override
     public PhaseResponse generatePhasesInFirstLogin(CreateQuitPlanInFirstLoginRequest req, int FTND, Account account) {
-        //rules
-        String userInfo = """
-                    User profile:
-                    - Age: %s
-                    - Gender: %s
-                    - smokeAvgPerDay: %d
-                    - yearsSmoking: %d
-                    - FTND: %d
-                    - StartDate: %s
-                """.formatted(
-                calculateAge(account.getMember().getDob()),
-                account.getMember().getGender(),
+       //k goi AI de giam overload
+
+        //goi AI
+//        String userInfo = """
+//                    User profile:
+//                    - Age: %s
+//                    - Gender: %s
+//                    - smokeAvgPerDay: %d
+//                    - yearsSmoking: %d
+//                    - FTND: %d
+//                    - StartDate: %s
+//                """.formatted(
+//                calculateAge(account.getMember().getDob()),
+//                account.getMember().getGender(),
+//                req.getSmokeAvgPerDay(),
+//                req.getNumberOfYearsOfSmoking(),
+//                FTND,
+//                req.getStartDate());
+//        // response from ai
+//        PhaseResponse phaseResponse = chatClient.prompt()
+//                .system(SYSTEM_PROMPT)
+//                .user(userInfo)
+//                .tools(quitPlanTools)
+//                .call()
+//                .entity(PhaseResponse.class);
+//
+//        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
+//            throw new IllegalStateException("AI did not return any phases");
+//        }
+//
+//        return phaseResponse;
+
+        //k goi AI
+        return buildPhasesByRules(
                 req.getSmokeAvgPerDay(),
                 req.getNumberOfYearsOfSmoking(),
+                req.getStartDate(),
                 FTND,
-                req.getStartDate());
-        // response from ai
-        PhaseResponse phaseResponse = chatClient.prompt()
-                .system(SYSTEM_PROMPT)
-                .user(userInfo)
-                .tools(quitPlanTools)
-                .call()
-                .entity(PhaseResponse.class);
-
-        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
-            throw new IllegalStateException("AI did not return any phases");
-        }
-
-        return phaseResponse;
+                account
+        );
     }
 
     @Override
     public PhaseResponse generatePhases(int smokeAvgPerDay, int numberOfYearsSmoking, LocalDate startDate, int FTND, Account account) {
         //rules
-        String userInfo = """
-                    User profile:
-                    - Age: %s
-                    - Gender: %s
-                    - smokeAvgPerDay: %d
-                    - yearsSmoking: %d
-                    - FTND: %d
-                    - StartDate: %s
-                """.formatted(
-                calculateAge(account.getMember().getDob()),
-                account.getMember().getGender(),
+        //k goi Ai de giam overload
+
+        //goi AI
+//        String userInfo = """
+//                    User profile:
+//                    - Age: %s
+//                    - Gender: %s
+//                    - smokeAvgPerDay: %d
+//                    - yearsSmoking: %d
+//                    - FTND: %d
+//                    - StartDate: %s
+//                """.formatted(
+//                calculateAge(account.getMember().getDob()),
+//                account.getMember().getGender(),
+//                smokeAvgPerDay,
+//                numberOfYearsSmoking,
+//                FTND,
+//                startDate);
+//        // response from ai
+//        PhaseResponse phaseResponse = chatClient.prompt()
+//                .system(SYSTEM_PROMPT)
+//                .user(userInfo)
+//                .tools(quitPlanTools)
+//                .call()
+//                .entity(PhaseResponse.class);
+//
+//        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
+//            throw new IllegalStateException("AI did not return any phases");
+//        }
+//
+//        return phaseResponse;
+        //k goi AI
+        return buildPhasesByRules(
                 smokeAvgPerDay,
                 numberOfYearsSmoking,
+                startDate,
                 FTND,
-                startDate);
-        // response from ai
-        PhaseResponse phaseResponse = chatClient.prompt()
-                .system(SYSTEM_PROMPT)
-                .user(userInfo)
-                .tools(quitPlanTools)
-                .call()
-                .entity(PhaseResponse.class);
+                account
+        );
+    }
 
-        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
-            throw new IllegalStateException("AI did not return any phases");
+    private PhaseResponse buildPhasesByRules(
+            int smokeAvgPerDay,
+            int yearsSmoking,
+            LocalDate startDate,
+            int FTND,
+            Account account
+    ) {
+        int age = calculateAge(account.getMember().getDob());
+        String gender = account.getMember().getGender().name();
+
+        // Dùng lại logic từ QuitPlanTools
+        Map<String, Integer> durations = quitPlanTools.calculatePhaseDuration(
+                FTND,
+                smokeAvgPerDay,
+                yearsSmoking,
+                age,
+                gender
+        );
+
+        PhaseResponse response = new PhaseResponse();
+        response.setStartDateOfQuitPlan(startDate);
+
+        List<PhaseDTO> phaseDTOs = new java.util.ArrayList<>();
+
+        LocalDate cursor = startDate;
+
+        // Thứ tự cố định
+        String[] phaseOrder = {
+                "Preparation",
+                "Onset",
+                "Peak Craving",
+                "Subsiding",
+                "Maintenance"
+        };
+
+        for (String phaseName : phaseOrder) {
+            Integer dur = durations.get(phaseName);
+            if (dur == null || dur <= 0) {
+                throw new IllegalStateException("No duration returned for phase: " + phaseName);
+            }
+
+            LocalDate phaseStart = cursor;
+            LocalDate phaseEnd = phaseStart.plusDays(dur - 1);
+
+            PhaseDTO dto = new PhaseDTO();
+            dto.setName(phaseName);
+            dto.setStartDate(phaseStart);
+            dto.setEndDate(phaseEnd);
+            dto.setDurationDay(dur);
+            dto.setReason(buildReasonForPhase(phaseName, FTND, smokeAvgPerDay, yearsSmoking, age, gender));
+
+            phaseDTOs.add(dto);
+
+            cursor = phaseEnd.plusDays(1);
         }
 
-        return phaseResponse;
+        response.setPhases(phaseDTOs);
+        response.setEndDateOfQuitPlan(
+                phaseDTOs.get(phaseDTOs.size() - 1).getEndDate()
+        );
+
+        return response;
+    }
+
+    private String buildReasonForPhase(
+            String phaseName,
+            int FTND,
+            int smokeAvgPerDay,
+            int yearsSmoking,
+            int age,
+            String gender
+    ) {
+        switch (phaseName.toLowerCase()) {
+            case "preparation":
+                return "This phase helps you get mentally and logistically ready to quit based on your current smoking pattern.";
+            case "onset":
+                return "This phase covers the first tough days after quitting when withdrawal and habit change begin.";
+            case "peak craving":
+                return "This phase focuses on dealing with the strongest cravings, especially with your current dependence level (FTND " + FTND + ").";
+            case "subsiding":
+                return "This phase helps you stabilize as cravings gradually reduce and your body adjusts to being smoke-free.";
+            case "maintenance":
+                return "This phase focuses on preventing relapse in the long term given your " + yearsSmoking + " years of smoking.";
+            default:
+                return "This phase supports your quit journey step by step.";
+        }
     }
 
     @Override
@@ -316,7 +427,7 @@ public class PhaseServiceImpl implements PhaseService {
     @Transactional
     @Override
     public void updateQuitPlanAndPhaseStatuses() {
-        log.info("Scheduler running.");
+        log.info("UPDATE QUIT PLAN AND PHASE STATUS SCHEDULER RUNNING");
         LocalDate currentDate = LocalDate.now();
         // con truong hop failed
         // Lấy tất cả plan đang chạy trong hệ thống

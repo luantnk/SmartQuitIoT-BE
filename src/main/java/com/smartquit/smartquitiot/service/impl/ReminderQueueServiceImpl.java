@@ -6,6 +6,7 @@ import com.smartquit.smartquitiot.enums.PhaseEnum;
 import com.smartquit.smartquitiot.enums.ReminderQueueStatus;
 import com.smartquit.smartquitiot.enums.ReminderType;
 import com.smartquit.smartquitiot.repository.DiaryRecordRepository;
+import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.repository.ReminderQueueRepository;
 import com.smartquit.smartquitiot.repository.ReminderTemplateRepository;
 import com.smartquit.smartquitiot.service.NotificationService;
@@ -35,15 +36,15 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
     private final ReminderQueueRepository reminderQueueRepository;
     private final DiaryRecordRepository diaryRecordRepository;
     private final NotificationService notificationService;
+    private final QuitPlanRepository quitPlanRepository;
 
-    @Scheduled(cron = "0 */1 * * * *") // mỗi phút
+    @Scheduled(cron = "0 */1 * * * *")
     @Transactional
     public void dispatchReminders() {
         LocalDateTime now = LocalDateTime.now();
 
-        log.info("=== REMINDER SCHEDULER RUNNING AT {} ===", now);
+        log.info("REMINDER SCHEDULER RUNNING AT");
 
-        // Tìm tất cả reminder PENDING và tới hạn gửi
         List<ReminderQueue> dueReminders =
                 reminderQueueRepository.findByStatusAndScheduledAtBefore(
                         ReminderQueueStatus.PENDING,
@@ -59,12 +60,19 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
 
         for (ReminderQueue rq : dueReminders) {
             try {
+                LocalDate today = now.toLocalDate();
+
+                // Nếu là reminder của hôm nay nhưng đã trễ quá 1h bỏ luôn
+                if (rq.getScheduledAt().toLocalDate().isEqual(today)
+                        && rq.getScheduledAt().isBefore(now.minusHours(1))) {
+
+                    rq.setStatus(ReminderQueueStatus.CANCELLED);
+                    reminderQueueRepository.save(rq);
+                    continue;
+                }
+
                 Member member = rq.getPhaseDetail().getPhase().getQuitPlan().getMember();
 
-                log.info("→ Sending reminder for Member {}, ReminderQueue ID: {}",
-                        member.getId(), rq.getId());
-
-                // Gửi notification qua hàm bạn đã cung cấp
                 notificationService.saveAndPublish(
                         member,
                         NotificationType.REMINDER,
@@ -75,24 +83,21 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
                         "smartquit://reminder"
                 );
 
-                // Update status
                 rq.setStatus(ReminderQueueStatus.SENT);
                 reminderQueueRepository.save(rq);
 
-                log.info("✓ ReminderQueue {} sent successfully.", rq.getId());
-
             } catch (Exception e) {
-                log.error("✗ Failed to send reminderQueue {}: {}", rq.getId(), e.getMessage());
                 rq.setStatus(ReminderQueueStatus.CANCELLED);
                 reminderQueueRepository.save(rq);
             }
         }
+
     }
 
     @Override
     @Transactional
     public void createDailyRemindersForPhase(Phase phase, List<PhaseDetail> details) {
-        log.info("---- ? ----");
+
         Member member = phase.getQuitPlan().getMember();
 
 
@@ -109,7 +114,7 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
 
         ZoneId zone = ZoneId.of(timeZone);
 
-        // ===== Templates cho MORNING theo phase =====
+        //Templates cho MORNING
         List<ReminderTemplate> morningTemplates =
                 reminderTemplateRepository.findByReminderTypeAndPhaseEnum(ReminderType.MORNING,
                         toPhaseEnum(phase));
@@ -117,8 +122,7 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
         // Nếu không có template morning thì thôi khỏi gen MORNING
         boolean hasMorningTemplate = !morningTemplates.isEmpty();
 
-        // ===== Templates cho BEHAVIOR – sẽ lọc theo trigger sau =====
-        // (có thể load tất cả và filter theo triggerCode, hoặc tạo riêng query)
+        // Templates cho BEHAVIOR – sẽ lọc theo trigger sau
         List<ReminderTemplate> behaviorTemplates =
                 reminderTemplateRepository.findByReminderType(ReminderType.BEHAVIOR);
 
@@ -127,12 +131,7 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
 
         for (PhaseDetail pd : details) {
             LocalDate phaseDate = pd.getDate();
-            log.info("---- MORNING REMINDER DEBUG ----");
-            log.info("MemberId: {}", member.getId());
-            log.info("PhaseDate: {}", phaseDate);
-            log.info("User Morning Time: {}", morningTime);
-            log.info("User TimeZone: {}", zone);
-            // ==================== MORNING ====================
+            //MORNING
             if (hasMorningTemplate) {
                 ReminderTemplate morningChosen = pickRandom(morningTemplates);
 
@@ -152,16 +151,11 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
                 reminderQueueRepository.save(morningQueue);
             }
 
-            // ==================== BEHAVIOR ====================
+            // BEHAVIOR
             if (!memberTriggers.isEmpty() && !behaviorTemplates.isEmpty()) {
                 // random 1 trigger trong số trigger của member
-
-                for(String m : memberTriggers){
-                    log.info("memberTrigger {}", m);
-                }
-
                 String triggerForThisDay = pickRandom(memberTriggers);
-
+                    log.info("triggerForThisDay {}", triggerForThisDay);
                 // lọc template behavior nào có triggerCode phù hợp
                 List<ReminderTemplate> matchedBehaviorTemplates = behaviorTemplates.stream()
                         .filter(t -> triggerForThisDay.equalsIgnoreCase(t.getTriggerCode()))
@@ -198,30 +192,78 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
 
     //from Log Diary Record
     private List<String> getFrequentlyTriggeredReminders(Integer memberId) {
-        List<DiaryRecord> diaryRecords = diaryRecordRepository.findByMemberIdOrderByDateDesc(memberId);
 
-        if (diaryRecords.isEmpty()) {
-            return Collections.emptyList();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(memberId);
+        if (plan == null) {
+            throw new RuntimeException("No active Quit Plan found when using getFrequentlyTriggeredReminders");
         }
 
-        // Đếm tần suất trigger
+        List<DiaryRecord> diaryRecords =
+                diaryRecordRepository.findByMemberIdOrderByDateDesc(memberId);
+
+        // CASE 1: Diary rỗng
+        if (diaryRecords.isEmpty()) {
+            log.info("[REMINDER] No diary records. Fallback to FormMetric.triggered or default.");
+
+            FormMetric fm = plan.getFormMetric();
+            if (fm != null && fm.getTriggered() != null && !fm.getTriggered().isEmpty()) {
+                return fm.getTriggered().stream()
+                        .map(this::normalizeTrigger)
+                        .collect(Collectors.toList());
+            }
+
+            return getDefaultTriggers();
+        }
+
+        //CASE 2: Diary có nhưng triggers rỗng
         Map<String, Long> triggerCount = diaryRecords.stream()
-                .filter(r -> r.getTriggers() != null)
-                .flatMap(r -> r.getTriggers().stream())   // merge all triggers
+                .filter(r -> r.getTriggers() != null && !r.getTriggers().isEmpty())
+                .flatMap(r -> r.getTriggers().stream())
+                .map(this::normalizeTrigger)
                 .collect(Collectors.groupingBy(t -> t, Collectors.counting()));
 
-
         if (triggerCount.isEmpty()) {
-            return Collections.emptyList();
+            log.info("[REMINDER] Diary exists but no triggers. Checking FormMetric…");
+
+            FormMetric fm = plan.getFormMetric();
+            if (fm != null && fm.getTriggered() != null && !fm.getTriggered().isEmpty()) {
+                return fm.getTriggered().stream()
+                        .map(this::normalizeTrigger)
+                        .collect(Collectors.toList());
+            }
+
+            return getDefaultTriggers();
         }
 
-        // Sắp xếp theo tần suất giảm dần , lấy 3 trigger nhiều nhất
+        // CASE 3: Có trigger thống kê được
         return triggerCount.entrySet().stream()
-                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue())) // DESC
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))  // DESC
                 .limit(3)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+    }
 
+
+    private List<String> getDefaultTriggers() {
+        return List.of(
+                "MORNING",
+                "AFTER_MEAL",
+                "GAMING",
+                "PARTY",
+                "COFFEE",
+                "STRESS",
+                "BOREDOM",
+                "DRIVING",
+                "SADNESS",
+                "WORK"
+        );
+    }
+
+    private String normalizeTrigger(String raw) {
+        if (raw == null) return null;
+        return raw.trim()
+                .toUpperCase()
+                .replace(" ", "_");
     }
 
 
@@ -231,12 +273,6 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
         return list.get(idx);
     }
 
-    /**
-     * Nếu candidate nằm trong khoảng "quiet time" thì dời ra ngoài.
-     * Giả định:
-     * - quietStart, quietEnd có thể null (nếu user chưa set → không cần chỉnh)
-     * - Nếu quietStart < quietEnd: ví dụ 22:00–06:00 thì qua đêm → xử lý riêng.
-     */
     private LocalDateTime adjustForQuietTime(LocalDateTime candidate,
                                              LocalTime quietStart,
                                              LocalTime quietEnd) {
@@ -246,10 +282,10 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
 
         LocalTime t = candidate.toLocalTime();
 
-        // case 1: quiet không qua đêm (vd: 21:00–23:00) – đơn giản
+        // case 1: quiet không qua đêm (vd: 21:00–23:00)
         if (quietStart.isBefore(quietEnd)) {
             if (!t.isBefore(quietStart) && !t.isAfter(quietEnd)) {
-                // nếu đang rơi trong quiet → dời tới quietEnd + 5'
+                // nếu đang rơi trong quiet dời tới quietEnd + 5'
                 return LocalDateTime.of(candidate.toLocalDate(), quietEnd).plusMinutes(5);
             } else {
                 return candidate;
@@ -257,7 +293,6 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
         }
 
         // case 2: quiet qua đêm (vd: 22:00–06:00)
-        // quiet = [22:00..24:00) U [00:00..06:00]
         boolean inQuiet =
                 (!t.isBefore(quietStart) && t.isBefore(LocalTime.MIDNIGHT)) ||
                         (t.isAfter(LocalTime.MIDNIGHT.minusNanos(1)) && !t.isAfter(quietEnd));
@@ -272,7 +307,7 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
             return LocalDateTime.of(candidate.toLocalDate().plusDays(1), quietEnd)
                     .plusMinutes(5);
         } else {
-            // đang trong quiet sáng sớm (trước quietEnd) → dời tới quietEnd + 5' cùng ngày
+            // đang trong quiet sáng sớm (trước quietEnd)  dời tới quietEnd + 5' cùng ngày
             return LocalDateTime.of(candidate.toLocalDate(), quietEnd)
                     .plusMinutes(5);
         }

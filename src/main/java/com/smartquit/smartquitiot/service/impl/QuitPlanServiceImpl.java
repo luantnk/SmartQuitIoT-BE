@@ -101,7 +101,6 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             phaseService.savePhasesAndSystemPhaseCondition(phaseResponse, quitPlan);
             //tao phase detail
             List<PhaseDetail> preparedDetails = phaseDetailService.generateInitialPhaseDetails(quitPlan,"Preparation");
-
             return phaseDetailMissionService.generatePhaseDetailMissionsForPhase
                     (preparedDetails,quitPlan, 4, "Preparation", MissionPhase.PREPARATION);
 
@@ -114,10 +113,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     @Override
     public QuitPlanResponse getCurrentQuitPlan() {
         Account account = accountService.getAuthenticatedAccount();
-        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.CREATED);
-        if (plan == null) {
-            plan = quitPlanRepository.findByMember_IdAndStatus(account.getMember().getId(), QuitPlanStatus.IN_PROGRESS);
-        }
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(account.getMember().getId());
         if(plan == null) {
             throw new RuntimeException("No Quit Plan found when using!");
         }
@@ -192,6 +188,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             newQuitPlan.setFtndScore(oldQuitPlan.getFtndScore());
             newQuitPlan.setMember(account.getMember());
             newQuitPlan.setStartDate(req.getStartDate());
+            newQuitPlan.setUseNRT(req.isUseNRT());
             LocalDate currentDate = LocalDate.now();
 
             if(req.getStartDate().equals(currentDate)){
