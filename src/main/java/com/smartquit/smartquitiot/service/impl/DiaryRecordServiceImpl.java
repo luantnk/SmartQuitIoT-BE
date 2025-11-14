@@ -5,13 +5,9 @@ import com.smartquit.smartquitiot.dto.request.DiaryRecordRequest;
 import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.entity.*;
-import com.smartquit.smartquitiot.enums.HealthRecoveryDataName;
-import com.smartquit.smartquitiot.enums.QuitPlanStatus;
+import com.smartquit.smartquitiot.enums.*;
 import com.smartquit.smartquitiot.mapper.DiaryRecordMapper;
-import com.smartquit.smartquitiot.repository.DiaryRecordRepository;
-import com.smartquit.smartquitiot.repository.HealthRecoveryRepository;
-import com.smartquit.smartquitiot.repository.MetricRepository;
-import com.smartquit.smartquitiot.repository.QuitPlanRepository;
+import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.DiaryRecordService;
 import com.smartquit.smartquitiot.service.MemberAchievementService;
 import com.smartquit.smartquitiot.service.MemberService;
@@ -27,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -54,6 +51,8 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
 
     private final MemberAchievementService memberAchievementService;
     private final NotificationService notificationService;
+    private final ReminderTemplateRepository reminderTemplateRepository;
+    private final ReminderQueueRepository reminderQueueRepository;
 
     @Transactional
     @Override
@@ -216,7 +215,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         metricRepository.save(metric);
 
         diaryRecord = diaryRecordRepository.save(diaryRecord);
-
         //calculate recovery time
         calculateRecoveryTime(calculateAge(member.getDob()), currentQuitPlan.getFtndScore(), request.getHaveSmoked());
 
@@ -237,8 +235,38 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         memberAchievementService.addMemberAchievement(addAchievementRequestSteps).orElse(null);
 
         if(isOnPlan && request.getHaveSmoked() == true){
+            List<ReminderTemplate> smokedTemplates =
+                    reminderTemplateRepository.findByReminderType(ReminderType.SMOKED);
+
+            String content;
+
+            if (smokedTemplates == null || smokedTemplates.isEmpty()) {
+                content = "Don't worry, relapses happen. You can do it!";
+            } else {
+                ReminderTemplate chosen = pickRandom(smokedTemplates);
+                content = chosen.getContent();
+            }
+
+            // Save notifications
+            notificationService.saveAndPublish(
+                    member,
+                    NotificationType.REMINDER,
+                    "Oh no, you smoked!",
+                    content,
+                    null,
+                    null,
+                    "smartquit://relapse"
+            );
+
+            ReminderQueue smokedQueue = new ReminderQueue();
+            smokedQueue.setContent(content);
+            smokedQueue.setStatus(ReminderQueueStatus.SENT);
+            smokedQueue.setPhaseDetail(null);
+            reminderQueueRepository.save(smokedQueue);
             return GlobalResponse.smokedOnPlan("Oh no you have smoked when you on quit plan!", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
         }
+
+
 
         return GlobalResponse.ok("Diary record logged successfully", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
     }
@@ -493,5 +521,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     public List<DiaryRecordDTO> getDiaryRecordsHistoryByMemberId(int memberId) {
         List<DiaryRecord> records = diaryRecordRepository.findByMemberIdOrderByDateDesc(memberId);
         return records.stream().map(diaryRecordMapper::toListDiaryRecordDTO).toList();
+    }
+    private <T> T pickRandom(List<T> list) {
+        int idx = ThreadLocalRandom.current().nextInt(list.size());
+        return list.get(idx);
     }
 }
