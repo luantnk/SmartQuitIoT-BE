@@ -254,7 +254,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
 
             // Save notifications
             notificationService.saveAndPublish(
-                    member,
+                    member.getAccount(),
                     NotificationType.REMINDER,
                     "Oh no, you smoked!",
                     content,

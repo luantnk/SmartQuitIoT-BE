@@ -74,7 +74,7 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
                 Member member = rq.getPhaseDetail().getPhase().getQuitPlan().getMember();
 
                 notificationService.saveAndPublish(
-                        member,
+                        member.getAccount(),
                         NotificationType.REMINDER,
                         "SmartQuit Reminder",
                         rq.getContent(),
