@@ -26,7 +26,10 @@ public class MemberMapper {
         memberDTO.setUsedFreeTrial(member.isUsedFreeTrial());
         memberDTO.setAge(calculateAge(member.getDob()));
         memberDTO.setAccount(accountMapper.toAccountDTO(member.getAccount()));
-
+        memberDTO.setMorningReminderTime(member.getMorningReminderTime());
+        memberDTO.setQuietStart(member.getQuietStart());
+        memberDTO.setQuietEnd(member.getQuietEnd());
+        memberDTO.setTimeZone(member.getTimeZone());
         return memberDTO;
     }
 

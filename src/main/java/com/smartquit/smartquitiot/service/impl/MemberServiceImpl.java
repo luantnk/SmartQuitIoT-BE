@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.request.MemberReminderSettingsRequest;
 import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
@@ -74,5 +75,17 @@ public class MemberServiceImpl implements MemberService {
     public List<MemberListItemDTO> getListMembers() {
         List<Member> all = memberRepository.findAllByAccount_IsActiveTrueAndAccount_IsBannedFalse();
         return all.stream().map(memberMapper::toMemberListItemDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public MemberDTO updateReminderSettings(MemberReminderSettingsRequest req) {
+        Member member = accountService.getAuthenticatedAccount().getMember();
+
+        member.setMorningReminderTime(req.getMorningReminderTime());
+        member.setQuietStart(req.getQuietStart());
+        member.setQuietEnd(req.getQuietEnd());
+
+        memberRepository.save(member);
+        return  memberMapper.toMemberDTO(member);
     }
 }

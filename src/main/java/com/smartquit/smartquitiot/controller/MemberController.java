@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
+import com.smartquit.smartquitiot.dto.request.MemberReminderSettingsRequest;
 import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
@@ -71,4 +72,16 @@ public class MemberController {
             List<MemberListItemDTO> result = memberService.getListMembers();
             return ResponseEntity.ok(result);
         }
+
+
+    @PutMapping("/settings/reminder")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "This endpoint for update setting time of noti reminder", description = "Only member can access this endpoint")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<MemberDTO> updateReminderSettings(@RequestBody MemberReminderSettingsRequest req) {
+
+        return ResponseEntity.ok(memberService.updateReminderSettings(req));
+    }
+
+
 }

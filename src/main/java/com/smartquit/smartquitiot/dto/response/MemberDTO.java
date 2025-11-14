@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,4 +26,8 @@ public class MemberDTO {
     Integer age;
     boolean isUsedFreeTrial;
     AccountDTO account;
+    LocalTime morningReminderTime;
+    LocalTime quietStart;
+    LocalTime quietEnd;
+    String timeZone;
 }

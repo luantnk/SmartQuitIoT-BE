@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service;
 
+import com.smartquit.smartquitiot.dto.request.MemberReminderSettingsRequest;
 import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
@@ -17,4 +18,5 @@ public interface MemberService {
     MemberDTO updateProfile(MemberUpdateRequest request);
     Page<MemberDTO> getMembers(int page, int size, String search);
     List<MemberListItemDTO> getListMembers();
+    MemberDTO updateReminderSettings(MemberReminderSettingsRequest req);
 }

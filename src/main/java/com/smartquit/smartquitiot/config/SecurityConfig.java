@@ -80,7 +80,8 @@ public class SecurityConfig {
             Map.entry("/phase/redo", HttpMethod.POST),
             Map.entry("/system-phase-condition", HttpMethod.GET),
             Map.entry("/system-phase-condition/{id}", HttpMethod.PUT),
-            Map.entry("/system-phase-condition/test", HttpMethod.POST)
+            Map.entry("/system-phase-condition/test", HttpMethod.POST),
+            Map.entry("/members/settings/reminder", HttpMethod.PUT)
     );
 
     @Bean

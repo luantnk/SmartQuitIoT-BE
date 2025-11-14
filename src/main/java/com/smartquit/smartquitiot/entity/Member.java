@@ -56,9 +56,9 @@ public class Member {
     @JsonIgnore
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     Metric metric;
-
-    LocalTime morningReminderTime;
-    LocalTime quietStart;
-    LocalTime quietEnd;
-    String timeZone;                // Asia/Ho_Chi_Minh
+ //default
+    LocalTime morningReminderTime = LocalTime.of(7, 0);  // 07:00
+    LocalTime quietStart = LocalTime.of(22, 0);         // 22:00
+    LocalTime quietEnd = LocalTime.of(6, 0);            // 06:00
+    String timeZone = "Asia/Ho_Chi_Minh";
 }
