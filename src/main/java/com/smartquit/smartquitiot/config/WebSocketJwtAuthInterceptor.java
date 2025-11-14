@@ -94,12 +94,6 @@ public class WebSocketJwtAuthInterceptor implements ChannelInterceptor {
                 } catch (Exception e) {
                     log.debug("Failed to write session attributes for WS CONNECT: {}", e.getMessage());
                 }
-
-                // --- optional dev-only: if you want to force a specific principal when token lacks accountId ---
-                // if (principalName == null || principalName.isBlank()) {
-                //     accessor.setUser(new UsernamePasswordAuthenticationToken("3", token, List.of(new SimpleGrantedAuthority("ROLE_COACH"))));
-                //     log.debug("WS CONNECT: forced principal=3 for dev testing");
-                // }
             }
         } catch (Exception ex) {
             log.warn("WS auth interceptor error (CONNECT): {}", ex.getMessage());

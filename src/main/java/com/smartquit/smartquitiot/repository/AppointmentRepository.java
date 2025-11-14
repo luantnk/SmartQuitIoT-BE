@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
-
+import java.time.LocalTime;
 public interface AppointmentRepository extends JpaRepository<Appointment, Integer> {
 
     // kiểm tra appointment active via CoachWorkSchedule (coach + date + slot) ----------
@@ -41,9 +41,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             "WHERE c.account.id = :accountId")
     List<Appointment> findAllByCoachAccountId(@Param("accountId") int accountId);
 
-    /**
-     * appointment.date được dùng để so sánh với subscription period.
-     */
     @Query("SELECT COUNT(a) FROM Appointment a " +
             "WHERE a.member.id = :memberId " +
             "  AND a.date BETWEEN :start AND :end " +
@@ -52,4 +49,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     long countActiveByMemberIdAndDateBetween(@Param("memberId") int memberId,
                                              @Param("start") LocalDate start,
                                              @Param("end") LocalDate end);
+
+    @Query("""
+    SELECT a FROM Appointment a
+    JOIN a.coachWorkSchedule cws
+    JOIN cws.slot s
+    WHERE a.appointmentStatus = :status
+      AND a.date = :date
+      AND s.startTime BETWEEN :from AND :to
+""")
+    List<Appointment> findAppointmentsForReminder(
+            @Param("date") LocalDate date,
+            @Param("from") LocalTime from,
+            @Param("to") LocalTime to,
+            @Param("status") AppointmentStatus status
+    );
 }

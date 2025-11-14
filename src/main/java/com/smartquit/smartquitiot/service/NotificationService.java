@@ -9,20 +9,20 @@ import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import org.springframework.data.domain.Page;
 
 public interface NotificationService {
-    NotificationDTO saveAndSendAchievementNoti(Member member, Achievement a);
+    NotificationDTO saveAndSendAchievementNoti(Account account, Achievement a);
     NotificationDTO saveAndSendPhaseNoti(
-            Member member,
+            Account account,
             Phase phase,
             PhaseStatus toStatus,
             int newMissionsCount
     );
     NotificationDTO saveAndSendQuitPlanNoti(
-            Member member,
+            Account account,
             QuitPlan plan,
             QuitPlanStatus toStatus
     );
     NotificationDTO saveAndPublish(
-            Member member,
+            Account account,
             NotificationType type,
             String title,
             String content,
