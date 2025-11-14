@@ -25,9 +25,9 @@ public class ReminderQueue {
     @Column(columnDefinition = "TEXT")
     String content;
 
-    @Type(JsonType.class)
-    @Column(name = "payload_json", columnDefinition = "JSON", nullable = false)
-    JsonNode payload;
+//    @Type(JsonType.class)
+//    @Column(name = "payload_json", columnDefinition = "JSON", nullable = false)
+//    JsonNode payload;
 
     @Enumerated(EnumType.STRING)
     ReminderQueueStatus status;

@@ -12,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Entity
@@ -57,4 +58,9 @@ public class Member {
     @JsonIgnore
     @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     Metric metric;
+
+    LocalTime morningReminderTime;
+    LocalTime quietStart;
+    LocalTime quietEnd;
+    String timeZone;                // Asia/Ho_Chi_Minh
 }
