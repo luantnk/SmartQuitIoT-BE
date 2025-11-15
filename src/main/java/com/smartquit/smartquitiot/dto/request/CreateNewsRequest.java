@@ -15,5 +15,6 @@ public class CreateNewsRequest {
 
     String title;
     String content;
+    String thumbnailUrl;
     List<String> mediaUrls;
 }
