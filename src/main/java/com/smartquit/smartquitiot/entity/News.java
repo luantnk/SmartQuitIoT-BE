@@ -24,7 +24,7 @@ public class News {
     @Column(columnDefinition = "TEXT")
     String content;
     @Enumerated(EnumType.STRING)
-    NewsStatus status;
+    NewsStatus status; // DRAFT, PUBLISHED, DELETED
 
     String thumbnailUrl;
 

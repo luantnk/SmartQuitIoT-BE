@@ -64,6 +64,9 @@ public class NewsServiceImpl implements NewsService {
         news.setTitle(createNewsRequest.getTitle());
         news.setContent(createNewsRequest.getContent());
         news.setStatus(NewsStatus.PUBLISH);
+        if (createNewsRequest.getThumbnailUrl() != null) {
+            news.setThumbnailUrl(createNewsRequest.getThumbnailUrl());
+        }
         if( createNewsRequest.getMediaUrls() != null ){
             List<NewsMedia> newsMedia = new ArrayList<>();
             for (String url : createNewsRequest.getMediaUrls()) {
@@ -92,6 +95,7 @@ public class NewsServiceImpl implements NewsService {
         }
         news.setTitle(updateRequest.getTitle());
         news.setContent(updateRequest.getContent());
+        news.setThumbnailUrl(updateRequest.getThumbnailUrl());
         // Optionally update media if provided
         List<NewsMedia> existingMedia = newsMediaRepository.findByNewsId(news.getId());
         newsMediaRepository.deleteAll(existingMedia);
