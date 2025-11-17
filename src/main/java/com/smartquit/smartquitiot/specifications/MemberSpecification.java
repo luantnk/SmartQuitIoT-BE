@@ -14,4 +14,13 @@ public class MemberSpecification {
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), "%"+searchString.toLowerCase()+"%"));
         }));
     }
+    public static Specification<Member> hasActive(boolean isActive){
+        return (root, query, criteriaBuilder) -> {
+            if (isActive) {
+                return criteriaBuilder.isTrue(root.get("account").get("isActive"));
+            } else {
+                return criteriaBuilder.isFalse(root.get("account").get("isActive"));
+            }
+        };
+    }
 }

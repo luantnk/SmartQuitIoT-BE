@@ -64,8 +64,8 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public Page<MemberDTO> getMembers(int page, int size, String search) {
-        Specification<Member> spec = Specification.allOf(MemberSpecification.hasSearchString(search));
+    public Page<MemberDTO> getMembers(int page, int size, String search, Boolean isActive) {
+        Specification<Member> spec = Specification.allOf(MemberSpecification.hasSearchString(search).and(MemberSpecification.hasActive(isActive)));
         Pageable pageable = PageRequest.of(page, size);
         Page<Member> memberPage = memberRepository.findAll(spec, pageable);
         return memberPage.map(memberMapper::toMemberDTO);

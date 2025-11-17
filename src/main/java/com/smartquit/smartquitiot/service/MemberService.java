@@ -16,7 +16,7 @@ public interface MemberService {
     MemberDTO getAuthenticatedMemberProfile();
     MemberDTO getMemberById(int id);
     MemberDTO updateProfile(MemberUpdateRequest request);
-    Page<MemberDTO> getMembers(int page, int size, String search);
+    Page<MemberDTO> getMembers(int page, int size, String search, Boolean isActive);
     List<MemberListItemDTO> getListMembers();
     MemberDTO updateReminderSettings(MemberReminderSettingsRequest req);
 }

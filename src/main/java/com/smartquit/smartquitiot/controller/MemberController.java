@@ -53,9 +53,10 @@ public class MemberController {
     public ResponseEntity<Page<MemberDTO>> manageMembers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false, defaultValue = "true") Boolean isActive
     ){
-        return ResponseEntity.ok(memberService.getMembers(page, size, search));
+        return ResponseEntity.ok(memberService.getMembers(page, size, search, isActive));
     }
 
 

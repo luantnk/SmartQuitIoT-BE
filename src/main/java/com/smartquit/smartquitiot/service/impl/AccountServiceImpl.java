@@ -286,7 +286,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public GlobalResponse<String> banAccountById(int accountId) {
+    public GlobalResponse<String> deleteAccountById(int accountId) {
         Account account = accountRepository.findById(accountId).orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
 
         if (Role.ADMIN.equals(account.getRole())) {
@@ -298,12 +298,12 @@ public class AccountServiceImpl implements AccountService {
         }else{
             account.setActive(true);
         }
-        account = accountRepository.save(account);
+        accountRepository.save(account);
 
-        if (account.isActive()) {
-            return GlobalResponse.ok("Account has been banned.");
-        } else {
+        if(account.isActive() && !account.isBanned()){
             return GlobalResponse.ok("Account has been unbanned.");
         }
+        return GlobalResponse.ok("Account has been deleted.");
+
     }
 }

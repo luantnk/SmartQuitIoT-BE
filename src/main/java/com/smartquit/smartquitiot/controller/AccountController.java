@@ -91,6 +91,6 @@ public class AccountController {
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> banAccountById(@PathVariable int accountId) {
-        return ResponseEntity.ok(accountService.banAccountById(accountId));
+        return ResponseEntity.ok(accountService.deleteAccountById(accountId));
     }
 }
