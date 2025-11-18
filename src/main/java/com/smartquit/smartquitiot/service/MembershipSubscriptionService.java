@@ -12,7 +12,7 @@ public interface MembershipSubscriptionService {
             Integer size,
             String sortBy,
             String sortDir,
-            Long orderCode,
+            String orderCode,
             String status
     );
 }

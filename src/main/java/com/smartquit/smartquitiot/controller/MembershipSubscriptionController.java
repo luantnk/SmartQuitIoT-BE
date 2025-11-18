@@ -36,7 +36,7 @@ public class MembershipSubscriptionController {
             @RequestParam (required = false, defaultValue = "10") Integer size,
             @RequestParam (required = false, defaultValue = "createdAt") String sortBy,
             @RequestParam (required = false, defaultValue = "desc") String sortDir,
-            @RequestParam (required = false) Long orderCode,
+            @RequestParam (required = false) String orderCode,
             @RequestParam (required = false) String status
     ){
         return ResponseEntity.ok(membershipSubscriptionService.getAllMembershipSubscriptions(page, size, sortBy, sortDir, orderCode, status));

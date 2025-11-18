@@ -38,7 +38,7 @@ public class MembershipSubscriptionServiceImpl implements MembershipSubscription
     }
 
     @Override
-    public Page<MembershipSubscriptionDTO> getAllMembershipSubscriptions(Integer page, Integer size, String sortBy, String sortDir, Long orderCode, String status) {
+    public Page<MembershipSubscriptionDTO> getAllMembershipSubscriptions(Integer page, Integer size, String sortBy, String sortDir, String orderCode, String status) {
 
         Specification<MembershipSubscription> spec = Specification
                 .allOf(

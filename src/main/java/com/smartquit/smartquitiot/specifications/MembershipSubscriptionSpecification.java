@@ -4,7 +4,7 @@ import com.smartquit.smartquitiot.entity.MembershipSubscription;
 import org.springframework.data.jpa.domain.Specification;
 
 public class MembershipSubscriptionSpecification {
-    public static Specification<MembershipSubscription> hasSearchString(Long orderCode) {
+    public static Specification<MembershipSubscription> hasSearchString(String orderCode) {
         return (root, query, criteriaBuilder) -> {
             if (orderCode == null) {
                 return criteriaBuilder.conjunction(); // No filter applied
