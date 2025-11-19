@@ -24,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -173,6 +177,33 @@ public class NotificationServiceImpl implements NotificationService {
                 (root, q, cb) -> cb.isFalse(root.get("isDeleted")),
                 hasRead(request.getIsRead()),
                 hasType(request.getType())
+        );
+
+        Page<Notification> page = notificationRepository.findAll(spec, pageable);
+        return page.map(notificationMapper::mapToNotificationDTO);
+    }
+
+    @Override
+    public Page<NotificationDTO> getAppointmentNotifications(GetAllNotificationsRequest request) {
+        Pageable pageable = PageRequest.of(
+                request.getPage(),
+                request.getSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Integer accountId = accountService.getAuthenticatedAccount().getId();
+
+        List<NotificationType> appointmentTypes = Arrays.asList(
+                NotificationType.APPOINTMENT_BOOKED,
+                NotificationType.APPOINTMENT_CANCELLED,
+                NotificationType.APPOINTMENT_REMINDER
+        );
+
+        Specification<Notification> spec = Specification.allOf(
+                (root, query, cb) -> cb.equal(root.get("account").get("id"), accountId),
+                (root, q, cb) -> cb.isFalse(root.get("isDeleted")),
+                (root, q, cb) -> root.get("notificationType").in(appointmentTypes),
+                hasRead(request.getIsRead()) // vẫn giữ filter isRead nếu cần
         );
 
         Page<Notification> page = notificationRepository.findAll(spec, pageable);
