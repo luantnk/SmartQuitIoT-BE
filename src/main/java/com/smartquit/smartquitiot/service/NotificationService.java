@@ -8,6 +8,8 @@ import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+
 public interface NotificationService {
     NotificationDTO saveAndSendAchievementNoti(Account account, Achievement a);
     NotificationDTO saveAndSendPhaseNoti(
@@ -31,6 +33,9 @@ public interface NotificationService {
             String deepLink
     );
     Page<NotificationDTO> getAll(GetAllNotificationsRequest request);
+
+    Page<NotificationDTO> getAppointmentNotifications(GetAllNotificationsRequest request);
+
     void markReadById(int notificationId);
     int markAllRead();
     int deleteAll();
