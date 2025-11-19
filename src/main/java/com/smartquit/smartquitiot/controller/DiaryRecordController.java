@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/diary-records")
 @RequiredArgsConstructor
@@ -60,5 +62,16 @@ public class DiaryRecordController {
     public ResponseEntity<?> getDiaryRecordHistoryByMemberId(@PathVariable int memberId) {
         return ResponseEntity.ok(diaryRecordService.getDiaryRecordsHistoryByMemberId(memberId));
     }
+
+    @GetMapping("/check-today")
+    @PreAuthorize("hasRole('MEMBER')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Check if the authenticated member has created a diary record today",
+            description = "Trả về true nếu hôm nay đã tạo record, false nếu chưa.")
+    public ResponseEntity<?> hasCreatedDiaryRecordToday() {
+        boolean hasRecord = diaryRecordService.hasCreatedDiaryRecordToday();
+        return ResponseEntity.ok(Map.of("hasRecordToday", hasRecord));
+    }
+
 
 }
