@@ -119,43 +119,43 @@ public class PhaseServiceImpl implements PhaseService {
        //k goi AI de giam overload
 
         //goi AI
-//        String userInfo = """
-//                    User profile:
-//                    - Age: %s
-//                    - Gender: %s
-//                    - smokeAvgPerDay: %d
-//                    - yearsSmoking: %d
-//                    - FTND: %d
-//                    - StartDate: %s
-//                """.formatted(
-//                calculateAge(account.getMember().getDob()),
-//                account.getMember().getGender(),
-//                req.getSmokeAvgPerDay(),
-//                req.getNumberOfYearsOfSmoking(),
-//                FTND,
-//                req.getStartDate());
-//        // response from ai
-//        PhaseResponse phaseResponse = chatClient.prompt()
-//                .system(SYSTEM_PROMPT)
-//                .user(userInfo)
-//                .tools(quitPlanTools)
-//                .call()
-//                .entity(PhaseResponse.class);
-//
-//        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
-//            throw new IllegalStateException("AI did not return any phases");
-//        }
-//
-//        return phaseResponse;
-
-        //k goi AI
-        return buildPhasesByRules(
+        String userInfo = """
+                    User profile:
+                    - Age: %s
+                    - Gender: %s
+                    - smokeAvgPerDay: %d
+                    - yearsSmoking: %d
+                    - FTND: %d
+                    - StartDate: %s
+                """.formatted(
+                calculateAge(account.getMember().getDob()),
+                account.getMember().getGender(),
                 req.getSmokeAvgPerDay(),
                 req.getNumberOfYearsOfSmoking(),
-                req.getStartDate(),
                 FTND,
-                account
-        );
+                req.getStartDate());
+        // response from ai
+        PhaseResponse phaseResponse = chatClient.prompt()
+                .system(SYSTEM_PROMPT)
+                .user(userInfo)
+                .tools(quitPlanTools)
+                .call()
+                .entity(PhaseResponse.class);
+
+        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
+            throw new IllegalStateException("AI did not return any phases");
+        }
+
+        return phaseResponse;
+
+        //k goi AI
+//        return buildPhasesByRules(
+//                req.getSmokeAvgPerDay(),
+//                req.getNumberOfYearsOfSmoking(),
+//                req.getStartDate(),
+//                FTND,
+//                account
+//        );
     }
 
     @Override
@@ -164,42 +164,42 @@ public class PhaseServiceImpl implements PhaseService {
         //k goi Ai de giam overload
 
         //goi AI
-//        String userInfo = """
-//                    User profile:
-//                    - Age: %s
-//                    - Gender: %s
-//                    - smokeAvgPerDay: %d
-//                    - yearsSmoking: %d
-//                    - FTND: %d
-//                    - StartDate: %s
-//                """.formatted(
-//                calculateAge(account.getMember().getDob()),
-//                account.getMember().getGender(),
-//                smokeAvgPerDay,
-//                numberOfYearsSmoking,
-//                FTND,
-//                startDate);
-//        // response from ai
-//        PhaseResponse phaseResponse = chatClient.prompt()
-//                .system(SYSTEM_PROMPT)
-//                .user(userInfo)
-//                .tools(quitPlanTools)
-//                .call()
-//                .entity(PhaseResponse.class);
-//
-//        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
-//            throw new IllegalStateException("AI did not return any phases");
-//        }
-//
-//        return phaseResponse;
-        //k goi AI
-        return buildPhasesByRules(
+        String userInfo = """
+                    User profile:
+                    - Age: %s
+                    - Gender: %s
+                    - smokeAvgPerDay: %d
+                    - yearsSmoking: %d
+                    - FTND: %d
+                    - StartDate: %s
+                """.formatted(
+                calculateAge(account.getMember().getDob()),
+                account.getMember().getGender(),
                 smokeAvgPerDay,
                 numberOfYearsSmoking,
-                startDate,
                 FTND,
-                account
-        );
+                startDate);
+        // response from ai
+        PhaseResponse phaseResponse = chatClient.prompt()
+                .system(SYSTEM_PROMPT)
+                .user(userInfo)
+                .tools(quitPlanTools)
+                .call()
+                .entity(PhaseResponse.class);
+
+        if (phaseResponse == null || phaseResponse.getPhases() == null || phaseResponse.getPhases().isEmpty()) {
+            throw new IllegalStateException("AI did not return any phases");
+        }
+
+        return phaseResponse;
+        //k goi AI
+//        return buildPhasesByRules(
+//                smokeAvgPerDay,
+//                numberOfYearsSmoking,
+//                startDate,
+//                FTND,
+//                account
+//        );
     }
 
     private PhaseResponse buildPhasesByRules(
