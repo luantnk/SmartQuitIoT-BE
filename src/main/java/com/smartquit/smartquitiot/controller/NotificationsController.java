@@ -14,10 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
-public class NotificationsController {
+public class NotificationsController {git
     private final NotificationService notificationService;
 
     @PostMapping("/all")
@@ -63,6 +65,24 @@ public class NotificationsController {
     public ResponseEntity<?> deleteOne(@PathVariable int id) {
         notificationService.deleteOne(id);
         return ResponseEntity.ok().build();
+    }
+
+
+    @GetMapping("/mine/appointments")
+    @PreAuthorize("hasAnyRole('COACH','MEMBER')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Get appointment-related notifications (booked/cancelled/reminder) for current user")
+    public ResponseEntity<Page<NotificationDTO>> getAppointmentNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Boolean isRead
+    ) {
+        GetAllNotificationsRequest req = new GetAllNotificationsRequest();
+        req.setPage(page);
+        req.setSize(size);
+        req.setIsRead(isRead);
+        Page<NotificationDTO> result = notificationService.getAppointmentNotifications(req);
+        return ResponseEntity.ok(result);
     }
 
 }

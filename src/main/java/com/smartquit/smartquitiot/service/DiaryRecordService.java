@@ -15,4 +15,5 @@ public interface DiaryRecordService {
     Map<String , Object> getDiaryRecordsCharts();
     Map<String , Object> getDiaryRecordsChartsByMemberId(int memberId);
     List<DiaryRecordDTO> getDiaryRecordsHistoryByMemberId(int memberId);
+    boolean hasCreatedDiaryRecordToday();
 }

@@ -531,4 +531,12 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         int idx = ThreadLocalRandom.current().nextInt(list.size());
         return list.get(idx);
     }
+
+    @Override
+    public boolean hasCreatedDiaryRecordToday() {
+        Member member = memberService.getAuthenticatedMember();
+        LocalDate today = LocalDate.now();
+        return diaryRecordRepository.findByDateAndMemberId(today, member.getId()).isPresent();
+    }
+
 }

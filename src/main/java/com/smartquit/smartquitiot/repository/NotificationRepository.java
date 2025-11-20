@@ -42,4 +42,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
             int accountId, NotificationType notificationType, String deepLink
     );
 
+    List<Notification> findAllByAccountIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer accountId);
+
 }
