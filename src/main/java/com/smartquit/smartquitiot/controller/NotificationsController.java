@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
-public class NotificationsController {git
+public class NotificationsController {
     private final NotificationService notificationService;
 
     @PostMapping("/all")
