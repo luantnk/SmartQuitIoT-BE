@@ -42,6 +42,8 @@ services:
       PAYOS_API_KEY: ${PAYOS_API_KEY}
       PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY}
       PAYOS_CLIENT_ID: ${PAYOS_CLIENT_ID}
+      AGORA_APPID: ${AGORA_APPID}
+      AGORA_APPCERTIFICATE: ${AGORA_APPCERTIFICATE}
     networks:
       - smartquit-network
 
