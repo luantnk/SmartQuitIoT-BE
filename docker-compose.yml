@@ -4,6 +4,7 @@ services:
     container_name: mysql
     restart: always
     environment:
+      TZ: Asia/Ho_Chi_Minh
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3307:3306"
@@ -28,6 +29,8 @@ services:
     ports:
       - "19000:8080"
     environment:
+      TZ: Asia/Ho_Chi_Minh
+      JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Ho_Chi_Minh
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartquitiot?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASS}
@@ -42,6 +45,8 @@ services:
       PAYOS_API_KEY: ${PAYOS_API_KEY}
       PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY}
       PAYOS_CLIENT_ID: ${PAYOS_CLIENT_ID}
+      AGORA_APPID: ${AGORA_APPID}
+      AGORA_APPCERTIFICATE: ${AGORA_APPCERTIFICATE}
     networks:
       - smartquit-network
 

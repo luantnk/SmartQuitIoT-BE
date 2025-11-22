@@ -140,6 +140,8 @@ public class ReminderQueueServiceImpl implements ReminderQueueService {
 
                 LocalDateTime morningScheduleAt =
                         adjustForQuietTime(morningCandidate, quietStart, quietEnd);
+                log.info("[REM-GEN] phaseDetail={} morningCandidate={} morningScheduleAt={}",
+                        pd.getId(), morningCandidate, morningScheduleAt);
 
                 ReminderQueue morningQueue = new ReminderQueue();
                 morningQueue.setPhaseDetail(pd);
