@@ -6,4 +6,5 @@ import org.springframework.data.domain.Page;
 public interface AchievementService {
 
     Page<AchievementDTO> getAllAchievements(int page, int size, String search);
+    AchievementDTO getAchievementById(int id);
 }

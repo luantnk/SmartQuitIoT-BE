@@ -72,4 +72,13 @@ public class AchievementController {
     ){
         return ResponseEntity.ok(achievementService.getAllAchievements(page, size, search));
     }
+
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MEMBER')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "This end point for get achievements by id")
+    public ResponseEntity<AchievementDTO> getDetails(@PathVariable int id){
+        return ResponseEntity.ok(achievementService.getAchievementById(id));
+    }
 }

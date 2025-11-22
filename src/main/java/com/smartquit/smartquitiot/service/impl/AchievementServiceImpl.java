@@ -28,4 +28,11 @@ public class AchievementServiceImpl implements AchievementService {
         Page<Achievement> achievements = achievementRepository.findAll(spec, pageRequest);
         return achievements.map(achievementMapper::toAchievementDTO);
     }
+
+    @Override
+    public AchievementDTO getAchievementById(int id) {
+        Achievement achievement = achievementRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Achievement with id " + id + " not found!"));
+        return achievementMapper.toAchievementDTO(achievement);
+    }
 }

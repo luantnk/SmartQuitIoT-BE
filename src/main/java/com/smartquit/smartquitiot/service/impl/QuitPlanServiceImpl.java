@@ -128,7 +128,12 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             throw new RuntimeException("No Quit Plan found when using!");
         }
         TimeResponse timeResponse = new TimeResponse();
-        timeResponse.setStartTime(plan.getCreatedAt());
+
+        if(plan.getStartDate().isAfter(LocalDate.now())) {
+            timeResponse.setStartTime(plan.getStartDate().atStartOfDay());
+        }else{
+            timeResponse.setStartTime(plan.getCreatedAt());
+        }
         return timeResponse;
     }
 
