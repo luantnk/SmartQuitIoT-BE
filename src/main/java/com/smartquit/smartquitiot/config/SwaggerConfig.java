@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
                 )
         ),
         servers = {
-             //   @Server(url = "https://server.smartquitiot.website/api", description = " Server deployment"),
+                @Server(url = "https://server.smartquitiot.website/api", description = " Server deployment"),
                 @Server(url = "http://localhost:8080/api", description = "Local Development Server")
         }
 )
