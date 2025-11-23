@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
+import com.smartquit.smartquitiot.dto.request.SnapshotUploadRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
 import com.smartquit.smartquitiot.service.AppointmentService;
@@ -215,6 +216,52 @@ public class AppointmentController {
             return ResponseEntity.status(500).body(GlobalResponse.error("Error when completing appointment: " + e.getMessage(), 500));
         }
     }
+    @PostMapping("/{appointmentId}/snapshots")
+    @PreAuthorize("hasAnyRole('MEMBER','COACH')")
+    @Operation(summary = "Upload snapshot URLs cho appointment",
+            description = "Member hoặc Coach upload hình ảnh snapshot sau buổi meeting")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> uploadSnapshots(
+            @PathVariable int appointmentId,
+            @RequestBody SnapshotUploadRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
 
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401)
+                    .body(GlobalResponse.error("accountId not found in token", 401));
+        }
+
+        appointmentService.addSnapshots(
+                appointmentId, accountIdNum.intValue(), request.getImageUrls()
+        );
+
+        return ResponseEntity.ok(GlobalResponse.ok("Snapshots uploaded", null));
+    }
+
+    @GetMapping("/{appointmentId}/snapshots")
+    @PreAuthorize("hasAnyRole('MEMBER','COACH')")
+    @Operation(summary = "Lấy danh sách snapshot URLs của appointment",
+            description = "Member hoặc Coach có thể xem danh sách ảnh snapshot đã upload.")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> getSnapshots(
+            @PathVariable int appointmentId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401)
+                    .body(GlobalResponse.error("accountId not found in token", 401));
+        }
+
+        var urls = appointmentService.getSnapshots(
+                appointmentId,
+                accountIdNum.intValue()
+        );
+
+        return ResponseEntity.ok(
+                GlobalResponse.ok("Snapshots fetched", urls)
+        );
+    }
 
 }

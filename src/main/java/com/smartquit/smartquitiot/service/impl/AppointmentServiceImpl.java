@@ -780,4 +780,48 @@ public class AppointmentServiceImpl implements AppointmentService {
         log.info("Coach(accountId={}) manually completed appointment {}", coachAccountId, appointmentId);
     }
 
+    @Override
+    @Transactional
+    public void addSnapshots(int appointmentId, int accountId, List<String> urls) {
+
+        Appointment ap = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        boolean isMember = ap.getMember() != null &&
+                ap.getMember().getAccount().getId() == accountId;
+
+        boolean isCoach = ap.getCoach() != null &&
+                ap.getCoach().getAccount().getId() == accountId;
+
+        if (!isMember && !isCoach) {
+            throw new SecurityException("You do not have permission to upload snapshots");
+        }
+
+        if (urls != null) {
+            ap.getSnapshotUrls().addAll(urls);
+        }
+
+        appointmentRepository.save(ap);
+    }
+
+    @Override
+    public List<String> getSnapshots(int appointmentId, int accountId) {
+
+        Appointment ap = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        boolean isMember = ap.getMember() != null &&
+                ap.getMember().getAccount().getId() == accountId;
+
+        boolean isCoach = ap.getCoach() != null &&
+                ap.getCoach().getAccount().getId() == accountId;
+
+        if (!isMember && !isCoach) {
+            throw new SecurityException("You do not have permission to view these snapshots");
+        }
+
+        return ap.getSnapshotUrls();
+    }
+
+
 }

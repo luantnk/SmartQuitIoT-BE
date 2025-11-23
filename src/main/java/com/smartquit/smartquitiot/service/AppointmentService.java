@@ -27,4 +27,9 @@ public interface AppointmentService {
     RemainingBookingResponse getRemainingBookingsForMember(int memberAccountId);
 
     void completeAppointmentByCoach(int appointmentId, int coachAccountId);
+
+    void addSnapshots(int appointmentId, int accountId, List<String> urls);
+
+    List<String> getSnapshots(int appointmentId, int accountId);
+
 }
