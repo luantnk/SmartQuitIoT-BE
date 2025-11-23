@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.request.PaymentProcessRequest;
+import com.smartquit.smartquitiot.dto.request.UpdateMembershipPackageRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.dto.response.MembershipPackagePlan;
@@ -250,5 +251,26 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
         );
 
         return response;
+    }
+
+    @Override
+    public Map<String, Object> getMembershipPackageDetails(int membershipPackageId) {
+        MembershipPackage membershipPackage = membershipPackageRepository.findById(membershipPackageId)
+                .orElseThrow(() -> new RuntimeException("Membership Package Not Found"));
+
+        List<MembershipPackagePlan> plans = getMembershipPackagesPlanByMembershipPackageId(membershipPackageId);
+        return Map.of(
+                "membershipPackage", membershipPackageMapper.toMembershipPackageDTO(membershipPackage),
+                "plans", plans
+        );
+    }
+
+    @Override
+    public MembershipPackageDTO updateMembershipPackage(UpdateMembershipPackageRequest request) {
+        MembershipPackage membershipPackage = membershipPackageRepository.findById(request.getMembershipPackageId())
+                .orElseThrow(() -> new RuntimeException("Membership Package Not Found"));
+        membershipPackage.setPrice(request.getPrice());
+        membershipPackage = membershipPackageRepository.save(membershipPackage);
+        return membershipPackageMapper.toMembershipPackageDTO(membershipPackage);
     }
 }

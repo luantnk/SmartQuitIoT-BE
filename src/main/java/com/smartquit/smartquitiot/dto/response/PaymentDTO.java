@@ -1,34 +1,28 @@
-package com.smartquit.smartquitiot.entity;
+package com.smartquit.smartquitiot.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.smartquit.smartquitiot.enums.PaymentStatus;
-import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-@Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Payment {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class PaymentDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     int id;
     long orderCode;
     String paymentLinkId;
     @CreationTimestamp
     LocalDateTime createdAt;
     long amount;
-    @Enumerated(EnumType.STRING)
-    PaymentStatus status = PaymentStatus.SUCCESS;
-
-    @OneToOne
-    @JoinColumn(name = "subscription_id")
-    MembershipSubscription subscription;
-
+    PaymentStatus status;
+    MemberDTO member;
+    MembershipSubscriptionDTO subscription;
 }

@@ -23,7 +23,7 @@ public class MemberMapper {
         memberDTO.setGender(member.getGender());
         memberDTO.setDob(member.getDob());
         memberDTO.setAvatarUrl(member.getAvatarUrl());
-        memberDTO.setUsedFreeTrial(member.isUsedFreeTrial());
+        memberDTO.setIsUsedFreeTrial(member.isUsedFreeTrial());
         memberDTO.setAge(calculateAge(member.getDob()));
         memberDTO.setAccount(accountMapper.toAccountDTO(member.getAccount()));
         memberDTO.setMorningReminderTime(member.getMorningReminderTime());
@@ -51,5 +51,14 @@ public class MemberMapper {
         memberListItemDTO.setReductionPercentage(member.getMetric().getReductionPercentage());
         memberListItemDTO.setSmokeFreeDayPercentage(member.getMetric().getSmokeFreeDayPercentage());
         return memberListItemDTO;
+    }
+
+    public MemberDTO toMemberPayment(Member member) {
+        MemberDTO memberDTO = new MemberDTO();
+        memberDTO.setId(member.getId());
+        memberDTO.setFirstName(member.getFirstName());
+        memberDTO.setLastName(member.getLastName());
+        memberDTO.setGender(member.getGender());
+        return memberDTO;
     }
 }

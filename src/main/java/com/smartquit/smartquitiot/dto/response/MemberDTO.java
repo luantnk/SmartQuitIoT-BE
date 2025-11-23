@@ -24,7 +24,7 @@ public class MemberDTO {
     Gender gender;
     LocalDate dob;
     Integer age;
-    boolean isUsedFreeTrial;
+    Boolean isUsedFreeTrial;
     AccountDTO account;
     LocalTime morningReminderTime;
     LocalTime quietStart;

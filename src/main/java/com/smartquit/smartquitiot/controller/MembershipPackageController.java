@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.MembershipPaymentRequest;
 import com.smartquit.smartquitiot.dto.request.PaymentProcessRequest;
+import com.smartquit.smartquitiot.dto.request.UpdateMembershipPackageRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MembershipPackageDTO;
 import com.smartquit.smartquitiot.dto.response.MembershipSubscriptionDTO;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,6 +59,20 @@ public class MembershipPackageController {
     @Operation(summary = "Get membership statistics")
     public ResponseEntity<?> getMembershipStatistics() {
         return ResponseEntity.ok(membershipPackageService.getMembershipStatistics());
+    }
+
+    @GetMapping("/detail/{membershipPackageId}")
+    @Operation(summary = "Get membership package details by id")
+    public ResponseEntity<?> getMembershipPackageDetails(@PathVariable int membershipPackageId) {
+        return ResponseEntity.ok(membershipPackageService.getMembershipPackageDetails(membershipPackageId));
+    }
+
+    @PutMapping("/update")
+    @Operation(summary = "Update membership package")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<GlobalResponse<MembershipPackageDTO>> updateMembershipPackage(@RequestBody UpdateMembershipPackageRequest request){
+        return ResponseEntity.ok(GlobalResponse.ok("Update membership package success", membershipPackageService.updateMembershipPackage(request)));
     }
 
 }

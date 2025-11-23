@@ -10,8 +10,9 @@ public class MemberSpecification {
             if(searchString == null || searchString.isEmpty()){
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), "%"+searchString.toLowerCase()+"%"),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), "%"+searchString.toLowerCase()+"%"));
+            return criteriaBuilder.or(criteriaBuilder.like(criteriaBuilder.lower(criteriaBuilder.concat(
+                    criteriaBuilder.concat(root.get("firstName"), " "), root.get("lastName")
+            )), "%"+searchString.toLowerCase()+"%"));
         }));
     }
     public static Specification<Member> hasActive(boolean isActive){

@@ -28,4 +28,20 @@ public class MembershipSubscriptionMapper {
 
         return membershipSubscriptionDTO;
     }
+
+    public MembershipSubscriptionDTO toMembershipSubscriptionPayment(MembershipSubscription membershipSubscription){
+        if(membershipSubscription == null) return null;
+
+        MembershipSubscriptionDTO membershipSubscriptionDTO = new MembershipSubscriptionDTO();
+        membershipSubscriptionDTO.setId(membershipSubscription.getId());
+        membershipSubscriptionDTO.setMembershipPackage(membershipPackageMapper.toMembershipPackageDTO(membershipSubscription.getMembershipPackage()));
+        membershipSubscriptionDTO.setStatus(membershipSubscription.getStatus().name());
+        membershipSubscriptionDTO.setStartDate(membershipSubscription.getStartDate());
+        membershipSubscriptionDTO.setEndDate(membershipSubscription.getEndDate());
+        membershipSubscriptionDTO.setCreatedAt(membershipSubscription.getCreatedAt());
+        membershipSubscriptionDTO.setOrderCode(membershipSubscription.getOrderCode());
+        membershipSubscriptionDTO.setTotalAmount(membershipSubscription.getTotalAmount());
+
+        return membershipSubscriptionDTO;
+    }
 }
