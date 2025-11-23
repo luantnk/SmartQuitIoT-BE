@@ -21,12 +21,10 @@ public class QuitPlanMapper {
         resp.setEndDate(plan.getEndDate());
         resp.setUseNRT(plan.isUseNRT());
         resp.setFtndScore(plan.getFtndScore());
-
         resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
-
         if (plan.getPhases() != null) {
             List<PhaseDTO> phaseDTOs = plan.getPhases().stream()
-                    .map(this::toPhaseDTO)
+                    .map(phase -> toPhaseDTO(phase, plan))
                     .toList();
             resp.setPhases(phaseDTOs);
         }
@@ -74,7 +72,7 @@ public class QuitPlanMapper {
         return dto;
     }
 
-    private PhaseDTO toPhaseDTO(Phase phase) {
+    private PhaseDTO toPhaseDTO(Phase phase, QuitPlan quitPlan) {
         if (phase == null) return null;
 
         PhaseDTO dto = new PhaseDTO();
@@ -90,9 +88,9 @@ public class QuitPlanMapper {
         dto.setProgress(phase.getProgress());
         dto.setStatus(phase.getStatus());
         dto.setCompletedAt(phase.getCompletedAt());
-        dto.setFm_cigarettes_total(phase.getFm_cigarettes_total());
-        dto.setAvg_cigarettes(phase.getAvg_cigarettes());
-        dto.setAvg_craving_level(phase.getAvg_craving_level());
+        dto.setFm_cigarettes_total(quitPlan.getFormMetric().getSmokeAvgPerDay());
+        dto.setAvg_cigarettes(quitPlan.getMember().getMetric().getAvgCigarettesPerDay());
+        dto.setAvg_craving_level(quitPlan.getMember().getMetric().getAvgCravingLevel());
         dto.setKeepPhase(phase.isKeepPhase());
         dto.setCreateAt(phase.getCreatedAt());
         dto.setRedo(phase.isRedo());
