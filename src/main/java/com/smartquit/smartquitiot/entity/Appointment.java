@@ -8,6 +8,8 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -40,6 +42,14 @@ public class Appointment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     CoachWorkSchedule coachWorkSchedule;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "appointment_snapshots",
+            joinColumns = @JoinColumn(name = "appointment_id")
+    )
+    @Column(name = "image_url")
+    List<String> snapshotUrls = new ArrayList<>();
 
 
 }
