@@ -306,4 +306,13 @@ public class AccountServiceImpl implements AccountService {
         return GlobalResponse.ok("Account has been deleted.");
 
     }
+
+    @Override
+    public Account getAdminAccount() {
+        Account admin = accountRepository.findByRole(Role.ADMIN).get(0);
+        if (admin != null) {
+            return admin;
+        }
+        return null;
+    }
 }

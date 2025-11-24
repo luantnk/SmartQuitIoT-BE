@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class NotificationServiceImpl implements NotificationService {
     private static final String TOPIC_NOTIFICATIONS_FMT = "/topic/notifications/%d";
+    private static final String TOPIC_SYSTEM_ACTIVITY = "/topic/system-activity";
 
     @Value("${default.icon.notification}")
     private String DEFAULT_PHASE_ICON;
@@ -252,5 +253,27 @@ public class NotificationServiceImpl implements NotificationService {
     private Specification<Notification> hasType(NotificationType type) {
         if (type == null) return (root, q, cb) -> cb.conjunction();
         return (root, q, cb) -> cb.equal(root.get("notificationType"), type);
+    }
+
+    @Override
+    public NotificationDTO sendSystemActivityNotification(String title, String content) {
+        Account adminAccount = accountService.getAdminAccount();
+        Notification notification = new Notification();
+        notification.setAccount(adminAccount);
+        notification.setNotificationType(NotificationType.SYSTEM);
+        notification.setTitle(title);
+        notification.setContent(content);
+        notificationRepository.save(notification);
+        NotificationDTO dto = notificationMapper.mapToNotificationDTO(notification);
+        messagingTemplate.convertAndSend(TOPIC_SYSTEM_ACTIVITY, dto);
+        return dto;
+    }
+
+    @Override
+    public Page<NotificationDTO> getSystemNotifications(int page, int size) {
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Notification> notificationsPage = notificationRepository.findByNotificationTypeOrderByCreatedAtDesc(NotificationType.SYSTEM, pageable);
+        return notificationsPage.map(notificationMapper::mapToNotificationDTO);
     }
 }

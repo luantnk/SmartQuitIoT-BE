@@ -40,4 +40,8 @@ public interface NotificationService {
     int markAllRead();
     int deleteAll();
     void deleteOne(int notificationId);
+
+    NotificationDTO sendSystemActivityNotification(String title, String content);
+
+    Page<NotificationDTO> getSystemNotifications(int page, int size);
 }

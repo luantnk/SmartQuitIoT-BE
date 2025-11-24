@@ -30,4 +30,6 @@ public interface AccountService {
     GlobalResponse<String> activeAccountById(int accountId);
 
     GlobalResponse<String> deleteAccountById(int accountId);
+
+    Account getAdminAccount();
 }

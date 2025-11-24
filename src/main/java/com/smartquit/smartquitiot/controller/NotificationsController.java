@@ -85,5 +85,25 @@ public class NotificationsController {
         return ResponseEntity.ok(result);
     }
 
+    @PostMapping("/system-activity/test")
+    public ResponseEntity<?> sendSystemActivityNotificationTest(
+            @RequestParam(name = "title", required = false) String title,
+            @RequestParam(name = "content", required = false) String content
+    ) {
+        return ResponseEntity.ok(notificationService.sendSystemActivityNotification(title, content));
+    }
+
+    @GetMapping("/system-activity")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get system activity notifications, paging")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Page<NotificationDTO>> getSystemActivityNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Page<NotificationDTO> result = notificationService.getSystemNotifications(page, size);
+        return ResponseEntity.ok(result);
+        }
+
 }
 

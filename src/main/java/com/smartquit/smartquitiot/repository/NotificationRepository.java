@@ -44,4 +44,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
 
     List<Notification> findAllByAccountIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer accountId);
 
+    Page<Notification> findByNotificationTypeOrderByCreatedAtDesc(NotificationType notificationType, Pageable pageable);
+
 }
