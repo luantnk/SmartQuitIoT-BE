@@ -18,7 +18,7 @@ public class PostMapper {
         dto.setDescription(post.getDescription());
         dto.setThumbnail(post.getThumbnail());
         dto.setCreatedAt(post.getCreatedAt().toString());
-
+        dto.setMediaUrl(post.getMedia().getFirst().getMediaUrl());
         PostSummaryDTO.AccountDTO accountDTO = new PostSummaryDTO.AccountDTO();
         if (post.getAccount() != null) {
             accountDTO.setId(post.getAccount().getId());

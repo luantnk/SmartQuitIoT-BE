@@ -15,7 +15,7 @@ public class PostSummaryDTO {
     private String thumbnail;
     private String createdAt;
     private AccountDTO account;
-
+    private String mediaUrl;
     @Getter @Setter
     @NoArgsConstructor
     @AllArgsConstructor
