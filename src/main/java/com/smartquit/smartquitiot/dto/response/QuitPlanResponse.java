@@ -25,5 +25,8 @@ public class QuitPlanResponse {
     boolean active;
     int ftndScore;
     FormMetricDTO formMetricDTO;
+    CurrentMetricDTO currentMetricDTO;
     List<PhaseDTO> phases;
+
+
 }

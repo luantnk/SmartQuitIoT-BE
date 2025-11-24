@@ -24,7 +24,7 @@ import java.util.List;
 public class FormMetricDTO {
 
     int id;
-    int smokeAvgPerDay;
+    int smokeAvgPerDay; //base
     int numberOfYearsOfSmoking;
     int cigarettesPerPackage;
     int minutesAfterWakingToSmoke;

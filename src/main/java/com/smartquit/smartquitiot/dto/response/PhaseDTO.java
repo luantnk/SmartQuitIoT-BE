@@ -3,15 +3,11 @@ package com.smartquit.smartquitiot.dto.response;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
-import com.vladmihalcea.hibernate.type.json.JsonType;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,11 +32,11 @@ public class PhaseDTO {
     private boolean redo;
     int totalMissions;
     int completedMissions;
-    BigDecimal progress;
-    double avg_craving_level;
-    double avg_cigarettes;
-    double fm_cigarettes_total;
-
+//    BigDecimal progress;
+//    double avg_craving_level;
+//    double avg_cigarettes;
+//    double fm_cigarettes_total;
+     SnapshotMetricDTO snapshotMetricDTO;
     JsonNode condition;
     List<PhaseDetailResponseDTO> details;
     PhaseDetailResponseDTO currentPhaseDetail;

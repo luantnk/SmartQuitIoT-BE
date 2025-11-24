@@ -3,10 +3,7 @@ package com.smartquit.smartquitiot.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.RedoPhaseRequest;
-import com.smartquit.smartquitiot.dto.response.PhaseDTO;
-import com.smartquit.smartquitiot.dto.response.PhaseDetailResponseDTO;
-import com.smartquit.smartquitiot.dto.response.PhaseResponse;
-import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
+import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.*;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
@@ -78,6 +75,7 @@ public class PhaseServiceImpl implements PhaseService {
             }
         }
 
+        SnapshotMetricDTO snapshotMetricDTO =  new SnapshotMetricDTO();
         PhaseDTO phaseDTO = new PhaseDTO();
         phaseDTO.setId(currentPhase.getId());
         phaseDTO.setName(currentPhase.getName());
@@ -87,16 +85,21 @@ public class PhaseServiceImpl implements PhaseService {
         phaseDTO.setReason(currentPhase.getReason());
         phaseDTO.setTotalMissions(currentPhase.getTotalMissions());
         phaseDTO.setCompletedMissions(currentPhase.getCompletedMissions());
-        phaseDTO.setProgress(currentPhase.getProgress());
         phaseDTO.setCondition(currentPhase.getCondition());
         phaseDTO.setStartDateOfQuitPlan(plan.getStartDate());
         phaseDTO.setStatus(currentPhase.getStatus());
         phaseDTO.setCompletedAt(currentPhase.getCompletedAt());
         phaseDTO.setCreateAt(currentPhase.getCreatedAt());
         phaseDTO.setKeepPhase(currentPhase.isKeepPhase());
-        phaseDTO.setAvg_cigarettes(currentPhase.getAvg_cigarettes());
-        phaseDTO.setAvg_craving_level(currentPhase.getAvg_craving_level());
-        phaseDTO.setFm_cigarettes_total(currentPhase.getFm_cigarettes_total());
+
+        snapshotMetricDTO.setProgress(currentPhase.getProgress());
+        snapshotMetricDTO.setAvgCravingLevel(currentPhase.getAvgCravingLevel());
+        snapshotMetricDTO.setAvgCigarettesPerDay(currentPhase.getAvgCigarettesPerDay());
+        snapshotMetricDTO.setAvgMood(currentPhase.getAvgMood());
+        snapshotMetricDTO.setAvgAnxiety(currentPhase.getAvgAnxiety());
+        snapshotMetricDTO.setAvgConfidentLevel(currentPhase.getAvgConfidentLevel());
+
+        phaseDTO.setSnapshotMetricDTO(snapshotMetricDTO);
 
         if(currentPhaseDetail != null){
             PhaseDetailResponseDTO  phaseDetailResponseDTO = new PhaseDetailResponseDTO();
@@ -323,10 +326,12 @@ public class PhaseServiceImpl implements PhaseService {
         freshPhase.setRedo(false);
         freshPhase.setStatus(anchorStart.equals(LocalDate.now())
                 ? PhaseStatus.IN_PROGRESS : PhaseStatus.CREATED);
-        freshPhase.setAvg_craving_level(0d);
-        freshPhase.setAvg_cigarettes(0d);
-        freshPhase.setFm_cigarettes_total(0d);
-
+        freshPhase.setAvgCravingLevel(0d);
+        freshPhase.setAvgCigarettesPerDay(0d);
+     //   freshPhase.setFm_cigarettes_total(0d);
+        freshPhase.setAvgMood(0d);
+        freshPhase.setAvgAnxiety(0d);
+        freshPhase.setAvgConfidentLevel(0d);
         LocalDate start = anchorStart;
         LocalDate end   = start.plusDays(freshPhase.getDurationDays() - 1);
         freshPhase.setStartDate(start);
@@ -493,9 +498,12 @@ public class PhaseServiceImpl implements PhaseService {
                     if(passed){
                         phase.setStatus(PhaseStatus.COMPLETED);
                         phase.setCompletedAt(LocalDateTime.now());
-                        phase.setAvg_cigarettes(account.getMember().getMetric().getAvgCigarettesPerDay());
-                        phase.setAvg_craving_level(account.getMember().getMetric().getAvgCravingLevel());
-                        phase.setFm_cigarettes_total(currentPlan.getFormMetric().getSmokeAvgPerDay());
+                        phase.setAvgCigarettesPerDay(account.getMember().getMetric().getAvgCigarettesPerDay());
+                        phase.setAvgCravingLevel(account.getMember().getMetric().getAvgCravingLevel());
+                       // phase.setFm_cigarettes_total(currentPlan.getFormMetric().getSmokeAvgPerDay());
+                        phase.setAvgMood(account.getMember().getMetric().getAvgMood());
+                        phase.setAvgAnxiety(account.getMember().getMetric().getAvgAnxiety());
+                        phase.setAvgConfidentLevel(account.getMember().getMetric().getAvgConfidentLevel());
                         phaseRepository.save(phase);
 
 

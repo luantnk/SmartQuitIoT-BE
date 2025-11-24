@@ -4,6 +4,7 @@ import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,7 +13,7 @@ public class QuitPlanMapper {
 
     public QuitPlanResponse toResponse(QuitPlan plan) {
         if (plan == null) return null;
-
+        CurrentMetricDTO currentMetricDTO = new CurrentMetricDTO();
         QuitPlanResponse resp = new QuitPlanResponse();
         resp.setId(plan.getId());
         resp.setName(plan.getName());
@@ -22,9 +23,18 @@ public class QuitPlanMapper {
         resp.setUseNRT(plan.isUseNRT());
         resp.setFtndScore(plan.getFtndScore());
         resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
+
+        currentMetricDTO.setAvgCravingLevel(plan.getMember().getMetric().getAvgCravingLevel());
+        currentMetricDTO.setAvgCigarettesPerDay(plan.getMember().getMetric().getAvgCigarettesPerDay());
+        currentMetricDTO.setAvgMood(plan.getMember().getMetric().getAvgMood());
+        currentMetricDTO.setAvgAnxiety(plan.getMember().getMetric().getAvgAnxiety());
+        currentMetricDTO.setAvgConfidentLevel(plan.getMember().getMetric().getAvgConfidentLevel());
+
+        resp.setCurrentMetricDTO(currentMetricDTO);
+
         if (plan.getPhases() != null) {
             List<PhaseDTO> phaseDTOs = plan.getPhases().stream()
-                    .map(phase -> toPhaseDTO(phase, plan))
+                    .map(this::toPhaseDTO)
                     .toList();
             resp.setPhases(phaseDTOs);
         }
@@ -72,9 +82,9 @@ public class QuitPlanMapper {
         return dto;
     }
 
-    private PhaseDTO toPhaseDTO(Phase phase, QuitPlan quitPlan) {
+    private PhaseDTO toPhaseDTO(Phase phase) {
         if (phase == null) return null;
-
+        SnapshotMetricDTO snapshotMetricDTO = new SnapshotMetricDTO();
         PhaseDTO dto = new PhaseDTO();
         dto.setId(phase.getId());
         dto.setName(phase.getName());
@@ -85,12 +95,17 @@ public class QuitPlanMapper {
         dto.setCondition(phase.getCondition());
         dto.setTotalMissions(phase.getTotalMissions());
         dto.setCompletedMissions(phase.getCompletedMissions());
-        dto.setProgress(phase.getProgress());
         dto.setStatus(phase.getStatus());
         dto.setCompletedAt(phase.getCompletedAt());
-        dto.setFm_cigarettes_total(quitPlan.getFormMetric().getSmokeAvgPerDay());
-        dto.setAvg_cigarettes(quitPlan.getMember().getMetric().getAvgCigarettesPerDay());
-        dto.setAvg_craving_level(quitPlan.getMember().getMetric().getAvgCravingLevel());
+
+        snapshotMetricDTO.setProgress(phase.getProgress());
+        snapshotMetricDTO.setAvgCravingLevel(phase.getAvgCravingLevel());
+        snapshotMetricDTO.setAvgCigarettesPerDay(phase.getAvgCigarettesPerDay());
+        snapshotMetricDTO.setAvgMood(phase.getAvgMood());
+        snapshotMetricDTO.setAvgAnxiety(phase.getAvgAnxiety());
+        snapshotMetricDTO.setAvgConfidentLevel(phase.getAvgConfidentLevel());
+
+        dto.setSnapshotMetricDTO(snapshotMetricDTO);
         dto.setKeepPhase(phase.isKeepPhase());
         dto.setCreateAt(phase.getCreatedAt());
         dto.setRedo(phase.isRedo());
