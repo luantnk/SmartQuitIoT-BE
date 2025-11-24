@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.repository;
 
 import com.smartquit.smartquitiot.entity.News;
 import com.smartquit.smartquitiot.enums.NewsStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +14,7 @@ public interface NewsRepository extends JpaRepository<News, Integer> {
 
     List<News> findAllByOrderByCreatedAtDesc();
 
-    List<News> findByStatusOrderByCreatedAtDesc(NewsStatus status);
+   // List<News> findByStatusOrderByCreatedAtDesc(NewsStatus status);
 
     @Query("SELECT n FROM News n WHERE LOWER(n.title) LIKE %:query% OR LOWER(n.content) LIKE %:query% ORDER BY n.createdAt DESC")
     List<News> searchNews(@Param("query") String query);
@@ -21,5 +22,15 @@ public interface NewsRepository extends JpaRepository<News, Integer> {
     @Query("SELECT n FROM News n ORDER BY n.createdAt DESC")
     List<News> findLatestNews(org.springframework.data.domain.Pageable pageable);
 
-    List<News> findByStatusOrderByCreatedAtDesc(NewsStatus status, Pageable pageable);
+    Page<News> findByStatusOrderByCreatedAtDesc(NewsStatus status, Pageable pageable);
+
+    @Query("SELECT n FROM News n WHERE " +
+            "(:status IS NULL OR n.status = :status) AND " +
+            "(:title IS NULL OR LOWER(n.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
+            "ORDER BY n.createdAt DESC")
+    Page<News> findAllWithFilters(
+            @Param("status") NewsStatus status,
+            @Param("title") String title,
+            Pageable pageable
+    );
 }

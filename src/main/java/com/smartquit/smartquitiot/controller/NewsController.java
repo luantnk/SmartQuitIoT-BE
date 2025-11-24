@@ -3,10 +3,15 @@ package com.smartquit.smartquitiot.controller;
 import com.smartquit.smartquitiot.dto.request.CreateNewsRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.NewsDTO;
+import com.smartquit.smartquitiot.enums.NewsStatus;
 import com.smartquit.smartquitiot.service.NewsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -73,4 +78,26 @@ public class NewsController {
 
     }
 
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Admin get all news with pagination and filters")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<Page<NewsDTO>> getAllNewsForAdmin(
+            @RequestParam(required = false) NewsStatus status,
+            @RequestParam(required = false) String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
+
+        // Parse sort parameters
+        Sort.Order order = sort.length > 0 && sort.length >= 2
+                ? new Sort.Order(Sort.Direction.fromString(sort[1]), sort[0])
+                : Sort.Order.desc("createdAt");
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(order));
+
+        Page<NewsDTO> newsPage = newsService.getAllNewsWithFilters(status, title, pageable);
+
+        return ResponseEntity.ok(newsPage);
+    }
 }

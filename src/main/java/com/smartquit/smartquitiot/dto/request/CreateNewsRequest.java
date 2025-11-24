@@ -17,4 +17,5 @@ public class CreateNewsRequest {
     String content;
     String thumbnailUrl;
     List<String> mediaUrls;
+    NewsStatus newsStatus;
 }
