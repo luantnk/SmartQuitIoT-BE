@@ -44,6 +44,8 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     private final MissionRepository missionRepository;
     private final PhaseRepository phaseRepository;
     private final NotificationService  notificationService;
+    private final String PHASE_PRE = "Preparation";
+    private final int MAX_MISSIONS = 4;
     @Transactional
     @Override
     public PhaseBatchMissionsResponse createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req) {
@@ -100,9 +102,9 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             //save phase and system phase condition
             phaseService.savePhasesAndSystemPhaseCondition(phaseResponse, quitPlan);
             //tao phase detail
-            List<PhaseDetail> preparedDetails = phaseDetailService.generateInitialPhaseDetails(quitPlan,"Preparation");
+            List<PhaseDetail> preparedDetails = phaseDetailService.generateInitialPhaseDetails(quitPlan,PHASE_PRE);
             return phaseDetailMissionService.generatePhaseDetailMissionsForPhase
-                    (preparedDetails,quitPlan, 4, "Preparation", MissionPhase.PREPARATION);
+                    (preparedDetails,quitPlan, MAX_MISSIONS, PHASE_PRE, MissionPhase.PREPARATION);
 
        }
         else {
@@ -212,7 +214,7 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             List<PhaseDetail> preparedDetails = phaseDetailService.generateInitialPhaseDetails(newQuitPlan,"Preparation");
 
             PhaseBatchMissionsResponse phaseBatchMissionsResponse = phaseDetailMissionService.generatePhaseDetailMissionsForPhase
-                    (preparedDetails,newQuitPlan, 4, "Preparation", MissionPhase.PREPARATION);
+                    (preparedDetails,newQuitPlan, MAX_MISSIONS, PHASE_PRE, MissionPhase.PREPARATION);
             if(phaseBatchMissionsResponse != null) {
                 notificationService.saveAndPublish(account.getMember().getAccount(), NotificationType.QUIT_PLAN,
                         "Created New Quit Plan!",
