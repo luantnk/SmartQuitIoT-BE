@@ -19,7 +19,7 @@ public class MemberListItemDTO {
     String avatarUrl;
     Gender gender;
     LocalDate dob;
-    int age;
+    Integer age;
     boolean isUsedFreeTrial;
     // metric summary
     private int streaks;
