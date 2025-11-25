@@ -22,7 +22,7 @@ public class MemberListItemDTO {
     Integer age;
     boolean isUsedFreeTrial;
     // metric summary
-    private int streaks;
-    private double smokeFreeDayPercentage;
-    private double reductionPercentage;
+    Integer streaks;
+    Double smokeFreeDayPercentage;
+    Double reductionPercentage;
 }
