@@ -180,9 +180,12 @@ public class ScheduleServiceImpl implements ScheduleService {
 
             boolean allAvailable = schedules.stream()
                     .allMatch(s -> s.getStatus() == CoachWorkScheduleStatus.AVAILABLE);
+
             if (!allAvailable) {
-                log.warn("Coach id {} không thể xóa vì có slot không ở trạng thái AVAILABLE", coachId);
-                continue;
+                throw new IllegalStateException(
+                        String.format("Cannot remove coach %d from date %s because some slots are not available (may be booked or in progress).",
+                                coachId, date)
+                );
             }
 
             coachWorkScheduleRepository.deleteAll(schedules);
