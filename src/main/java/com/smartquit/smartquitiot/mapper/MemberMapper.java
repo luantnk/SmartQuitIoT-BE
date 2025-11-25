@@ -47,9 +47,17 @@ public class MemberMapper {
         memberListItemDTO.setAge(calculateAge(member.getDob()));
         memberListItemDTO.setAvatarUrl(member.getAvatarUrl());
         memberListItemDTO.setUsedFreeTrial(member.isUsedFreeTrial());
-        memberListItemDTO.setStreaks(member.getMetric().getStreaks());
-        memberListItemDTO.setReductionPercentage(member.getMetric().getReductionPercentage());
-        memberListItemDTO.setSmokeFreeDayPercentage(member.getMetric().getSmokeFreeDayPercentage());
+
+        if (member.getMetric() != null) {
+            memberListItemDTO.setStreaks(member.getMetric().getStreaks());
+            memberListItemDTO.setReductionPercentage(member.getMetric().getReductionPercentage());
+            memberListItemDTO.setSmokeFreeDayPercentage(member.getMetric().getSmokeFreeDayPercentage());
+        } else {
+            memberListItemDTO.setStreaks(0);
+            memberListItemDTO.setReductionPercentage(0.0);
+            memberListItemDTO.setSmokeFreeDayPercentage(0.0);
+        }
+
         return memberListItemDTO;
     }
 
