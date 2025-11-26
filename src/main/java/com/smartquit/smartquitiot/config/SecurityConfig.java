@@ -82,7 +82,10 @@ public class SecurityConfig {
             Map.entry("/system-phase-condition/{id}", HttpMethod.PUT),
             Map.entry("/system-phase-condition/test", HttpMethod.POST),
             Map.entry("/members/settings/reminder", HttpMethod.PUT),
-            Map.entry("/achievement/{id}", HttpMethod.GET)
+            Map.entry("/achievement/{id}", HttpMethod.GET),
+            Map.entry("/achievement/create-new", HttpMethod.POST),
+            Map.entry("/achievement/delete/{id}", HttpMethod.DELETE),
+            Map.entry("/achievement/update/{id}", HttpMethod.PUT)
     );
 
     @Bean
