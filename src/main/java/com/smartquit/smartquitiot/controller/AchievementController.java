@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
+import com.smartquit.smartquitiot.dto.request.CreateAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.MemberAccountRequest;
 import com.smartquit.smartquitiot.dto.response.AchievementDTO;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
@@ -80,5 +81,30 @@ public class AchievementController {
     @Operation(summary = "This end point for get achievements by id")
     public ResponseEntity<AchievementDTO> getDetails(@PathVariable int id){
         return ResponseEntity.ok(achievementService.getAchievementById(id));
+    }
+
+    @PostMapping("/create-new")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "This end point for admin create new achievement")
+    public ResponseEntity<AchievementDTO> createNewAchievement(@RequestBody CreateAchievementRequest request){
+        return ResponseEntity.ok(achievementService.createAchievement(request));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "This end point for admin delete achievement")
+    public ResponseEntity<AchievementDTO> delete(@PathVariable int id){
+        return ResponseEntity.ok(achievementService.deleteAchievement(id));
+    }
+
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "This end point for admin update achievement")
+    public ResponseEntity<AchievementDTO> delete( @PathVariable int id,
+                                                  @RequestBody CreateAchievementRequest request){
+        return ResponseEntity.ok(achievementService.updateAchievement(id,request));
     }
 }

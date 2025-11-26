@@ -18,7 +18,8 @@ public class AchievementMapper {
         achievementDTO.setIcon(achievement.getIcon());
         achievementDTO.setType(achievement.getType().name());
         achievementDTO.setCondition(achievement.getCondition());
-
+        achievementDTO.setCreatedAt(achievement.getCreatedAt());
+        achievementDTO.setUpdatedAt(achievement.getUpdatedAt());
         return achievementDTO;
     }
 
