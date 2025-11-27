@@ -22,6 +22,7 @@ import com.smartquit.smartquitiot.repository.PaymentRepository;
 import com.smartquit.smartquitiot.service.EmailService;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
+import com.smartquit.smartquitiot.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,7 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
     private final PayOS payOS;
     private final MembershipSubscriptionMapper membershipSubscriptionMapper;
     private final PaymentRepository paymentRepository;
+    private final NotificationService notificationService;
 
     @Override
     public List<MembershipPackageDTO> getMembershipPackages() {
@@ -209,6 +211,9 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
                     pendingSubscription.getTotalAmount(),
                     request.getOrderCode()
             );
+            notificationService.sendSystemActivityNotification("New Membership Subscription",
+                    "Member " + member.getAccount().getUsername() + " has successfully subscribed to " +
+                            pendingSubscription.getMembershipPackage().getName() + " package.");
         } else {
             if (request.getStatus().equals(PaymentStatus.CANCELLED)) {
                 // Khi hủy payment ko lưu thông tin payment, chỉ gửi email cancel payment

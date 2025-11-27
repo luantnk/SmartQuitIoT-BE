@@ -1,4 +1,5 @@
 package com.smartquit.smartquitiot.service.impl;
+
 import com.smartquit.smartquitiot.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -12,6 +13,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

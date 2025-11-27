@@ -1,31 +1,32 @@
 package com.smartquit.smartquitiot.service.impl;
+
 import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
-import com.smartquit.smartquitiot.dto.response.*;
+import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
+import com.smartquit.smartquitiot.dto.response.PhaseResponse;
+import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
+import com.smartquit.smartquitiot.dto.response.TimeResponse;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.NotificationType;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
-import com.smartquit.smartquitiot.repository.*;
+import com.smartquit.smartquitiot.repository.AccountRepository;
+import com.smartquit.smartquitiot.repository.MissionRepository;
+import com.smartquit.smartquitiot.repository.PhaseRepository;
+import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.service.*;
-import com.vladmihalcea.hibernate.type.json.JsonType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.OneToOne;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 

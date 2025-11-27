@@ -1,7 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.response.AchievementDTO;
 import com.smartquit.smartquitiot.dto.response.ConditionAchievementDTO;

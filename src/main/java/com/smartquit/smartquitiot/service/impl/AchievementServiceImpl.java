@@ -8,6 +8,7 @@ import com.smartquit.smartquitiot.enums.AchievementType;
 import com.smartquit.smartquitiot.mapper.AchievementMapper;
 import com.smartquit.smartquitiot.repository.AchievementRepository;
 import com.smartquit.smartquitiot.service.AchievementService;
+import com.smartquit.smartquitiot.service.NotificationService;
 import com.smartquit.smartquitiot.specifications.AchievementSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,8 @@ public class AchievementServiceImpl implements AchievementService {
 
     private final AchievementRepository achievementRepository;
     private final AchievementMapper achievementMapper;
+    private final NotificationService notificationService;
+
 
 
     @Override
@@ -55,6 +58,8 @@ public class AchievementServiceImpl implements AchievementService {
         achievement.setIcon(request.getIcon());
         achievement.setType(AchievementType.valueOf(request.getType()));
         achievement.setCondition(request.getCondition());
+
+        notificationService.sendSystemActivityNotification("New achievement created: " + request.getName(), "A new achievement has been added to the system. Check it out!");
 
         return achievementMapper.toAchievementDTO(achievementRepository.save(achievement));
     }

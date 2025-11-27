@@ -18,11 +18,9 @@ public class CommentMapper {
         dto.setContent(comment.getContent());
         dto.setCreatedAt(comment.getCreatedAt() != null ? comment.getCreatedAt().format(fmt) : null);
 
+        AccountMapper accountMapper = new AccountMapper();
         // Account
-        PostDetailDTO.AccountDTO accDTO = new PostDetailDTO.AccountDTO();
-        accDTO.setId(comment.getAccount().getId());
-        accDTO.setUsername(comment.getAccount().getUsername());
-        dto.setAccount(accDTO);
+        dto.setAccount(accountMapper.toAccountPostDTO(comment.getAccount()));
 
         // Media
         List<PostDetailDTO.PostMediaDTO> mediaDTOs = new ArrayList<>();

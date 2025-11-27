@@ -5,41 +5,35 @@ import com.smartquit.smartquitiot.dto.response.PostSummaryDTO;
 import com.smartquit.smartquitiot.entity.Comment;
 import com.smartquit.smartquitiot.entity.Post;
 import com.smartquit.smartquitiot.enums.Role;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
 public class PostMapper {
 
-    public static PostSummaryDTO toSummaryDTO(Post post) {
+    public static PostSummaryDTO toSummaryDTO(Post post, int commentCount) {
+
+        AccountMapper accountMapper = new AccountMapper();
+
         PostSummaryDTO dto = new PostSummaryDTO();
         dto.setId(post.getId());
         dto.setTitle(post.getTitle());
         dto.setDescription(post.getDescription());
         dto.setThumbnail(post.getThumbnail());
         dto.setCreatedAt(post.getCreatedAt().toString());
-        dto.setMediaUrl(post.getMedia().getFirst().getMediaUrl());
-        PostSummaryDTO.AccountDTO accountDTO = new PostSummaryDTO.AccountDTO();
-        if (post.getAccount() != null) {
-            accountDTO.setId(post.getAccount().getId());
-            accountDTO.setUsername(post.getAccount().getUsername());
-            if (post.getAccount().getRole().equals(Role.MEMBER)) {
-                accountDTO.setFirstName(post.getAccount().getMember().getFirstName());
-                accountDTO.setLastName(post.getAccount().getMember().getLastName());
-                accountDTO.setAvatarUrl(post.getAccount().getMember().getAvatarUrl());
-            }
-            if(post.getAccount().getRole().equals(Role.COACH)){
-                accountDTO.setFirstName(post.getAccount().getCoach().getFirstName());
-                accountDTO.setLastName(post.getAccount().getCoach().getLastName());
-                accountDTO.setAvatarUrl(post.getAccount().getCoach().getAvatarUrl());
-            }
+        if(!post.getMedia().isEmpty()) {
+            dto.setMediaUrl(post.getMedia().getFirst().getMediaUrl());
         }
-
-        dto.setAccount(accountDTO);
+        dto.setAccount(accountMapper.toAccountPostDTO(post.getAccount()));
+        dto.setCommentCount(commentCount);
         return dto;
     }
 
-    public static PostDetailDTO toDetailDTO(Post post) {
+    public static PostDetailDTO toDetailDTO(Post post, int commentCount) {
+        AccountMapper accountMapper = new AccountMapper();
         PostDetailDTO dto = new PostDetailDTO();
         dto.setId(post.getId());
         dto.setTitle(post.getTitle());
@@ -48,24 +42,9 @@ public class PostMapper {
         dto.setThumbnail(post.getThumbnail());
         dto.setCreatedAt(post.getCreatedAt());
         dto.setUpdatedAt(post.getUpdatedAt());
+        dto.setCommentCount(commentCount);
 
-        PostDetailDTO.AccountDTO accountDTO = new PostDetailDTO.AccountDTO();
-        if (post.getAccount() != null) {
-            accountDTO.setId(post.getAccount().getId());
-            accountDTO.setUsername(post.getAccount().getUsername());
-            accountDTO.setEmail(post.getAccount().getEmail());
-            if (post.getAccount().getRole().equals(Role.MEMBER)) {
-                accountDTO.setFirstName(post.getAccount().getMember().getFirstName());
-                accountDTO.setLastName(post.getAccount().getMember().getLastName());
-                accountDTO.setAvatarUrl(post.getAccount().getMember().getAvatarUrl());
-            }
-            if(post.getAccount().getRole().equals(Role.COACH)){
-                accountDTO.setFirstName(post.getAccount().getCoach().getFirstName());
-                accountDTO.setLastName(post.getAccount().getCoach().getLastName());
-                accountDTO.setAvatarUrl(post.getAccount().getCoach().getAvatarUrl());
-            }
-        }
-        dto.setAccount(accountDTO);
+        dto.setAccount(accountMapper.toAccountPostDTO(post.getAccount()));
 
         // media
         if (post.getMedia() != null) {
@@ -93,19 +72,9 @@ public class PostMapper {
         dto.setContent(comment.getContent());
         dto.setCreatedAt(comment.getCreatedAt().toString());
 
-        PostDetailDTO.AccountDTO accountDTO = new PostDetailDTO.AccountDTO();
-        if (comment.getAccount() != null) {
-            accountDTO.setId(comment.getAccount().getId());
-            accountDTO.setUsername(comment.getAccount().getUsername());
-            if (comment.getAccount().getMember() != null) {
-                accountDTO.setFirstName(comment.getAccount().getMember().getFirstName());
-                accountDTO.setLastName(comment.getAccount().getMember().getLastName());
-                accountDTO.setAvatarUrl(comment.getAccount().getMember().getAvatarUrl());
-            }
+        AccountMapper accountMapper = new AccountMapper();
 
-        }
-
-        dto.setAccount(accountDTO);
+        dto.setAccount(accountMapper.toAccountPostDTO(comment.getAccount()));
 
         // media
         if (comment.getCommentMedia() != null) {
@@ -140,18 +109,9 @@ public class PostMapper {
 
         // Account info
         if (post.getAccount() != null) {
-            PostDetailDTO.AccountDTO accountDTO = new PostDetailDTO.AccountDTO();
-            accountDTO.setId(post.getAccount().getId());
-            accountDTO.setUsername(post.getAccount().getUsername());
-            accountDTO.setEmail(post.getAccount().getEmail());
+            AccountMapper accountMapper = new AccountMapper();
 
-            if (post.getAccount().getMember() != null) {
-                accountDTO.setFirstName(post.getAccount().getMember().getFirstName());
-                accountDTO.setLastName(post.getAccount().getMember().getLastName());
-                accountDTO.setAvatarUrl(post.getAccount().getMember().getAvatarUrl());
-            }
-
-            dto.setAccount(accountDTO);
+            dto.setAccount(accountMapper.toAccountPostDTO(post.getAccount()));
         }
 
         // Media info

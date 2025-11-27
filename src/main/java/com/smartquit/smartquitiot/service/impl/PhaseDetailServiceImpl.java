@@ -1,10 +1,8 @@
 package com.smartquit.smartquitiot.service.impl;
 
-import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
-import com.smartquit.smartquitiot.dto.response.PhaseDetailMissionPlanToolDTO;
-import com.smartquit.smartquitiot.dto.response.PhaseDetailPlanToolDTO;
-import com.smartquit.smartquitiot.entity.*;
-import com.smartquit.smartquitiot.repository.MissionRepository;
+import com.smartquit.smartquitiot.entity.Phase;
+import com.smartquit.smartquitiot.entity.PhaseDetail;
+import com.smartquit.smartquitiot.entity.QuitPlan;
 import com.smartquit.smartquitiot.repository.PhaseDetailRepository;
 import com.smartquit.smartquitiot.repository.PhaseRepository;
 import com.smartquit.smartquitiot.service.PhaseDetailService;
@@ -15,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 

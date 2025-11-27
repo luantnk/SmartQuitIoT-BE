@@ -24,26 +24,7 @@ public class PostDetailDTO {
     private AccountDTO account;
     private List<PostMediaDTO> media;
     private List<CommentDTO> comments;
-
-    // ================= AccountDTO =================
-    @Getter @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class AccountDTO {
-        private Integer id;
-        private String username;
-        private String firstName;
-        private String email;
-        private String lastName;
-        private String avatarUrl;
-
-        // 👇 thêm constructor tiện lợi 2 tham số
-        public AccountDTO(Integer id, String username) {
-            this.id = id;
-            this.username = username;
-        }
-    }
+    private Integer commentCount;
 
     // ================= PostMediaDTO =================
     @Getter @Setter

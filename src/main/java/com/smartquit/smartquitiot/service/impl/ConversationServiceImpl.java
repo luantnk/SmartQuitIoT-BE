@@ -1,6 +1,8 @@
 package com.smartquit.smartquitiot.service.impl;
 
-import com.smartquit.smartquitiot.dto.response.*;
+import com.smartquit.smartquitiot.dto.response.ConversationSummaryDTO;
+import com.smartquit.smartquitiot.dto.response.LastMessageDTO;
+import com.smartquit.smartquitiot.dto.response.ParticipantSummaryDTO;
 import com.smartquit.smartquitiot.entity.Account;
 import com.smartquit.smartquitiot.entity.Conversation;
 import com.smartquit.smartquitiot.entity.Message;

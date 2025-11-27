@@ -10,19 +10,14 @@ import com.smartquit.smartquitiot.enums.MediaType;
 import com.smartquit.smartquitiot.enums.PostStatus;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.mapper.PostMapper;
-import com.smartquit.smartquitiot.repository.AccountRepository;
-import com.smartquit.smartquitiot.repository.CommentRepository;
-import com.smartquit.smartquitiot.repository.PostMediaRepository;
-import com.smartquit.smartquitiot.repository.PostRepository;
-import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.repository.*;
+import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.MemberAchievementService;
+import com.smartquit.smartquitiot.service.NotificationService;
 import com.smartquit.smartquitiot.service.PostService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -42,14 +37,17 @@ public class PostServiceImpl implements PostService {
     private final CommentRepository commentRepository;
     private final MemberAchievementService  memberAchievementService;
     private final MetricRepository metricRepository;
+    private final NotificationService notificationService;
 
 
     @Override
     public List<PostSummaryDTO> getLatestPosts(int limit) {
-        return postRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit))
-                .stream()
-                .map(PostMapper::toSummaryDTO)
-                .collect(Collectors.toList());
+        List<Post> posts = postRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit));
+
+        return posts.stream().map(post -> {
+            int commentCount = commentRepository.countByPostId(post.getId());
+            return PostMapper.toSummaryDTO(post, commentCount);
+        }).toList();
     }
 
 
@@ -62,9 +60,10 @@ public class PostServiceImpl implements PostService {
         else {
             posts = postRepository.searchPosts(query.trim());
         }
-        return posts.stream()
-                .map(PostMapper::toSummaryDTO)
-                .collect(Collectors.toList());
+        return posts.stream().map(post -> {
+            int commentCount = commentRepository.countByPostId(post.getId());
+            return PostMapper.toSummaryDTO(post, commentCount);
+        }).toList();
     }
 
     @Override
@@ -80,7 +79,8 @@ public class PostServiceImpl implements PostService {
         }
         post.getComments().clear();
         post.getComments().addAll(rootComments);
-        return PostMapper.toDetailDTO(post);
+        int commentCount = commentRepository.countByPostId(post.getId());
+        return PostMapper.toDetailDTO(post, commentCount);
     }
 
     private void loadRepliesRecursively(Comment parent) {
@@ -149,6 +149,9 @@ public class PostServiceImpl implements PostService {
             memberAchievementService.addMemberAchievement(addAchievementRequest).orElse(null);
         }
 
+        notificationService.sendSystemActivityNotification("New post created",
+                "A new post titled '" + savedPost.getTitle() + "' has been created by " + current.getUsername());
+
         return PostMapper.toDTO(savedPost);
     }
 
@@ -208,7 +211,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void     deletePost(Integer postId) {
+    public void deletePost(Integer postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
         postRepository.delete(post);
@@ -218,6 +221,9 @@ public class PostServiceImpl implements PostService {
     public List<PostSummaryDTO> getAllMyPosts() {
         Account authAccount = accountService.getAuthenticatedAccount();
         List<Post> myPosts = postRepository.findByAccountId(authAccount.getId());
-        return myPosts.stream().map(PostMapper::toSummaryDTO).toList();
+        return myPosts.stream().map(post -> {
+            int commentCount = commentRepository.countByPostId(post.getId());
+            return PostMapper.toSummaryDTO(post, commentCount);
+        }).toList();
     }
 }

@@ -1,7 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.request.UpdateFormMetricRequest;
-import com.smartquit.smartquitiot.dto.response.FormMetricDTO;
 import com.smartquit.smartquitiot.dto.response.GetFormMetricResponse;
 import com.smartquit.smartquitiot.dto.response.UpdateFormMetricResponse;
 import com.smartquit.smartquitiot.entity.Account;
@@ -18,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 

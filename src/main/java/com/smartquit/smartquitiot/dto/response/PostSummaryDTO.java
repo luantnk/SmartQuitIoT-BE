@@ -16,15 +16,6 @@ public class PostSummaryDTO {
     private String createdAt;
     private AccountDTO account;
     private String mediaUrl;
-    @Getter @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AccountDTO {
-        private Integer id;
-        private String username;
-        private String firstName;
-        private String lastName;
-        private String avatarUrl;
-    }
+    private Integer commentCount;
 
 }

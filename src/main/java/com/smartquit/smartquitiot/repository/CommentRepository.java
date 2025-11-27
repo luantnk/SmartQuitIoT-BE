@@ -47,4 +47,6 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
     @Query("SELECT c FROM Comment c WHERE c.parent.id = :parentId ORDER BY c.createdAt ASC")
     List<Comment> findRepliesByParentId(@Param("parentId") Integer parentId);
 
+    int countByPostId(int postId);
+
 }
