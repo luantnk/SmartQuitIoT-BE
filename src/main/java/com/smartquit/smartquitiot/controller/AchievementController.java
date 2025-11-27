@@ -103,7 +103,7 @@ public class AchievementController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "This end point for admin update achievement")
-    public ResponseEntity<AchievementDTO> delete( @PathVariable int id,
+    public ResponseEntity<AchievementDTO> update( @PathVariable int id,
                                                   @RequestBody CreateAchievementRequest request){
         return ResponseEntity.ok(achievementService.updateAchievement(id,request));
     }
