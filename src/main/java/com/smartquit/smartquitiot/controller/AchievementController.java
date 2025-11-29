@@ -88,7 +88,7 @@ public class AchievementController {
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "This end point for admin create new achievement")
     public ResponseEntity<AchievementDTO> createNewAchievement(@RequestBody CreateAchievementRequest request){
-        return ResponseEntity.ok(achievementService.createAchievement(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(achievementService.createAchievement(request));
     }
 
     @DeleteMapping("/delete/{id}")
