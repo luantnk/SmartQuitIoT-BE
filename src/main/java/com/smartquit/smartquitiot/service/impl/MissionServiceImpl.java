@@ -158,7 +158,7 @@ public class MissionServiceImpl implements MissionService {
 //    }
     @Override
     public Page<MissionDTO> getAllMissions(int page, int size, String search, String status,String phase) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
 
         Specification<Mission> spec = MissionSpecification.filterMissions(search, status,phase);
 
