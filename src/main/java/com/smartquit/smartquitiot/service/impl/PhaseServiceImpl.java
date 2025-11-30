@@ -470,9 +470,9 @@ public class PhaseServiceImpl implements PhaseService {
                     .sorted(Comparator.comparing(Phase::getStartDate)
                             .thenComparing(Phase::getId))
                     .toList();
-            for (Phase p : ordered) {
-                log.info("ss {}",p.getId());
-            }
+//            for (Phase p : ordered) {
+//                log.info("ss {}",p.getId());
+//            }
             for (int i = 0; i < ordered.size(); i++) {
                 Phase phase = ordered.get(i);
                 PhaseStatus oldStatus = phase.getStatus();

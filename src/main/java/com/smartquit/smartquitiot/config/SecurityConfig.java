@@ -86,7 +86,12 @@ public class SecurityConfig {
             Map.entry("/notifications/system-activity", HttpMethod.GET),
             Map.entry("/achievement/create-new", HttpMethod.POST),
             Map.entry("/achievement/delete/{id}", HttpMethod.DELETE),
-            Map.entry("/achievement/update/{id}", HttpMethod.PUT)
+            Map.entry("/achievement/update/{id}", HttpMethod.PUT),
+            Map.entry("/mission-type/all", HttpMethod.GET),
+            Map.entry("/mission/{id}", HttpMethod.GET),
+            Map.entry("/mission/{id}", HttpMethod.DELETE),
+            Map.entry("/mission", HttpMethod.POST),
+            Map.entry("/mission/{id}", HttpMethod.PUT)
     );
 
     @Bean

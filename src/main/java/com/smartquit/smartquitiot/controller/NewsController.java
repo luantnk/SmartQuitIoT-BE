@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +49,7 @@ public class NewsController {
     @Operation(summary = "Create a news item")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<GlobalResponse<NewsDTO>> createNews(@RequestBody CreateNewsRequest request) {
-        return ResponseEntity.ok(GlobalResponse.ok(newsService.createNews(request)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(GlobalResponse.ok(newsService.createNews(request)));
 
     }
 
