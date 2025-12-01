@@ -42,8 +42,12 @@ public class SlotController {
     public ResponseEntity<GlobalResponse<SlotReseedResponse>> reseedSlots(
             @Valid @RequestBody SlotReseedRequest request) {
         
-        LocalTime start = LocalTime.parse(request.getStart());
-        LocalTime end = LocalTime.parse(request.getEnd());
+        // Normalize time format: convert "H:mm" to "HH:mm" for LocalTime.parse()
+        String normalizedStart = normalizeTimeFormat(request.getStart());
+        String normalizedEnd = normalizeTimeFormat(request.getEnd());
+        
+        LocalTime start = LocalTime.parse(normalizedStart);
+        LocalTime end = LocalTime.parse(normalizedEnd);
         
         SlotReseedResponse response = slotService.reseedSlots(
                 start, 
@@ -59,5 +63,21 @@ public class SlotController {
         );
         
         return ResponseEntity.ok(GlobalResponse.ok(message, response));
+    }
+    
+    /**
+     * Normalize time format from "H:mm" to "HH:mm"
+     * Example: "5:30" -> "05:30", "09:30" -> "09:30"
+     */
+    private String normalizeTimeFormat(String time) {
+        if (time == null || time.isEmpty()) {
+            return time;
+        }
+        String[] parts = time.split(":");
+        if (parts.length == 2 && parts[0].length() == 1) {
+            // Add leading zero if hour has only 1 digit
+            return "0" + time;
+        }
+        return time;
     }
 }

@@ -29,5 +29,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
     })
     Page<Feedback> findAllByCoach_Id(int coachId, Pageable pageable);
 
+    // Find feedbacks by appointment IDs (for cleanup during slot reseed)
+    @Query("SELECT f FROM Feedback f " +
+           "WHERE f.appointment.id IN :appointmentIds")
+    List<Feedback> findByAppointmentIds(@Param("appointmentIds") List<Integer> appointmentIds);
+
 }
 
