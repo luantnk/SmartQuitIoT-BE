@@ -23,6 +23,8 @@ public class SlotBootstrap {
     private String endStr;
     @Value("${app.slots.minutes:30}")
     private int slotMinutes;
+    @Value("${app.slots.gap:0}")
+    private int gapMinutes;
     @Value("${app.seed-slots.enabled:true}")
     private boolean enabled;
 
@@ -35,8 +37,8 @@ public class SlotBootstrap {
         try {
             LocalTime start = LocalTime.parse(startStr);
             LocalTime end = LocalTime.parse(endStr);
-            slotService.findOrCreateRange(start, end, slotMinutes);
-         //   log.info("Seeded slots {}-{} every {}m", start, end, slotMinutes);
+            slotService.findOrCreateRange(start, end, slotMinutes, gapMinutes);
+            log.info("Seeded slots {}-{} every {}m with {}m gap", start, end, slotMinutes, gapMinutes);
         } catch (Exception e) {
             log.error("Failed to seed slots", e);
         }

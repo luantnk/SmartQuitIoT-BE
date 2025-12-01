@@ -64,12 +64,12 @@ public class CoachController {
     @PutMapping("/{coachId}")
     @Operation(summary = "This endpoint for update coach profile", description = "Admin and Coaches can update their own profile")
     @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<CoachDTO> updateMemberProfile(@PathVariable int coachId,
+    public ResponseEntity<CoachDTO> updateCoachProfile(@PathVariable int coachId,
                                                          @RequestBody CoachUpdateRequest request) {
         return ResponseEntity.ok(coachService.updateProfile(coachId, request));
     }
 
-    @GetMapping("/{coachId}/slots/available")
+    @PutMapping("/{coachId}/slots/available")
     @PreAuthorize("hasAnyRole('MEMBER','ADMIN')")
     @Operation(summary = "Get available slots of a coach by date (for member or admin)")
     @SecurityRequirement(name = "Bearer Authentication")
