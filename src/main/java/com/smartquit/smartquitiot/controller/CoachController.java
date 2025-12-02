@@ -69,7 +69,7 @@ public class CoachController {
         return ResponseEntity.ok(coachService.updateProfile(coachId, request));
     }
 
-    @PutMapping("/{coachId}/slots/available")
+    @GetMapping("/{coachId}/slots/available")
     @PreAuthorize("hasAnyRole('MEMBER','ADMIN')")
     @Operation(summary = "Get available slots of a coach by date (for member or admin)")
     @SecurityRequirement(name = "Bearer Authentication")

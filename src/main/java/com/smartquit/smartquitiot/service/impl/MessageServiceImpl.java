@@ -53,7 +53,7 @@ public class MessageServiceImpl implements MessageService {
 
         if (req.getConversationId() != null) {
             conv = conversationRepository.findById(req.getConversationId())
-                    .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + req.getConversationId()));
+                    .orElseThrow(() -> new IllegalArgum.Exception("Conversation not found: " + req.getConversationId()));
 
             boolean isParticipant = participantRepository.findByConversationAndAccount(conv, sender).isPresent();
             if (!isParticipant) {
