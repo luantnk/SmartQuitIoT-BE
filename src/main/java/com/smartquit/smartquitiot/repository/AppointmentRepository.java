@@ -84,4 +84,29 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
     boolean existsByCoachIdAndAppointmentStatusOrAppointmentStatus(int coachId, AppointmentStatus fistStatus, AppointmentStatus secondStatus);
     boolean existsByMemberIdAndAppointmentStatusOrAppointmentStatus(int memberId, AppointmentStatus fistStatus, AppointmentStatus secondStatus);
+
+    @Query("SELECT COUNT(a) FROM Appointment a " +
+       "WHERE a.date = :date " +
+       "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED")
+    long countByDate(@Param("date") LocalDate date);
+
+    @Query("SELECT COUNT(a) FROM Appointment a " +
+       "WHERE a.appointmentStatus = com.smartquit.smartquitiot.enums.AppointmentStatus.PENDING")
+    long countPendingRequests();
+
+    @Query("SELECT COUNT(a) FROM Appointment a " +
+       "WHERE a.appointmentStatus = com.smartquit.smartquitiot.enums.AppointmentStatus.COMPLETED " +
+       "AND a.date BETWEEN :startDate AND :endDate")
+    long countCompletedBetween(@Param("startDate") LocalDate startDate, 
+                          @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT a FROM Appointment a " +
+       "JOIN FETCH a.member m " +
+       "JOIN FETCH a.coachWorkSchedule cws " +
+       "JOIN FETCH cws.slot s " +
+       "WHERE a.date = :date " +
+       "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED " +
+       "ORDER BY s.startTime ASC")
+    List<Appointment> findUpcomingByDate(@Param("date") LocalDate date);
+
 }
