@@ -26,4 +26,15 @@ public interface MemberRepository extends JpaRepository<Member, Integer>, JpaSpe
 
     @EntityGraph(attributePaths = {"account"})
     List<Member> findAllByAccount_IsActiveTrueAndAccount_IsBannedFalse();
+
+    @Query("SELECT COUNT(m) FROM Member m " +
+           "JOIN m.account a " +
+           "WHERE a.isActive = true AND a.isBanned = false")
+    long countActiveMembers();
+
+    @Query("SELECT COUNT(m) FROM Member m " +
+           "JOIN m.account a " +
+           "WHERE a.isActive = true AND a.isBanned = false " +
+           "AND a.createdAt >= :startDate")
+    long countNewMembersSince(@Param("startDate") java.time.LocalDateTime startDate);
 }
