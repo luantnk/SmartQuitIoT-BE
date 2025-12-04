@@ -86,11 +86,11 @@ public class AccountController {
         return ResponseEntity.ok(accountService.activeAccountById(accountId));
     }
 
-    @PutMapping("/ban/{accountId}")
+    @PutMapping("/delete/{accountId}")
     @Operation(summary = "Ban account by ID")
     @SecurityRequirement(name = "Bearer Authentication")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> banAccountById(@PathVariable int accountId) {
+    public ResponseEntity<?> deleteAccountById(@PathVariable int accountId) {
         return ResponseEntity.ok(accountService.deleteAccountById(accountId));
     }
 }

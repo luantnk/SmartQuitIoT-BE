@@ -40,7 +40,7 @@ public class SecurityConfig {
             Map.entry("/accounts/coach/create", HttpMethod.POST),
             Map.entry("/accounts/p", HttpMethod.GET),
             Map.entry("/accounts/activate/{accountId}", HttpMethod.PUT),
-            Map.entry("/accounts/ban/{accountId}", HttpMethod.PUT),
+            Map.entry("/accounts/delete/{accountId}", HttpMethod.PUT),
             Map.entry("/members/p", HttpMethod.GET),
             Map.entry("/members/manage", HttpMethod.GET),
             Map.entry("/members", HttpMethod.PUT),

@@ -15,7 +15,7 @@ public interface    CoachService {
     Coach getAuthenticatedCoach();
     CoachDTO getAuthenticatedCoachProfile();
     List<CoachSummaryDTO> getCoachList();
-    Page<CoachDTO> getAllCoaches(int page, int size, String searchString, Sort.Direction sortBy);
+    Page<CoachDTO> getAllCoaches(int page, int size, String searchString, Sort.Direction sortBy, Boolean isActive);
     CoachDTO getCoachById(int id);
     CoachDTO updateProfile(int coachId, CoachUpdateRequest request);
     Map<String, Object> getCoachStatistics();

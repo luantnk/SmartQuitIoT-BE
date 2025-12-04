@@ -48,8 +48,8 @@
         }
 
         @Override
-        public Page<CoachDTO> getAllCoaches(int page, int size, String searchString, Sort.Direction sortBy) {
-            Specification<Coach> spec = Specification.allOf(CoachSpecification.hasSearchString(searchString));
+        public Page<CoachDTO> getAllCoaches(int page, int size, String searchString, Sort.Direction sortBy, Boolean isActive) {
+            Specification<Coach> spec = Specification.allOf(CoachSpecification.hasSearchString(searchString)).and(CoachSpecification.hasActive(isActive));
             Pageable pageable = PageRequest.of(page, size,sortBy, "id");
             Page<Coach> coaches = coachRepository.findAll(spec, pageable);
             return coaches.map(coachMapper::toCoachDTO);

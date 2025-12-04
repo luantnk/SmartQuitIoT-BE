@@ -42,4 +42,13 @@ public class CoachSpecification {
             );
         };
     }
+    public static Specification<Coach> hasActive(boolean isActive){
+        return (root, query, criteriaBuilder) -> {
+            if (isActive) {
+                return criteriaBuilder.isTrue(root.get("account").get("isActive"));
+            } else {
+                return criteriaBuilder.isFalse(root.get("account").get("isActive"));
+            }
+        };
+    }
 }

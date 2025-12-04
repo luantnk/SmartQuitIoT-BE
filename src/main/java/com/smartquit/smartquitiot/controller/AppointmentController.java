@@ -4,6 +4,7 @@ import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
 import com.smartquit.smartquitiot.dto.request.SnapshotUploadRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
+import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -262,6 +263,20 @@ public class AppointmentController {
         return ResponseEntity.ok(
                 GlobalResponse.ok("Snapshots fetched", urls)
         );
+    }
+
+    @GetMapping("/manage")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lấy danh sách snapshot URLs của appointment",
+            description = "Member hoặc Coach có thể xem danh sách ảnh snapshot đã upload.")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<?> getAllAppointments(
+            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") int size,
+            @RequestParam(value = "status", required = false, defaultValue = "") AppointmentStatus status){
+
+        var dtoPage = appointmentService.getAllAppointments(page, size, status);
+        return ResponseEntity.ok(dtoPage);
     }
 
 }
