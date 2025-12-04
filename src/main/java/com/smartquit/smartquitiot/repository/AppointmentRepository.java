@@ -79,7 +79,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     @Query("SELECT a FROM Appointment a " +
            "WHERE a.coachWorkSchedule.id IN :cwsIds")
     List<Appointment> findByCoachWorkScheduleIds(@Param("cwsIds") List<Integer> cwsIds);
-
     Page<Appointment> findAll(Specification<Appointment> specification, Pageable pageable);
 
     boolean existsByCoachIdAndAppointmentStatusOrAppointmentStatus(int coachId, AppointmentStatus fistStatus, AppointmentStatus secondStatus);
@@ -108,5 +107,4 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
        "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED " +
        "ORDER BY s.startTime ASC")
     List<Appointment> findUpcomingByDate(@Param("date") LocalDate date);
-
 }
