@@ -14,9 +14,15 @@ import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.AgoraService;
 import com.smartquit.smartquitiot.service.AppointmentService;
 import com.smartquit.smartquitiot.service.NotificationService;
+import com.smartquit.smartquitiot.specifications.AppointmentSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
@@ -823,5 +829,11 @@ public class AppointmentServiceImpl implements AppointmentService {
         return ap.getSnapshotUrls();
     }
 
-
+    @Override
+    public Page<AppointmentResponse> getAllAppointments(int page, int size, AppointmentStatus status) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Specification<Appointment> spec = Specification.allOf(AppointmentSpecification.hasStatus(status));
+        Page<Appointment> apPage = appointmentRepository.findAll(spec,pageable);
+        return apPage.map(appointmentMapper::toResponse);
+    }
 }

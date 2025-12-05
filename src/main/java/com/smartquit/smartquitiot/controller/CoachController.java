@@ -50,9 +50,10 @@ public class CoachController {
     public ResponseEntity<GlobalResponse<Page<CoachDTO>>> getAllCoaches(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                         @RequestParam(name = "size", defaultValue = "10") int size,
                                                                         @RequestParam(name = "searchString", required = false) String searchString,
-                                                                        @RequestParam(name = "sortBy", defaultValue = "ASC") Sort.Direction sortBy) {
+                                                                        @RequestParam(name = "sortBy", defaultValue = "ASC") Sort.Direction sortBy,
+                                                                        @RequestParam(required = false, defaultValue = "true") Boolean isActive) {
 
-        return ResponseEntity.ok(GlobalResponse.ok(coachService.getAllCoaches(page, size, searchString, sortBy)));
+        return ResponseEntity.ok(GlobalResponse.ok(coachService.getAllCoaches(page, size, searchString, sortBy, isActive)));
     }
 
     @GetMapping("/{coachId}")

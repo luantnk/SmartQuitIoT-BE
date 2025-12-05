@@ -5,15 +5,14 @@ import com.smartquit.smartquitiot.dto.response.CoachDTO;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.VerifyOtpResponse;
-import com.smartquit.smartquitiot.entity.Account;
-import com.smartquit.smartquitiot.entity.Coach;
-import com.smartquit.smartquitiot.entity.Member;
-import com.smartquit.smartquitiot.entity.Metric;
+import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.AccountType;
+import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.enums.Role;
 import com.smartquit.smartquitiot.mapper.CoachMapper;
 import com.smartquit.smartquitiot.mapper.MemberMapper;
 import com.smartquit.smartquitiot.repository.AccountRepository;
+import com.smartquit.smartquitiot.repository.AppointmentRepository;
 import com.smartquit.smartquitiot.repository.CoachRepository;
 import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.service.AccountService;
@@ -49,6 +48,7 @@ public class AccountServiceImpl implements AccountService {
     @Value("${smartquit.default.avatar.url}")
     // smartquit.default.avatar.url=https://ui-avatars.com/api/?background=00D09E&color=fff&size=250&name=
     private String defaultAvatar;
+    private final AppointmentRepository appointmentRepository;
 
     @Transactional
     @Override
@@ -292,19 +292,27 @@ public class AccountServiceImpl implements AccountService {
         if (Role.ADMIN.equals(account.getRole())) {
             throw new RuntimeException("Cannot have any action on admin account");
         }
-        account.setBanned(!account.isBanned());
-        if(account.isBanned()){
+        if(Role.MEMBER.equals(account.getRole())) {
+            if(appointmentRepository
+                    .existsByMemberIdAndAppointmentStatusOrAppointmentStatus(account.getMember().getId(), AppointmentStatus.PENDING, AppointmentStatus.IN_PROGRESS)){
+                throw new RuntimeException("Cannot delete this member account with pending or in progress appointments.");
+            }
+            account.setBanned(true);
             account.setActive(false);
+            accountRepository.save(account);
+            return GlobalResponse.ok("Account has been deleted.");
+        }else if(Role.COACH.equals(account.getRole())) {
+            if(appointmentRepository
+                    .existsByCoachIdAndAppointmentStatusOrAppointmentStatus(account.getCoach().getId(), AppointmentStatus.PENDING, AppointmentStatus.IN_PROGRESS)){
+                throw new RuntimeException("Cannot delete this coach account with pending or in progress appointments.");
+            }
+            account.setBanned(true);
+            account.setActive(false);
+            accountRepository.save(account);
+            return GlobalResponse.ok("Coach account has been deleted.");
         }else{
-            account.setActive(true);
+            throw new RuntimeException("Cannot have any action on this account");
         }
-        accountRepository.save(account);
-
-        if(account.isActive() && !account.isBanned()){
-            return GlobalResponse.ok("Account has been unbanned.");
-        }
-        return GlobalResponse.ok("Account has been deleted.");
-
     }
 
     @Override

@@ -276,6 +276,8 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
                 .orElseThrow(() -> new RuntimeException("Membership Package Not Found"));
         membershipPackage.setPrice(request.getPrice());
         membershipPackage = membershipPackageRepository.save(membershipPackage);
+        notificationService.sendSystemActivityNotification("Membership Package Updated",
+                "Membership Package " + membershipPackage.getName() + " has been updated to price " + membershipPackage.getPrice());
         return membershipPackageMapper.toMembershipPackageDTO(membershipPackage);
     }
 }

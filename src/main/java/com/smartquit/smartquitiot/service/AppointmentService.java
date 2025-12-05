@@ -4,6 +4,8 @@ import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
 import com.smartquit.smartquitiot.dto.response.AppointmentResponse;
 import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
 import com.smartquit.smartquitiot.dto.response.RemainingBookingResponse;
+import com.smartquit.smartquitiot.enums.AppointmentStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
@@ -31,5 +33,7 @@ public interface AppointmentService {
     void addSnapshots(int appointmentId, int accountId, List<String> urls);
 
     List<String> getSnapshots(int appointmentId, int accountId);
+
+    Page<AppointmentResponse> getAllAppointments(int page, int size, AppointmentStatus status);
 
 }

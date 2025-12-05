@@ -11,7 +11,7 @@ public class PostUpdateRequest {
     private String content;
     private String thumbnail;
     private List<PostMediaRequest> media;
-//    private Integer accountId; // 👈 thêm dòng này
+//    private Integer accountId; //
 
     @Data
     public static class PostMediaRequest {
