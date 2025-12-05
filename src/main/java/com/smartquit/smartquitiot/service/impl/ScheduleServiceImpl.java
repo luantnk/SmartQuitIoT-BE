@@ -119,10 +119,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         YearMonth current = YearMonth.from(today);
 
         // Không cho phép xem tháng quá khứ
-        if (requested.isBefore(current)) {
-            log.info("Requested month {}-{} is in the past — return empty", year, month);
-            return List.of();
-        }
+//        if (requested.isBefore(current)) {
+//            log.info("Requested month {}-{} is in the past — return empty", year, month);
+//            return List.of();
+//        }
 
         LocalDate start = requested.equals(current)
                 ? today
@@ -214,7 +214,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 schedule.setSlot(slot);
                 schedule.setStatus(CoachWorkScheduleStatus.AVAILABLE);
                 newSchedules.add(schedule);
-            }
+            }   
             coachWorkScheduleRepository.saveAll(newSchedules);
             log.info("Đã thêm coach {} vào lịch ngày {}", coachId, date);
         }
