@@ -15,5 +15,5 @@ public class UpcomingAppointmentDTO {
     String memberName;
     String memberAvatarUrl;
     String time; // format: "HH:mm"
-    String status; // "pending", "completed", etc.
+    String status; // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
 }

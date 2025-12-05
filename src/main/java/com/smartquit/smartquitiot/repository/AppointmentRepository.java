@@ -105,6 +105,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
        "JOIN FETCH cws.slot s " +
        "WHERE a.date = :date " +
        "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED " +
-       "ORDER BY s.startTime ASC")
+       "ORDER BY s.startTime DESC")
     List<Appointment> findUpcomingByDate(@Param("date") LocalDate date);
 }
