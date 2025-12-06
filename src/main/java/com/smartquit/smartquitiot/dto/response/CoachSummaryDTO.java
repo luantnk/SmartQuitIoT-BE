@@ -15,4 +15,5 @@ public class CoachSummaryDTO {
     String avatarUrl;
     Double ratingAvg;
     Integer accountId; // đây là accountId không phải coachId
+    String specializations;
 }
