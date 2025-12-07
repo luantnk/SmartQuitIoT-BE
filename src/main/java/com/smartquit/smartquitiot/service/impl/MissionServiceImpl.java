@@ -135,6 +135,7 @@ public class MissionServiceImpl implements MissionService {
             case "heart_rate" -> account.getMember().getMetric().getHeartRate();
             case "spo2" -> account.getMember().getMetric().getSpo2();
             case "sleep_duration" -> account.getMember().getMetric().getSleepDuration();
+            case "avg_in_take_nicotine_per_day" -> account.getMember().getMetric().getAvgNicotineMgPerDay();
             default -> null;
         };
     }
