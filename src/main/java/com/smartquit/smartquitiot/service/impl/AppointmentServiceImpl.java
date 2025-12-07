@@ -76,6 +76,50 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new IllegalStateException("No remaining booking available in your subscription period");
         }
 
+        // --- CHECK 2: kiểm tra trùng thời gian với appointment khác (cùng member, cùng slot, khác coach)
+        List<Appointment> overlappingAppointments = appointmentRepository.findOverlappingAppointments(
+                memberId, date, slotId, coachId);
+        
+        if (!overlappingAppointments.isEmpty()) {
+            // Lấy thông tin slot để hiển thị thời gian trong message
+            String slotTimeInfo = "";
+            if (!overlappingAppointments.isEmpty() && overlappingAppointments.get(0).getCoachWorkSchedule() != null 
+                    && overlappingAppointments.get(0).getCoachWorkSchedule().getSlot() != null) {
+                Slot slot = overlappingAppointments.get(0).getCoachWorkSchedule().getSlot();
+                slotTimeInfo = String.format(" at %s", slot.getStartTime());
+            }
+            
+            // Tạo danh sách tên coach bị trùng
+            String conflictingCoaches = overlappingAppointments.stream()
+                    .map(a -> {
+                        if (a.getCoach() != null) {
+                            String fn = a.getCoach().getFirstName() != null ? a.getCoach().getFirstName() : "";
+                            String ln = a.getCoach().getLastName() != null ? a.getCoach().getLastName() : "";
+                            return (fn + " " + ln).trim();
+                        }
+                        return "Unknown Coach";
+                    })
+                    .filter(name -> !name.isEmpty())
+                    .distinct()
+                    .collect(java.util.stream.Collectors.joining(", "));
+            
+            String warningMessage = String.format(
+                    "You already have an appointment scheduled for %s%s with coach(s): %s. " +
+                    "Please confirm if you want to proceed with booking this appointment.",
+                    date, slotTimeInfo, conflictingCoaches
+            );
+            
+            Boolean forceConfirm = request.getForceConfirm();
+            if (forceConfirm == null || !forceConfirm) {
+                // Nếu không có forceConfirm hoặc forceConfirm = false, throw exception để FE hiển thị dialog
+                throw new IllegalStateException(warningMessage);
+            } else {
+                // Nếu forceConfirm = true, log warning nhưng vẫn cho đặt
+                log.warn("Member(accountId={}) (memberId={}) booked overlapping appointment: {} - proceeding with forceConfirm=true",
+                        accountId, memberId, warningMessage);
+            }
+        }
+
         // Kiểm tra slot đã được đặt chưa (by coachId, slotId, date, miễn không phải cancel)
         if (appointmentRepository.existsActiveByCoachSlotDate(coachId, slotId, date)) {
             throw new IllegalStateException("This slot has already been booked");

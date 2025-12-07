@@ -24,6 +24,7 @@ public class FeedbackController {
     private final FeedbackService feedbackService;
 
     @PostMapping("/appointments/{appointmentId}/feedback")
+    @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Member: submit feedback for a completed appointment")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<GlobalResponse> createFeedback(
@@ -46,6 +47,35 @@ public class FeedbackController {
             return ResponseEntity.status(403).body(GlobalResponse.error(e.getMessage(), 403));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).body(GlobalResponse.error(e.getMessage(), 409));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(GlobalResponse.error("Server error: " + e.getMessage(), 500));
+        }
+    }
+
+    @GetMapping("/appointments/{appointmentId}/feedback")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Member: Lấy chi tiết feedback đã gửi cho appointment",
+            description = "Member có thể xem feedback mà mình đã gửi cho appointment cụ thể. Chỉ member owner của appointment mới có quyền xem.")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> getFeedbackByAppointmentId(
+            @PathVariable int appointmentId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        Number accountIdNum = jwt.getClaim("accountId");
+        if (accountIdNum == null) {
+            return ResponseEntity.status(401).body(GlobalResponse.error("accountId not found in token", 401));
+        }
+        int memberAccountId = accountIdNum.intValue();
+
+        try {
+            FeedbackResponse feedback = feedbackService.getFeedbackByAppointmentIdForMember(appointmentId, memberAccountId);
+            return ResponseEntity.ok(GlobalResponse.ok("Feedback fetched", feedback));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(GlobalResponse.error(e.getMessage(), 404));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(GlobalResponse.error(e.getMessage(), 403));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(400).body(GlobalResponse.error(e.getMessage(), 400));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(GlobalResponse.error("Server error: " + e.getMessage(), 500));
         }
