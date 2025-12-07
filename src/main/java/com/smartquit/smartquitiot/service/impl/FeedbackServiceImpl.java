@@ -92,4 +92,27 @@ public class FeedbackServiceImpl implements FeedbackService {
         return getFeedbacksByCoachId(coach.getId(), pageable);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public FeedbackResponse getFeedbackByAppointmentIdForMember(int appointmentId, int memberAccountId) {
+        // Kiểm tra appointment tồn tại
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        // Kiểm tra member có quyền (phải là owner của appointment)
+        if (appointment.getMember() == null || appointment.getMember().getAccount() == null) {
+            throw new IllegalStateException("Appointment has no member/account");
+        }
+
+        final int ownerAccountId = appointment.getMember().getAccount().getId();
+        if (ownerAccountId != memberAccountId) {
+            throw new SecurityException("Member not authorized to view feedback for this appointment");
+        }
+
+        Feedback feedback = feedbackRepository.findByAppointmentIdAndMemberAccountId(appointmentId, memberAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("Feedback not found for this appointment"));
+
+        return FeedbackMapper.toResponse(feedback);
+    }
+
 }
