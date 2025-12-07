@@ -34,5 +34,23 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
            "WHERE f.appointment.id IN :appointmentIds")
     List<Feedback> findByAppointmentIds(@Param("appointmentIds") List<Integer> appointmentIds);
 
+    /**
+     * Tìm feedback theo appointmentId và memberAccountId để đảm bảo security.
+     * Chỉ member owner của appointment mới có thể xem feedback của mình.
+     */
+    @EntityGraph(attributePaths = {
+            "appointment",
+            "appointment.coachWorkSchedule",
+            "appointment.coachWorkSchedule.slot",
+            "member",
+            "coach"
+    })
+    @Query("SELECT f FROM Feedback f " +
+            "WHERE f.appointment.id = :appointmentId " +
+            "  AND f.member.account.id = :memberAccountId")
+    java.util.Optional<Feedback> findByAppointmentIdAndMemberAccountId(
+            @Param("appointmentId") int appointmentId,
+            @Param("memberAccountId") int memberAccountId);
+
 }
 

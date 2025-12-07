@@ -107,4 +107,22 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
        "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED " +
        "ORDER BY s.startTime DESC")
     List<Appointment> findUpcomingByDate(@Param("date") LocalDate date);
+
+    /**
+     * Tìm appointments trùng thời gian: cùng member, cùng date, cùng slot nhưng khác coach.
+     * Dùng để cảnh báo khi member đặt lịch trùng thời gian với coach khác.
+     */
+    @Query("SELECT a FROM Appointment a " +
+            "JOIN FETCH a.coachWorkSchedule cws " +
+            "JOIN FETCH cws.slot s " +
+            "JOIN FETCH a.coach c " +
+            "WHERE a.member.id = :memberId " +
+            "  AND a.date = :date " +
+            "  AND cws.slot.id = :slotId " +
+            "  AND c.id <> :excludeCoachId " +
+            "  AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED")
+    List<Appointment> findOverlappingAppointments(@Param("memberId") int memberId,
+                                                   @Param("date") LocalDate date,
+                                                   @Param("slotId") int slotId,
+                                                   @Param("excludeCoachId") int excludeCoachId);
 }
