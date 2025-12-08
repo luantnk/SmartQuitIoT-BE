@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.repository;
 
+import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.entity.MembershipSubscription;
 import com.smartquit.smartquitiot.enums.MembershipSubscriptionStatus;
 import org.springframework.data.domain.Page;
@@ -31,4 +32,8 @@ public interface MembershipSubscriptionRepository extends JpaRepository<Membersh
     Page<MembershipSubscription> findAll(Specification<MembershipSubscription> specification, Pageable pageable);
 
     int countByStatus(MembershipSubscriptionStatus status);
+
+    List<MembershipSubscription> findByMemberId(int memberId);
+
+    int member(Member member);
 }

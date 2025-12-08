@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -65,7 +66,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public Page<MemberDTO> getMembers(int page, int size, String search, Boolean isActive) {
         Specification<Member> spec = Specification.allOf(MemberSpecification.hasSearchString(search).and(MemberSpecification.hasActive(isActive)));
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "id");
         Page<Member> memberPage = memberRepository.findAll(spec, pageable);
         return memberPage.map(memberMapper::toMemberDTO);
     }
