@@ -112,16 +112,16 @@ public class ChatWebSocketController {
             log.debug("WS: message persisted id={} conv={}", saved != null ? saved.getId() : null, saved != null ? saved.getConversationId() : null);
 
             // Temporary debug echo for FE correlation (remove if messageService already broadcasts)
-            if (saved != null) {
-                try {
-                    saved.setClientMessageId(req.getClientMessageId());
-                    String topic = "/topic/conversations/" + saved.getConversationId();
-                    log.info("[WS DEBUG] echoing to topic {} clientMessageId={}", topic, req.getClientMessageId());
-                    messagingTemplate.convertAndSend(topic, saved);
-                } catch (Exception e) {
-                    log.error("[WS DEBUG] echo failed", e);
-                }
-            }
+//            if (saved != null) {
+//                try {
+//                    saved.setClientMessageId(req.getClientMessageId());
+//                    String topic = "/topic/conversations/" + saved.getConversationId();
+//                    log.info("[WS DEBUG] echoing to topic {} clientMessageId={}", topic, req.getClientMessageId());
+//                    messagingTemplate.convertAndSend(topic, saved);
+//                } catch (Exception e) {
+//                    log.error("[WS DEBUG] echo failed", e);
+//                }
+//            }
         } catch (IllegalArgumentException ex) {
             log.warn("Invalid WS payload: {}", ex.getMessage());
             sendErrorToUser(SecurityContextHolder.getContext().getAuthentication(), "Bad request: " + ex.getMessage());
