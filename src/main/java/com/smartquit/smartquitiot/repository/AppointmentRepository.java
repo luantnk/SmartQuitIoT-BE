@@ -72,8 +72,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     // Count active appointments from a specific date onwards (for slot reseed validation)
     @Query("SELECT COUNT(a) FROM Appointment a " +
            "WHERE a.date >= :fromDate " +
-           "  AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED")
-    long countActiveAppointmentsFromDate(@Param("fromDate") LocalDate fromDate);
+           "  AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED" +
+            "  AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.COMPLETED")
+    long  countActiveAppointmentsFromDate(@Param("fromDate") LocalDate fromDate);
 
     // Find appointments by CoachWorkSchedule IDs (for cleanup during slot reseed)
     @Query("SELECT a FROM Appointment a " +

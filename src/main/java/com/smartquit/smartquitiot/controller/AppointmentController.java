@@ -30,8 +30,7 @@ public class AppointmentController {
     @PostMapping
     @PreAuthorize("hasRole('MEMBER')")
     @Operation(summary = "Member: Đặt lịch hẹn với coach",
-            description = "Member tạo appointment mới với coach. Nếu phát hiện trùng thời gian với appointment khác (cùng member, cùng slot, khác coach), " +
-                    "sẽ trả về cảnh báo. Member có thể gửi lại request với forceConfirm=true để xác nhận đặt lịch.")
+            description = "Member tạo appointment mới với coach. Không cho phép đặt lịch trùng thời gian với appointment khác (cùng member, cùng slot, khác coach).")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<GlobalResponse> bookAppointment(
             @Valid @RequestBody AppointmentRequest request,
@@ -47,10 +46,7 @@ public class AppointmentController {
             var response = appointmentService.bookAppointment(memberAccountId, request);
             return ResponseEntity.ok(GlobalResponse.ok("Booking successful", response));
         } catch (IllegalStateException e) {
-            // Kiểm tra nếu là cảnh báo trùng thời gian (message chứa "already have an appointment")
-            if (e.getMessage() != null && e.getMessage().contains("already have an appointment")) {
-                return ResponseEntity.status(409).body(GlobalResponse.error(e.getMessage(), 409));
-            }
+            // Tất cả IllegalStateException (bao gồm trùng thời gian, slot đã được đặt, không còn lượt, etc.)
             return ResponseEntity.status(400).body(GlobalResponse.error(e.getMessage(), 400));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body(GlobalResponse.error(e.getMessage(), 400));
