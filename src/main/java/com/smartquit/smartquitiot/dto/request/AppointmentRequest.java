@@ -23,10 +23,4 @@ public class AppointmentRequest {
     @NotNull(message = "Date is required")
     @FutureOrPresent(message = "Date must be today or in the future")
     LocalDate date;
-
-    /**
-     * Nếu true, cho phép đặt lịch ngay cả khi trùng thời gian với appointment khác (cùng member, cùng slot, khác coach).
-     * Nếu false hoặc null, sẽ throw exception cảnh báo khi phát hiện trùng thời gian.
-     */
-    Boolean forceConfirm;
 }
