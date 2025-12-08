@@ -77,6 +77,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         // --- CHECK 2: kiểm tra trùng thời gian với appointment khác (cùng member, cùng slot, khác coach)
+        // Business rule: Không cho phép đặt lịch trùng thời gian
         List<Appointment> overlappingAppointments = appointmentRepository.findOverlappingAppointments(
                 memberId, date, slotId, coachId);
         
@@ -103,21 +104,14 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .distinct()
                     .collect(java.util.stream.Collectors.joining(", "));
             
-            String warningMessage = String.format(
+            String errorMessage = String.format(
                     "You already have an appointment scheduled for %s%s with coach(s): %s. " +
-                    "Please confirm if you want to proceed with booking this appointment.",
+                    "Cannot book overlapping appointments.",
                     date, slotTimeInfo, conflictingCoaches
             );
             
-            Boolean forceConfirm = request.getForceConfirm();
-            if (forceConfirm == null || !forceConfirm) {
-                // Nếu không có forceConfirm hoặc forceConfirm = false, throw exception để FE hiển thị dialog
-                throw new IllegalStateException(warningMessage);
-            } else {
-                // Nếu forceConfirm = true, log warning nhưng vẫn cho đặt
-                log.warn("Member(accountId={}) (memberId={}) booked overlapping appointment: {} - proceeding with forceConfirm=true",
-                        accountId, memberId, warningMessage);
-            }
+            // Không cho phép đặt lịch trùng thời gian
+            throw new IllegalStateException(errorMessage);
         }
 
         // Kiểm tra slot đã được đặt chưa (by coachId, slotId, date, miễn không phải cancel)
