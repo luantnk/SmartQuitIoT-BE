@@ -478,25 +478,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     @Override
     public Map<String, Object> getDiaryRecordsCharts() {
         Member member = memberService.getAuthenticatedMember();
-        List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
-        Map<String, Object> chartsData = new HashMap<>();
-        chartsData.put("confidenceLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
-                "confidenceLevel", record.getConfidenceLevel()
-        )).toList());
-        chartsData.put("moodLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
-                "moodLevel", record.getMoodLevel()
-        )).toList());
-        chartsData.put("anxietyLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
-                "anxietyLevel", record.getAnxietyLevel()
-        )).toList());
-        chartsData.put("cravingLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
-                "cravingLevel", record.getCravingLevel()
-        )).toList());
-        return chartsData;
+        return getDiaryRecordsChartsByMemberId(member.getId());
     }
 
     @Override
@@ -518,6 +500,18 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         chartsData.put("cravingLevel", records.stream().map(record -> Map.of(
                 "date", record.getDate(),
                 "cravingLevel", record.getCravingLevel()
+        )).toList());
+        chartsData.put("estimatedNicotineIntake", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "estimatedNicotineIntake", record.getEstimatedNicotineIntake()
+        )).toList());
+        chartsData.put("reductionPercentage", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "reductionPercentage", record.getReductionPercentage()
+        )).toList());
+        chartsData.put("cigarettesSmoked", records.stream().map(record -> Map.of(
+                "date", record.getDate(),
+                "cigarettesSmoked", record.getCigarettesSmoked()
         )).toList());
         return chartsData;
     }
