@@ -273,6 +273,29 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<CoachSummaryDTO> findAvailableCoaches(LocalDate date, int slotId, Integer excludeCoachId) {
+        if (date == null) throw new IllegalArgumentException("date is required");
+        if (slotId <= 0) throw new IllegalArgumentException("invalid slotId");
+
+        // query all CWS for this date + slot (include coach join)
+        List<CoachWorkSchedule> cwsList = coachWorkScheduleRepository.findAllByDateAndSlotIdWithCoach(date, slotId);
+
+        return cwsList.stream()
+                .filter(Objects::nonNull)
+                .filter(cws -> cws.getStatus() == CoachWorkScheduleStatus.AVAILABLE)
+                .filter(cws -> {
+                    Coach coach = cws.getCoach();
+                    return coach != null
+                            && coach.getAccount() != null;
+                })
+                .filter(cws -> excludeCoachId == null || cws.getCoach().getId() != excludeCoachId)
+                .map(CoachWorkSchedule::getCoach)
+                .distinct()
+                .map(coachMapper::toCoachSummaryDTO)
+                .toList();
+    }
+
 
 
 }

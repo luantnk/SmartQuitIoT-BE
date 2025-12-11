@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.service;
 
 import com.smartquit.smartquitiot.dto.request.ScheduleAssignRequest;
 import com.smartquit.smartquitiot.dto.request.ScheduleUpdateRequest;
+import com.smartquit.smartquitiot.dto.response.CoachSummaryDTO;
 import com.smartquit.smartquitiot.dto.response.ScheduleByDayResponse;
 import com.smartquit.smartquitiot.dto.response.SlotAvailableResponse;
 
@@ -14,5 +15,6 @@ public interface ScheduleService {
     void updateScheduleByDate(LocalDate date, ScheduleUpdateRequest request);
     List<SlotAvailableResponse> getAvailableSlots(int coachId, LocalDate date);
     List<LocalDate> getWorkdaysByMonth(int accountId, int year, int month);
+    List<CoachSummaryDTO> findAvailableCoaches(LocalDate date, int slotId, Integer excludeCoachId);
 
 }
