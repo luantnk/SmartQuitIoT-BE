@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,7 @@ public class MembershipSubscriptionServiceImpl implements MembershipSubscription
                 .allOf(
                         MembershipSubscriptionSpecification.hasSearchString(orderCode)
                                 .and(MembershipSubscriptionSpecification.hasStatus(status)));
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "createdAt");
         Page<MembershipSubscription> subscriptionsPage = membershipSubscriptionRepository.findAll(spec, pageable);
 
         return subscriptionsPage.map(membershipSubscriptionMapper::toMembershipSubscriptionDTO);
@@ -71,5 +72,12 @@ public class MembershipSubscriptionServiceImpl implements MembershipSubscription
                 membershipSubscriptionRepository.save(subscription);
             }
         }
+    }
+
+    @Override
+    public List<MembershipSubscriptionDTO> getMembershipSubscriptionsByUserId(int memberId) {
+        List<MembershipSubscription> subscriptions = membershipSubscriptionRepository
+                .findByMemberId(memberId);
+        return subscriptions.stream().map(membershipSubscriptionMapper::toMembershipSubscriptionDTO).toList();
     }
 }

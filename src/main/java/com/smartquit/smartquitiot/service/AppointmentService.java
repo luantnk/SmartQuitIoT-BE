@@ -36,4 +36,5 @@ public interface AppointmentService {
 
     Page<AppointmentResponse> getAllAppointments(int page, int size, AppointmentStatus status);
 
+    void reassignAppointment(int appointmentId, int targetCoachId);
 }
