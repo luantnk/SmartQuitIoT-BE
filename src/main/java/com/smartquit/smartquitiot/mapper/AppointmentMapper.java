@@ -3,6 +3,7 @@ package com.smartquit.smartquitiot.mapper;
 import com.smartquit.smartquitiot.dto.response.AppointmentResponse;
 import com.smartquit.smartquitiot.entity.Appointment;
 import com.smartquit.smartquitiot.entity.Slot;
+import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.*;
@@ -16,7 +17,8 @@ public class AppointmentMapper {
         if (appointment == null) {
             return null;
         }
-
+        // Add real - appointment status
+        AppointmentStatus realAppointmentStatus = appointment.getAppointmentStatus();
         Integer appointmentId = appointment.getId();
         Integer coachId = appointment.getCoach() != null ? appointment.getCoach().getId() : null;
         String coachName = "";
@@ -45,7 +47,8 @@ public class AppointmentMapper {
                 .date(date)
                 .slotId(slotId != null ? slotId : 0)
                 .startTime(startTime)
-                .endTime(endTime);
+                .endTime(endTime)
+                .realAppointmentStatus(realAppointmentStatus);
 
         // --- map member info (moved into mapper)
         if (appointment.getMember() != null) {
@@ -81,6 +84,7 @@ public class AppointmentMapper {
         if (appointment.getCancelledAt() != null) {
             builder.cancelledAt(appointment.getCancelledAt());
         }
+
 
         return builder.build();
     }
