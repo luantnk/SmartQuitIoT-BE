@@ -39,10 +39,7 @@ public class DiaryRecord {
     int steps;
     int heartRate;
     int spo2;
-    int activityMinutes;
-    int respiratoryRate;
     double sleepDuration;
-    int sleepQuality;
     BigDecimal estimatedNicotineIntake;
     double reductionPercentage;
 

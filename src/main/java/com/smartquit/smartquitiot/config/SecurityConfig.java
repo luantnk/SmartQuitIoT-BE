@@ -57,6 +57,7 @@ public class SecurityConfig {
             Map.entry("/phase-detail-mission/mission-today", HttpMethod.GET),
             Map.entry("/phase-detail-mission/complete/home-page", HttpMethod.POST),
             Map.entry("/diary-records/log", HttpMethod.POST),
+            Map.entry("/diary-records/{recordId}", HttpMethod.PUT),
             Map.entry("/diary-records/history", HttpMethod.POST),
             Map.entry("/metrics/home-screen", HttpMethod.GET),
             Map.entry("/metrics/health-data", HttpMethod.GET),

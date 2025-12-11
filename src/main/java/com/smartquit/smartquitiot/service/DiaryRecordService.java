@@ -1,6 +1,7 @@
 package com.smartquit.smartquitiot.service;
 
 import com.smartquit.smartquitiot.dto.request.DiaryRecordRequest;
+import com.smartquit.smartquitiot.dto.request.DiaryRecordUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 
@@ -16,4 +17,5 @@ public interface DiaryRecordService {
     Map<String , Object> getDiaryRecordsChartsByMemberId(int memberId);
     List<DiaryRecordDTO> getDiaryRecordsHistoryByMemberId(int memberId);
     boolean hasCreatedDiaryRecordToday();
+    DiaryRecordDTO updateDiaryRecord(int recordId,  DiaryRecordUpdateRequest request);
 }

@@ -32,4 +32,6 @@ public interface AccountService {
     GlobalResponse<String> deleteAccountById(int accountId);
 
     Account getAdminAccount();
+
+    void resetAccountPassword(int accountId, String newPassword);
 }

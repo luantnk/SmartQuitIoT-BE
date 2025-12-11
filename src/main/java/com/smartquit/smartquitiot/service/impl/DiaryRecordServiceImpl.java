@@ -2,6 +2,7 @@ package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.DiaryRecordRequest;
+import com.smartquit.smartquitiot.dto.request.DiaryRecordUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.entity.*;
@@ -172,6 +173,13 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             }
             totalCigarettesInRecords += record.getCigarettesSmoked();
         }
+        double reductionInLastSmoked = 0.0;
+        DiaryRecord lastSmokedRecord = diaryRecordRepository.findTopByMemberIdAndHaveSmokedIsTrueOrderByDateAsc(member.getId()).orElse(null);
+        if(lastSmokedRecord != null){
+            reductionInLastSmoked = ((double)(lastSmokedRecord.getCigarettesSmoked() - request.getCigarettesSmoked()) / lastSmokedRecord.getCigarettesSmoked()) * 100.0;
+        }else{
+            reductionInLastSmoked = reductionPercentage;
+        }
         int count = records.size(); // number of member's diary records
         double newAvgCravingLevel = metric.getAvgCravingLevel() + (request.getCravingLevel() - metric.getAvgCravingLevel()) / (count + 1);
         double newAvgMoodLevel = metric.getAvgMood() + (request.getMoodLevel() - metric.getAvgMood()) / (count + 1);
@@ -204,6 +212,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         metric.setAvgCigarettesPerDay(avgCigarettesPerDay);
         metric.setReductionPercentage(reductionPercentage);
         metric.setSmokeFreeDayPercentage(smokeFreeDayPercentage);
+        metric.setReductionInLastSmoked(reductionInLastSmoked);
 
         if (request.getSteps() != null) {
             metric.setSteps(request.getSteps());
@@ -270,8 +279,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             reminderQueueRepository.save(smokedQueue);
             return GlobalResponse.smokedOnPlan("Oh no you have smoked when you on quit plan!", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
         }
-
-
 
         return GlobalResponse.ok("Diary record logged successfully", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
     }
@@ -533,4 +540,38 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         return diaryRecordRepository.findByDateAndMemberId(today, member.getId()).isPresent();
     }
 
+    @Override
+    public DiaryRecordDTO updateDiaryRecord(int recordId, DiaryRecordUpdateRequest request) {
+        Member member = memberService.getAuthenticatedMember();
+        DiaryRecord record = diaryRecordRepository.findById(recordId).orElseThrow(() -> new RuntimeException("Diary record not found"));
+        if(record.getMember().getId() != member.getId()) {
+            throw new RuntimeException("You are not authorized to update this record");
+        }
+        Metric metric = metricRepository.findByMemberId(member.getId()).orElseThrow(() -> new RuntimeException("Metric not found"));
+        record.setNote(request.getNote());
+        record.setCravingLevel(request.getCravingLevel());
+        record.setMoodLevel(request.getMoodLevel());
+        record.setConfidenceLevel(request.getConfidenceLevel());
+        record.setAnxietyLevel(request.getAnxietyLevel());
+        diaryRecordRepository.save(record);
+        //update metric
+        List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
+        int count = records.size();
+        double newAvgCravingLevel = records.stream().mapToDouble(DiaryRecord::getCravingLevel).average().orElse(0.0);
+        double newAvgMoodLevel = records.stream().mapToDouble(DiaryRecord::getMoodLevel).average().orElse(0.0);
+        double newAvgConfidenceLevel = records.stream().mapToDouble(DiaryRecord::getConfidenceLevel).average().orElse(0.0);
+        double newAvgAnxietyLevel = records.stream().mapToDouble(DiaryRecord::getAnxietyLevel).average().orElse(0.0);
+        metric.setAvgCravingLevel(newAvgCravingLevel);
+        metric.setAvgMood(newAvgMoodLevel);
+        metric.setAvgConfidentLevel(newAvgConfidenceLevel);
+        metric.setAvgAnxiety(newAvgAnxietyLevel);
+        //update money saved in metric if moneySpentOnNrt is changed
+        double oldMoneySpentOnNrt = record.getMoneySpentOnNrt();
+        if(oldMoneySpentOnNrt != request.getMoneySpentOnNrt()){
+            BigDecimal difference = BigDecimal.valueOf(oldMoneySpentOnNrt - request.getMoneySpentOnNrt());
+            metric.setMoneySaved(metric.getMoneySaved().add(difference));
+        }
+        metricRepository.save(metric);
+        return diaryRecordMapper.toDiaryRecordDTO(record);
+    }
 }

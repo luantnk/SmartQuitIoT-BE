@@ -54,8 +54,9 @@ public class Metric {
     BigDecimal moneySaved;
 
     //smokeMetrics
-    double reductionPercentage;
-    double smokeFreeDayPercentage;
+    double reductionPercentage; //percentage of reduction in cigarettes smoked in form metric
+    double smokeFreeDayPercentage; // percentage of smoke free days in total days of quit plan
+    double reductionInLastSmoked; // percentage of reduction in cigarettes smoked compared to last smoked day
 
     @CreationTimestamp
     LocalDateTime createdAt;

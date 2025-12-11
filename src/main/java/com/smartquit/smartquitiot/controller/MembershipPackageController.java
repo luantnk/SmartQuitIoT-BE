@@ -25,6 +25,7 @@ public class MembershipPackageController {
     private final MembershipPackageService membershipPackageService;
 
     @GetMapping
+    @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Get all membership package")
     public ResponseEntity<GlobalResponse<List<MembershipPackageDTO>>> getMembershipPackages() {
         return ResponseEntity.ok(

@@ -1,7 +1,8 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.DiaryRecordRequest;
-import com.smartquit.smartquitiot.entity.DiaryRecord;
+import com.smartquit.smartquitiot.dto.request.DiaryRecordUpdateRequest;
+import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.service.DiaryRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -71,6 +72,14 @@ public class DiaryRecordController {
     public ResponseEntity<?> hasCreatedDiaryRecordToday() {
         boolean hasRecord = diaryRecordService.hasCreatedDiaryRecordToday();
         return ResponseEntity.ok(Map.of("hasRecordToday", hasRecord));
+    }
+
+    @PutMapping("/{recordId}")
+    @PreAuthorize("hasRole('MEMBER')")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<DiaryRecordDTO> updateDiaryRecord(@PathVariable Integer recordId, @RequestBody @Valid DiaryRecordUpdateRequest request) {
+        DiaryRecordDTO updatedRecord = diaryRecordService.updateDiaryRecord(recordId, request);
+        return ResponseEntity.ok(updatedRecord);
     }
 
 

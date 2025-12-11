@@ -93,4 +93,13 @@ public class AccountController {
     public ResponseEntity<?> deleteAccountById(@PathVariable int accountId) {
         return ResponseEntity.ok(accountService.deleteAccountById(accountId));
     }
+
+    @PutMapping("/admin/reset-password/{accountId}")
+    @Operation(summary = "Admin reset account password by ID")
+//    @SecurityRequirement(name = "Bearer Authentication")
+//    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> adminResetAccountPassword(@PathVariable int accountId, @RequestBody ChangePasswordRequest request) {
+        accountService.resetAccountPassword(accountId, request.getNewPassword());
+        return ResponseEntity.ok(new MessageResponse("Account password has been reset successfully."));
+    }
 }

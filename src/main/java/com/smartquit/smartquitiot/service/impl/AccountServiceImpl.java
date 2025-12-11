@@ -323,4 +323,14 @@ public class AccountServiceImpl implements AccountService {
         }
         return null;
     }
+
+    @Override
+    public void resetAccountPassword(int accountId, String newPassword) {
+        Account account = accountRepository.findById(accountId).orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId));
+        if(Role.ADMIN.equals(account.getRole())) {
+            throw new RuntimeException("Cannot reset password for admin account");
+        }
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+    }
 }

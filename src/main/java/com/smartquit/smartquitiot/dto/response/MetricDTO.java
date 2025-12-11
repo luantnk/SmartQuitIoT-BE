@@ -19,6 +19,7 @@ public class MetricDTO {
     BigDecimal moneySaved;
     Double reductionPercentage;
     Double smokeFreeDayPercentage;
+    Double reductionInLastSmoked;
 
     //show at health data screen
     //avg metrics
@@ -26,7 +27,8 @@ public class MetricDTO {
     Double avgMood;
     Double avgAnxiety;
     Double avgConfidentLevel;
-    Integer avgCigarettesPerDay;
+    Double avgCigarettesPerDay;
+    Double avgNicotineMgPerDay;
 
     //current metrics
     Integer currentCravingLevel;
@@ -38,10 +40,7 @@ public class MetricDTO {
     Integer steps;
     Integer heartRate;
     Integer spo2;
-    Integer activityMinutes;
-    Integer respiratoryRate;
     Double sleepDuration;
-    Integer sleepQuality;
 
 
 }

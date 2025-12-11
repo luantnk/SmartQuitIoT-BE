@@ -56,8 +56,13 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
 
     @Override
     public List<MembershipPackageDTO> getMembershipPackages() {
+        Member member = memberService.getAuthenticatedMember();
         List<MembershipPackage> membershipPackages = membershipPackageRepository.findAll();
-
+        if(member.isUsedFreeTrial()){
+            membershipPackages = membershipPackages.stream()
+                    .filter(pkg -> !pkg.getType().equals(MembershipPackageType.TRIAL))
+                    .toList();
+        }
         return membershipPackages.stream().map(membershipPackageMapper::toMembershipPackageDTO).toList();
     }
 
