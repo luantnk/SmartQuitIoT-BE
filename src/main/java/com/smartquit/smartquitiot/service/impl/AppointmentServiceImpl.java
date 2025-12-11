@@ -874,4 +874,133 @@ public class AppointmentServiceImpl implements AppointmentService {
         Page<Appointment> apPage = appointmentRepository.findAll(spec,pageable);
         return apPage.map(appointmentMapper::toResponse);
     }
+
+    @Override
+    @Transactional
+    public void reassignAppointment(int appointmentId, int targetCoachId) {
+        Appointment ap = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        if (ap.getAppointmentStatus() != AppointmentStatus.PENDING) {
+            throw new IllegalStateException("Only PENDING appointments can be reassigned");
+        }
+
+        CoachWorkSchedule currentCws = ap.getCoachWorkSchedule();
+        if (currentCws == null || currentCws.getSlot() == null || ap.getDate() == null) {
+            throw new IllegalStateException("Cannot determine appointment's date/slot to perform reassignment");
+        }
+
+        LocalDate date = ap.getDate();
+        int slotId = currentCws.getSlot().getId();
+
+        // Lưu thông tin old coach/account trước khi thay đổi
+        Coach oldCoach = ap.getCoach();
+        Account oldCoachAccount = (oldCoach != null) ? oldCoach.getAccount() : null;
+
+        // 1) Lock target CWS row for update
+        CoachWorkSchedule targetCws = coachWorkScheduleRepository
+                .findByCoachIdAndDateAndSlotIdForUpdate(targetCoachId, date, slotId)
+                .orElseThrow(() -> new IllegalArgumentException("Target coach does not have this slot in schedule"));
+
+        // 2) ensure target is AVAILABLE
+        if (targetCws.getStatus() != CoachWorkScheduleStatus.AVAILABLE) {
+            throw new IllegalStateException("Target coach is not available for the specified slot");
+        }
+
+        // 3) double-check target slot not already booked (safety)
+        if (appointmentRepository.existsActiveByCoachSlotDate(targetCoachId, slotId, date)) {
+            throw new IllegalStateException("Target coach already has a booking for this slot");
+        }
+
+        // 4) Lock current CWS for update (try to fetch FOR UPDATE)
+        CoachWorkSchedule lockedCurrentCws = coachWorkScheduleRepository
+                .findByCoachIdAndDateAndSlotIdForUpdate(oldCoach != null ? oldCoach.getId() : -1, date, slotId)
+                .orElse(null);
+
+        // 5) perform the swap:
+        // - mark current CWS as UNAVAILABLE (because coach A is busy)
+        // - mark targetCws as BOOKED
+        if (lockedCurrentCws != null) {
+            lockedCurrentCws.setStatus(CoachWorkScheduleStatus.UNAVAILABLE);
+            coachWorkScheduleRepository.save(lockedCurrentCws);
+        } else {
+            // fallback: if we couldn't lock currentCws by coachId, try using the attached entity
+            currentCws.setStatus(CoachWorkScheduleStatus.UNAVAILABLE);
+            coachWorkScheduleRepository.save(currentCws);
+        }
+
+        targetCws.setStatus(CoachWorkScheduleStatus.BOOKED);
+        coachWorkScheduleRepository.save(targetCws);
+
+        // 6) update appointment -> new coach + new coachWorkSchedule
+        Coach newCoach = targetCws.getCoach();
+        if (newCoach == null) {
+            throw new IllegalStateException("Target coach entity missing");
+        }
+
+        ap.setCoach(newCoach);
+        ap.setCoachWorkSchedule(targetCws);
+
+        appointmentRepository.save(ap);
+
+        log.info("Reassigned appointment {} -> coach {} for date {} slot {} (old coach set to UNAVAILABLE)",
+                appointmentId, targetCoachId, date, slotId);
+
+        // 7) notifications: notify new coach + member + notify old coach that they were unassigned
+        try {
+            Account memberAccount = ap.getMember() != null ? ap.getMember().getAccount() : null;
+            Account newCoachAccount = newCoach.getAccount();
+
+            String deepLink = "smartquit://appointment/" + ap.getId();
+            String url = "appointments/" + ap.getId();
+
+            // notify new coach
+            if (newCoachAccount != null) {
+                notificationService.saveAndPublish(
+                        newCoachAccount,
+                        NotificationType.APPOINTMENT_BOOKED,
+                        "You have been assigned to an appointment",
+                        String.format("You were assigned to appointment #%d at %s on %s", ap.getId(), targetCws.getSlot().getStartTime(), date),
+                        null,
+                        url,
+                        deepLink
+                );
+            }
+
+            // notify member
+            if (memberAccount != null) {
+                notificationService.saveAndPublish(
+                        memberAccount,
+                        NotificationType.APPOINTMENT_BOOKED,
+                        "Your appointment has been reassigned",
+                        String.format("Your appointment #%d was reassigned to coach %s %s at %s on %s",
+                                ap.getId(),
+                                newCoach.getFirstName() != null ? newCoach.getFirstName() : "",
+                                newCoach.getLastName() != null ? newCoach.getLastName() : "",
+                                targetCws.getSlot().getStartTime(),
+                                date),
+                        null,
+                        url,
+                        deepLink
+                );
+            }
+
+            // notify old coach that they are unassigned (use CANCELLED type or custom type)
+            if (oldCoachAccount != null) {
+                notificationService.saveAndPublish(
+                        oldCoachAccount,
+                        NotificationType.APPOINTMENT_CANCELLED,
+                        "You were unassigned from an appointment",
+                        String.format("You were unassigned from appointment #%d at %s on %s (slot marked UNAVAILABLE).", ap.getId(), slotId, date),
+                        null,
+                        url,
+                        deepLink
+                );
+            }
+
+        } catch (Exception ex) {
+            log.warn("Failed sending reassignment notifications for appointment {}: {}", ap.getId(), ex.getMessage());
+        }
+    }
+
 }

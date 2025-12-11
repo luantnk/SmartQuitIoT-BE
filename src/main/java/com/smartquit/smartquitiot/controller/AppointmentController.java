@@ -1,15 +1,18 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.AppointmentRequest;
+import com.smartquit.smartquitiot.dto.request.ReassignAppointmentRequest;
 import com.smartquit.smartquitiot.dto.request.SnapshotUploadRequest;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
 import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.service.AppointmentService;
+import com.smartquit.smartquitiot.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -18,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 
 @RestController
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
+    private final ScheduleService scheduleService;
 
     @PostMapping
     @PreAuthorize("hasRole('MEMBER')")
@@ -288,4 +293,49 @@ public class AppointmentController {
         return ResponseEntity.ok(dtoPage);
     }
 
+    @PutMapping("/{appointmentId}/reassign")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Admin: Reassign appointment to another coach (same date+slot).")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> reassignAppointment(
+            @PathVariable int appointmentId,
+            @RequestBody ReassignAppointmentRequest request) {
+
+        if (request == null || request.getTargetCoachId() == null) {
+            return ResponseEntity.badRequest().body(GlobalResponse.error("targetCoachId is required", 400));
+        }
+
+        try {
+            appointmentService.reassignAppointment(appointmentId, request.getTargetCoachId());
+            return ResponseEntity.ok(GlobalResponse.ok("Appointment reassigned successfully", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(GlobalResponse.error(e.getMessage(), 404));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(400).body(GlobalResponse.error(e.getMessage(), 400));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(GlobalResponse.error(e.getMessage(), 403));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(GlobalResponse.error("Error when reassigning appointment: " + e.getMessage(), 500));
+        }
+    }
+
+    @GetMapping("/available-coaches")
+    @PreAuthorize("hasAnyRole('ADMIN','MEMBER')")
+    @Operation(summary = "List coaches available for a specific date + slotId",
+            description = "Query params: date=YYYY-MM-DD, slotId, optional excludeCoachId to exclude one coach.")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<GlobalResponse> getAvailableCoaches(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam int slotId,
+            @RequestParam(required = false) Integer excludeCoachId) {
+
+        try {
+            var list = scheduleService.findAvailableCoaches(date, slotId, excludeCoachId);
+            return ResponseEntity.ok(GlobalResponse.ok("Available coaches fetched", list));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(GlobalResponse.error(e.getMessage(), 400));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(GlobalResponse.error("Error when fetching available coaches: " + e.getMessage(), 500));
+        }
+    }
 }
