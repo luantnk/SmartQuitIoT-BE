@@ -41,6 +41,7 @@ public class AppointmentResponse {
     Instant joinWindowEnd;
     CancelledBy cancelledBy;
     LocalDateTime cancelledAt;
+    LocalDateTime createdAt;
     AppointmentStatus realAppointmentStatus;
     boolean hasRated = false;
 }
