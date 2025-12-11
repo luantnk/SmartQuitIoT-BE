@@ -140,6 +140,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setDate(cws.getDate());
         appointment.setName("Appointment with coach " + (cws.getCoach().getLastName() != null ? cws.getCoach().getLastName() : ""));
         appointment.setCoachWorkSchedule(cws);
+        appointment.setCreatedAt(LocalDateTime.now());
         appointmentRepository.save(appointment);
 
         log.info("Member(accountId={}) (memberId={}) booked slot {} with coach {} on date {}",

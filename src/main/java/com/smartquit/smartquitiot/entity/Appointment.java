@@ -40,6 +40,7 @@ public class Appointment {
 
     LocalDateTime cancelledAt;
 
+    LocalDateTime createdAt;
     @ManyToOne(fetch = FetchType.LAZY)
     CoachWorkSchedule coachWorkSchedule;
 
