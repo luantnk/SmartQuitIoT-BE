@@ -473,9 +473,26 @@ public class PhaseServiceImpl implements PhaseService {
 //            for (Phase p : ordered) {
 //                log.info("ss {}",p.getId());
 //            }
+            boolean hasBlockingFailure = false;
             for (int i = 0; i < ordered.size(); i++) {
                 Phase phase = ordered.get(i);
+
+                // Nếu đã có 1 phase FAILED phía trước chưa được xử lý -> đóng băng các phase sau
+                if (hasBlockingFailure) {
+                    log.info("Skip phase {} because previous phase is FAILED and unresolved", phase.getId());
+                    continue;
+                }
+
                 PhaseStatus oldStatus = phase.getStatus();
+
+                //FAILED nhưng mà người ta chọn keep rồi nên là cho đánh dá lại
+                //Còn không nếu đã FAILED từ trước mà không chon keep thi block luon
+                if (oldStatus == PhaseStatus.FAILED && !phase.isKeepPhase()) {
+                    hasBlockingFailure = true;
+                    continue;
+                }
+
+
                 if(phase.isRedo()){
                     continue;
                 }
@@ -536,6 +553,7 @@ public class PhaseServiceImpl implements PhaseService {
                         phase.setStatus(PhaseStatus.FAILED);
 //                        log.info(" not pass due to fail condition of phase");
                         phaseRepository.save(phase);
+                        hasBlockingFailure = true;
                     }
 
 
