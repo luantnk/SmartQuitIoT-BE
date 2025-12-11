@@ -1,6 +1,8 @@
 package com.smartquit.smartquitiot.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.smartquit.smartquitiot.entity.Appointment;
+import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.enums.CancelledBy;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -39,6 +41,6 @@ public class AppointmentResponse {
     Instant joinWindowEnd;
     CancelledBy cancelledBy;
     LocalDateTime cancelledAt;
-
+    AppointmentStatus realAppointmentStatus;
     boolean hasRated = false;
 }
