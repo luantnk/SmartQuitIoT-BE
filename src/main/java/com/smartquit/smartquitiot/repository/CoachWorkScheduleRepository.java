@@ -66,4 +66,8 @@ public interface CoachWorkScheduleRepository extends JpaRepository<CoachWorkSche
             @Param("start") LocalDate start,
             @Param("end") LocalDate end);
 
+    @Query("select cws from CoachWorkSchedule cws join fetch cws.coach ch where cws.date = :date and cws.slot.id = :slotId")
+    List<CoachWorkSchedule> findAllByDateAndSlotIdWithCoach(@Param("date") LocalDate date, @Param("slotId") int slotId);
+
+
 }

@@ -86,4 +86,6 @@ public class CoachController {
     public ResponseEntity<?> getCoachStatistics() {
         return ResponseEntity.ok(coachService.getCoachStatistics());
     }
+
+   
 }
