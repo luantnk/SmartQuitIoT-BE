@@ -19,6 +19,7 @@ public class AppointmentMapper {
         }
         // Add real - appointment status
         AppointmentStatus realAppointmentStatus = appointment.getAppointmentStatus();
+        LocalDateTime createdAt = appointment.getCreatedAt();
         Integer appointmentId = appointment.getId();
         Integer coachId = appointment.getCoach() != null ? appointment.getCoach().getId() : null;
         String coachName = "";
@@ -48,7 +49,8 @@ public class AppointmentMapper {
                 .slotId(slotId != null ? slotId : 0)
                 .startTime(startTime)
                 .endTime(endTime)
-                .realAppointmentStatus(realAppointmentStatus);
+                .realAppointmentStatus(realAppointmentStatus)
+                .createdAt(createdAt);
 
         // --- map member info (moved into mapper)
         if (appointment.getMember() != null) {
