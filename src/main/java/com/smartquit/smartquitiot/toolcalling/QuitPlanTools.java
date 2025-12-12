@@ -56,7 +56,9 @@ public class QuitPlanTools {
         else if (FTND <= 3) onset = 4;
         else onset = 5;
         if ("FEMALE".equalsIgnoreCase(gender)) onset += 1;
+        if (age >= 40) onset += 1;
         phases.put("Onset", onset);
+
         // Peak Craving
         int peak;
         if (FTND >= 7 || yearsSmoking > 10) peak = 10;
