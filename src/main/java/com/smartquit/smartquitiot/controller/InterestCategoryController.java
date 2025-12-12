@@ -1,7 +1,6 @@
 package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.response.InterestCategoryDTO;
-import com.smartquit.smartquitiot.entity.InterestCategory;
 import com.smartquit.smartquitiot.service.InterestCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

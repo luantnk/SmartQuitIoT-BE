@@ -6,7 +6,6 @@ import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
 import com.smartquit.smartquitiot.entity.Member;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 

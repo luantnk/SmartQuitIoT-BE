@@ -1,9 +1,9 @@
 package com.smartquit.smartquitiot.cron;
 
-import com.smartquit.smartquitiot.entity.Appointment;
 import com.smartquit.smartquitiot.entity.Account;
-import com.smartquit.smartquitiot.enums.NotificationType;
+import com.smartquit.smartquitiot.entity.Appointment;
 import com.smartquit.smartquitiot.enums.AppointmentStatus;
+import com.smartquit.smartquitiot.enums.NotificationType;
 import com.smartquit.smartquitiot.repository.AppointmentRepository;
 import com.smartquit.smartquitiot.repository.NotificationRepository;
 import com.smartquit.smartquitiot.service.NotificationService;

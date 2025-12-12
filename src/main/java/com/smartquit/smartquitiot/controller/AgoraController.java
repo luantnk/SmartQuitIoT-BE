@@ -1,11 +1,5 @@
 package com.smartquit.smartquitiot.controller;
 
-import com.smartquit.smartquitiot.service.AgoraService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
 import com.smartquit.smartquitiot.service.AgoraService;
 import lombok.RequiredArgsConstructor;

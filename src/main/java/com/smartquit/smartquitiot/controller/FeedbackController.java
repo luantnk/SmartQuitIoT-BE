@@ -1,8 +1,8 @@
 package com.smartquit.smartquitiot.controller;
+
 import com.smartquit.smartquitiot.dto.request.FeedbackRequest;
 import com.smartquit.smartquitiot.dto.response.FeedbackResponse;
 import com.smartquit.smartquitiot.dto.response.GlobalResponse;
-import com.smartquit.smartquitiot.entity.Feedback;
 import com.smartquit.smartquitiot.service.FeedbackService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

@@ -1,6 +1,5 @@
 package com.smartquit.smartquitiot.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.smartquit.smartquitiot.enums.Gender;
 import lombok.*;
 

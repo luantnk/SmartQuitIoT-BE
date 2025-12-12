@@ -2,8 +2,6 @@ package com.smartquit.smartquitiot.dto.request;
 
 import com.smartquit.smartquitiot.enums.Gender;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

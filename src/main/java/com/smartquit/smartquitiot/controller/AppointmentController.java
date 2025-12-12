@@ -22,7 +22,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/appointments")

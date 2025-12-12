@@ -1,9 +1,9 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.response.DashboardStatisticsDTO;
+import com.smartquit.smartquitiot.mapper.StatisticsMapper;
 import com.smartquit.smartquitiot.repository.AppointmentRepository;
 import com.smartquit.smartquitiot.repository.MemberRepository;
-import com.smartquit.smartquitiot.mapper.StatisticsMapper;
 import com.smartquit.smartquitiot.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

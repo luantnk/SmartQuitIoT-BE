@@ -1,7 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.response.MissionTypeDTO;
-import com.smartquit.smartquitiot.entity.InterestCategory;
 import com.smartquit.smartquitiot.entity.MissionType;
 import com.smartquit.smartquitiot.mapper.MissionTypeMapper;
 import com.smartquit.smartquitiot.repository.MissionTypeRepository;

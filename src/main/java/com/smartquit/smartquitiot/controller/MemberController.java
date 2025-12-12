@@ -4,8 +4,6 @@ import com.smartquit.smartquitiot.dto.request.MemberReminderSettingsRequest;
 import com.smartquit.smartquitiot.dto.request.MemberUpdateRequest;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.MemberListItemDTO;
-import com.smartquit.smartquitiot.entity.Account;
-import com.smartquit.smartquitiot.entity.Member;
 import com.smartquit.smartquitiot.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

@@ -3,7 +3,6 @@ package com.smartquit.smartquitiot.controller;
 import com.smartquit.smartquitiot.dto.request.RedoPhaseRequest;
 import com.smartquit.smartquitiot.dto.response.PhaseDTO;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
-import com.smartquit.smartquitiot.repository.PhaseRepository;
 import com.smartquit.smartquitiot.service.PhaseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

@@ -6,7 +6,6 @@ import com.smartquit.smartquitiot.dto.response.JoinTokenResponse;
 import com.smartquit.smartquitiot.dto.response.RemainingBookingResponse;
 import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import org.springframework.data.domain.Page;
-import org.springframework.security.core.Authentication;
 
 import java.util.List;
 

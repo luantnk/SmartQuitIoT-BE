@@ -4,7 +4,6 @@ import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 

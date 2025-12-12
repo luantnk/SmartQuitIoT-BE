@@ -6,9 +6,6 @@ import com.smartquit.smartquitiot.dto.response.UpdateFormMetricResponse;
 import com.smartquit.smartquitiot.entity.FormMetric;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 
 @Component
 public class FormMetricMapper {

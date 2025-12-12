@@ -1,6 +1,5 @@
 package com.smartquit.smartquitiot.dto.request;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.MissionStatus;
 import jakarta.validation.constraints.Min;

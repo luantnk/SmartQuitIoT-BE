@@ -2,17 +2,13 @@ package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.AddAchievementRequest;
 import com.smartquit.smartquitiot.dto.request.CreateAchievementRequest;
-import com.smartquit.smartquitiot.dto.request.MemberAccountRequest;
 import com.smartquit.smartquitiot.dto.response.AchievementDTO;
-import com.smartquit.smartquitiot.dto.response.MemberDTO;
 import com.smartquit.smartquitiot.dto.response.TopMemberAchievementDTO;
 import com.smartquit.smartquitiot.entity.Achievement;
-import com.smartquit.smartquitiot.entity.MemberAchievement;
 import com.smartquit.smartquitiot.service.AchievementService;
 import com.smartquit.smartquitiot.service.MemberAchievementService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;

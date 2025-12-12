@@ -1,6 +1,5 @@
 package com.smartquit.smartquitiot.controller;
 
-import com.smartquit.smartquitiot.dto.response.InterestCategoryDTO;
 import com.smartquit.smartquitiot.dto.response.MissionTypeDTO;
 import com.smartquit.smartquitiot.service.MissionTypeService;
 import io.swagger.v3.oas.annotations.Operation;

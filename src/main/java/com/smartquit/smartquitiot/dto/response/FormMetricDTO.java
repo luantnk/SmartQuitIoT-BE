@@ -1,19 +1,12 @@
 package com.smartquit.smartquitiot.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.smartquit.smartquitiot.entity.QuitPlan;
-import com.vladmihalcea.hibernate.type.json.JsonType;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter

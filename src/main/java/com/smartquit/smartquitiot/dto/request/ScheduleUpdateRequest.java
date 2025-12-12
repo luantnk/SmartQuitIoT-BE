@@ -3,6 +3,7 @@ package com.smartquit.smartquitiot.dto.request;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
 import java.util.List;
 
 @Getter

@@ -4,8 +4,6 @@ import com.smartquit.smartquitiot.dto.response.NotificationDTO;
 import com.smartquit.smartquitiot.entity.Notification;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 @Component
 public class NotificationMapper {
 

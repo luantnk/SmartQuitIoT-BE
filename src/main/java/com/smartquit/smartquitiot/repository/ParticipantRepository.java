@@ -1,8 +1,8 @@
 package com.smartquit.smartquitiot.repository;
 
-import com.smartquit.smartquitiot.entity.Participant;
-import com.smartquit.smartquitiot.entity.Conversation;
 import com.smartquit.smartquitiot.entity.Account;
+import com.smartquit.smartquitiot.entity.Conversation;
+import com.smartquit.smartquitiot.entity.Participant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

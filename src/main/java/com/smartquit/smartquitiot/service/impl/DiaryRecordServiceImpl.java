@@ -85,8 +85,11 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         var currentMoneySaved = BigDecimal.ZERO;
         double reductionPercentage = 0.0;
 
-        if (recordDate.isAfter(startDate)) {
+        if (recordDate.isEqual(startDate) || recordDate.isAfter(startDate)) {
             dayBetween = ChronoUnit.DAYS.between(startDate, recordDate);
+            if(dayBetween == 0){
+                dayBetween = 1;
+            }
             pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
             moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
             currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));

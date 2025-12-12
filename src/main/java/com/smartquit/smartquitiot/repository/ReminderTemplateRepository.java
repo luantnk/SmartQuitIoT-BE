@@ -1,6 +1,5 @@
 package com.smartquit.smartquitiot.repository;
 
-import com.smartquit.smartquitiot.entity.QuitPlan;
 import com.smartquit.smartquitiot.entity.ReminderTemplate;
 import com.smartquit.smartquitiot.enums.PhaseEnum;
 import com.smartquit.smartquitiot.enums.ReminderType;

@@ -1,7 +1,10 @@
 package com.smartquit.smartquitiot.dto.request;
 
 import com.smartquit.smartquitiot.enums.Gender;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

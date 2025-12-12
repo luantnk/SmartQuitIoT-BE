@@ -2,7 +2,6 @@ package com.smartquit.smartquitiot.controller;
 
 import com.smartquit.smartquitiot.dto.request.CreateMissionRequest;
 import com.smartquit.smartquitiot.dto.request.UpdateMissionRequest;
-import com.smartquit.smartquitiot.dto.response.AchievementDTO;
 import com.smartquit.smartquitiot.dto.response.MissionDTO;
 import com.smartquit.smartquitiot.service.MissionService;
 import io.swagger.v3.oas.annotations.Operation;

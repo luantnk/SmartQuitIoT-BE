@@ -7,7 +7,6 @@ import com.smartquit.smartquitiot.entity.Mission;
 import com.smartquit.smartquitiot.entity.QuitPlan;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.MissionStatus;
-import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.repository.QuitPlanRepository;
 import com.smartquit.smartquitiot.service.AccountService;
 import com.smartquit.smartquitiot.service.MissionService;

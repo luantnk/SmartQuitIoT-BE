@@ -1,7 +1,6 @@
 package com.smartquit.smartquitiot.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.smartquit.smartquitiot.entity.Appointment;
 import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.enums.CancelledBy;
 import lombok.*;

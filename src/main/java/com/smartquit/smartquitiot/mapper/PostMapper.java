@@ -4,8 +4,6 @@ import com.smartquit.smartquitiot.dto.response.PostDetailDTO;
 import com.smartquit.smartquitiot.dto.response.PostSummaryDTO;
 import com.smartquit.smartquitiot.entity.Comment;
 import com.smartquit.smartquitiot.entity.Post;
-import com.smartquit.smartquitiot.enums.Role;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

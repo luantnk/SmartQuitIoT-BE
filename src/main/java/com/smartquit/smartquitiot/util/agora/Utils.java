@@ -1,5 +1,9 @@
 package com.smartquit.smartquitiot.util.agora;
 
+import org.apache.commons.codec.binary.Base64;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -10,11 +14,6 @@ import java.util.Date;
 import java.util.zip.CRC32;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.apache.commons.codec.binary.Base64;
 
 public class Utils {
     public static final long HMAC_SHA256_LENGTH = 32;
