@@ -285,4 +285,10 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
                 "Membership Package " + membershipPackage.getName() + " has been updated to price " + membershipPackage.getPrice());
         return membershipPackageMapper.toMembershipPackageDTO(membershipPackage);
     }
+
+    @Override
+    public List<MembershipPackageDTO> manageMembershipPackages() {
+        List<MembershipPackage> membershipPackages = membershipPackageRepository.findAll();
+        return membershipPackages.stream().map(membershipPackageMapper::toMembershipPackageDTO).toList();
+    }
 }

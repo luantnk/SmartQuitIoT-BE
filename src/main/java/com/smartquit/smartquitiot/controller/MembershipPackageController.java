@@ -76,4 +76,13 @@ public class MembershipPackageController {
         return ResponseEntity.ok(GlobalResponse.ok("Update membership package success", membershipPackageService.updateMembershipPackage(request)));
     }
 
+    @GetMapping("/manage")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Get all membership package fot Admin")
+    public ResponseEntity<GlobalResponse<List<MembershipPackageDTO>>> manageMembershipPackages() {
+        return ResponseEntity.ok(
+                GlobalResponse.ok("Get Membership Packages", membershipPackageService.manageMembershipPackages())
+        );
+    }
+
 }

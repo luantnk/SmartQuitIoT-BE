@@ -24,4 +24,6 @@ public interface MembershipPackageService {
     Map<String, Object> getMembershipPackageDetails(int membershipPackageId);
 
     MembershipPackageDTO updateMembershipPackage(UpdateMembershipPackageRequest request);
+
+    List<MembershipPackageDTO> manageMembershipPackages();
 }
