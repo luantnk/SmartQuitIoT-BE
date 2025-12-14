@@ -20,7 +20,7 @@ public class StatisticsController {
     private final StatisticsService statisticsService;
 
     @GetMapping("/dashboard")
-    @PreAuthorize("hasAnyRole('ADMIN','COACH')")
+    @PreAuthorize("hasAnyRole('COACH')")
     @Operation(summary = "Get dashboard statistics", 
                description = "Returns statistics for appointments and members including today's appointments, pending requests, completed this week, active members, and upcoming appointments")
     @SecurityRequirement(name = "Bearer Authentication")
