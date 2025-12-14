@@ -32,9 +32,27 @@ public interface MemberRepository extends JpaRepository<Member, Integer>, JpaSpe
            "WHERE a.isActive = true AND a.isBanned = false")
     long countActiveMembers();
 
+    @Query("SELECT COUNT(DISTINCT a.member) FROM Appointment a " +
+           "JOIN a.member m " +
+           "JOIN m.account acc " +
+           "WHERE a.coach.id = :coachId " +
+           "AND acc.isActive = true AND acc.isBanned = false " +
+           "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED")
+    long countActiveMembersByCoachId(@Param("coachId") int coachId);
+
     @Query("SELECT COUNT(m) FROM Member m " +
            "JOIN m.account a " +
            "WHERE a.isActive = true AND a.isBanned = false " +
            "AND a.createdAt >= :startDate")
     long countNewMembersSince(@Param("startDate") java.time.LocalDateTime startDate);
+
+    @Query("SELECT COUNT(DISTINCT a.member) FROM Appointment a " +
+           "JOIN a.member m " +
+           "JOIN m.account acc " +
+           "WHERE a.coach.id = :coachId " +
+           "AND acc.isActive = true AND acc.isBanned = false " +
+           "AND acc.createdAt >= :startDate " +
+           "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED")
+    long countNewMembersByCoachIdSince(@Param("coachId") int coachId, 
+                                      @Param("startDate") java.time.LocalDateTime startDate);
 }

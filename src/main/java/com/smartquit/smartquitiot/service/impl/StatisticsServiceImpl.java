@@ -1,9 +1,12 @@
 package com.smartquit.smartquitiot.service.impl;
 
 import com.smartquit.smartquitiot.dto.response.DashboardStatisticsDTO;
+import com.smartquit.smartquitiot.entity.Coach;
 import com.smartquit.smartquitiot.mapper.StatisticsMapper;
 import com.smartquit.smartquitiot.repository.AppointmentRepository;
 import com.smartquit.smartquitiot.repository.MemberRepository;
+import com.smartquit.smartquitiot.mapper.StatisticsMapper;
+import com.smartquit.smartquitiot.service.CoachService;
 import com.smartquit.smartquitiot.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,9 +22,14 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final AppointmentRepository appointmentRepository;
     private final MemberRepository memberRepository;
     private final StatisticsMapper statisticsMapper;
+    private final CoachService coachService;
 
     @Override
     public DashboardStatisticsDTO getDashboardStatistics() {
+        // Lấy coach hiện tại đang đăng nhập
+        Coach currentCoach = coachService.getAuthenticatedCoach();
+        int coachId = currentCoach.getId();
+
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
         
@@ -37,23 +45,23 @@ public class StatisticsServiceImpl implements StatisticsService {
         // Tính start của tháng hiện tại
         LocalDateTime startOfMonth = LocalDateTime.of(today.withDayOfMonth(1), LocalTime.MIN);
 
-        // Appointments Today
-        long appointmentsToday = appointmentRepository.countByDate(today);
-        long appointmentsYesterday = appointmentRepository.countByDate(yesterday);
+        // Appointments Today (filter theo coach)
+        long appointmentsToday = appointmentRepository.countByDateAndCoachId(today, coachId);
+        long appointmentsYesterday = appointmentRepository.countByDateAndCoachId(yesterday, coachId);
         
-        // Pending Requests
-        long pendingRequests = appointmentRepository.countPendingRequests();
+        // Pending Requests (filter theo coach)
+        long pendingRequests = appointmentRepository.countPendingRequestsByCoachId(coachId);
         
-        // Completed This Week
-        long completedThisWeek = appointmentRepository.countCompletedBetween(startOfWeek, endOfWeek);
-        long completedLastWeek = appointmentRepository.countCompletedBetween(startOfLastWeek, endOfLastWeek);
+        // Completed This Week (filter theo coach)
+        long completedThisWeek = appointmentRepository.countCompletedBetweenByCoachId(coachId, startOfWeek, endOfWeek);
+        long completedLastWeek = appointmentRepository.countCompletedBetweenByCoachId(coachId, startOfLastWeek, endOfLastWeek);
         
-        // Active Members
-        long activeMembers = memberRepository.countActiveMembers();
-        long newMembersThisMonth = memberRepository.countNewMembersSince(startOfMonth);
+        // Active Members (filter theo coach - members đã có appointment với coach này)
+        long activeMembers = memberRepository.countActiveMembersByCoachId(coachId);
+        long newMembersThisMonth = memberRepository.countNewMembersByCoachIdSince(coachId, startOfMonth);
         
-        // Upcoming Appointments
-        var upcomingAppointments = appointmentRepository.findUpcomingByDate(today);
+        // Upcoming Appointments (filter theo coach)
+        var upcomingAppointments = appointmentRepository.findUpcomingByDateAndCoachId(today, coachId);
         var upcomingDTOs = statisticsMapper.toUpcomingAppointmentDTOList(upcomingAppointments);
 
         return DashboardStatisticsDTO.builder()
