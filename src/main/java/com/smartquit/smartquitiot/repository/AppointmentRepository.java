@@ -90,14 +90,33 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     long countByDate(@Param("date") LocalDate date);
 
     @Query("SELECT COUNT(a) FROM Appointment a " +
+       "WHERE a.date = :date " +
+       "AND a.coach.id = :coachId " +
+       "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED")
+    long countByDateAndCoachId(@Param("date") LocalDate date, @Param("coachId") int coachId);
+
+    @Query("SELECT COUNT(a) FROM Appointment a " +
        "WHERE a.appointmentStatus = com.smartquit.smartquitiot.enums.AppointmentStatus.PENDING")
     long countPendingRequests();
+
+    @Query("SELECT COUNT(a) FROM Appointment a " +
+       "WHERE a.appointmentStatus = com.smartquit.smartquitiot.enums.AppointmentStatus.PENDING " +
+       "AND a.coach.id = :coachId")
+    long countPendingRequestsByCoachId(@Param("coachId") int coachId);
 
     @Query("SELECT COUNT(a) FROM Appointment a " +
        "WHERE a.appointmentStatus = com.smartquit.smartquitiot.enums.AppointmentStatus.COMPLETED " +
        "AND a.date BETWEEN :startDate AND :endDate")
     long countCompletedBetween(@Param("startDate") LocalDate startDate, 
                           @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COUNT(a) FROM Appointment a " +
+       "WHERE a.appointmentStatus = com.smartquit.smartquitiot.enums.AppointmentStatus.COMPLETED " +
+       "AND a.coach.id = :coachId " +
+       "AND a.date BETWEEN :startDate AND :endDate")
+    long countCompletedBetweenByCoachId(@Param("coachId") int coachId,
+                                       @Param("startDate") LocalDate startDate, 
+                                       @Param("endDate") LocalDate endDate);
 
     @Query("SELECT a FROM Appointment a " +
        "JOIN FETCH a.member m " +
@@ -107,6 +126,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
        "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED " +
        "ORDER BY s.startTime DESC")
     List<Appointment> findUpcomingByDate(@Param("date") LocalDate date);
+
+    @Query("SELECT a FROM Appointment a " +
+       "JOIN FETCH a.member m " +
+       "JOIN FETCH a.coachWorkSchedule cws " +
+       "JOIN FETCH cws.slot s " +
+       "WHERE a.date = :date " +
+       "AND a.coach.id = :coachId " +
+       "AND a.appointmentStatus <> com.smartquit.smartquitiot.enums.AppointmentStatus.CANCELLED " +
+       "ORDER BY s.startTime DESC")
+    List<Appointment> findUpcomingByDateAndCoachId(@Param("date") LocalDate date, @Param("coachId") int coachId);
 
     /**
      * Tìm appointments trùng thời gian: cùng member, cùng date, cùng slot nhưng khác coach.
