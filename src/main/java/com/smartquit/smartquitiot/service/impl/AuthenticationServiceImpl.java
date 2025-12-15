@@ -187,7 +187,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                .subject(account.getEmail())
                .issuer("SmartQuitIoT")
                .issueTime(new Date())
-               .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.MINUTES).toEpochMilli()))
+               .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.HOURS).toEpochMilli()))
                .claim("scope", account.getRole() != null ? account.getRole().name() : Role.MEMBER.name())
                .claim("username", account.getUsername())
                .claim("accountId", account.getId());
