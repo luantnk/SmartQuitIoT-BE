@@ -257,7 +257,7 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
                 "totalMembershipPackage", totalMembershipPackage,
                 "totalSubscriptions", totalSubscriptions,
                 "activeSubscriptions", activeSubscriptions,
-                "mostPopularPackage", maxEntry != null ? maxEntry.getKey().getName() : null
+                "mostPopularPackage", maxEntry != null ? maxEntry.getKey().getName() : "N/A"
         );
 
         return response;

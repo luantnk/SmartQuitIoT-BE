@@ -79,22 +79,19 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         int smokeAvgPerDay = currentFormMetric.getSmokeAvgPerDay();
         double _avgDayToSmokeAll = (double) cigarettesPerPackage / smokeAvgPerDay;
         //calculate money saved on plan
-        long dayBetween = 0;
+        long dayBetween = 1;
         var pricePerCigarettes = BigDecimal.ZERO;
         var moneyForSmokedPerDay = BigDecimal.ZERO;
         var currentMoneySaved = BigDecimal.ZERO;
         double reductionPercentage = 0.0;
 
         if (recordDate.isEqual(startDate) || recordDate.isAfter(startDate)) {
-            dayBetween = ChronoUnit.DAYS.between(startDate, recordDate);
-            if(dayBetween == 0){
-                dayBetween = 1;
-            }
-            pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
-            moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
-            currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
-            reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) / smokeAvgPerDay) * 100.0;
+            dayBetween += ChronoUnit.DAYS.between(startDate, recordDate);
         }
+        pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
+        moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
+        currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
+        reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) / smokeAvgPerDay) * 100.0;
         //Number of consumption day
         int avgDayToSmokeAll = (int) Math.ceil(_avgDayToSmokeAll);
         Calendar cal = Calendar.getInstance();
@@ -178,9 +175,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         }
         double reductionInLastSmoked = 0.0;
         DiaryRecord lastSmokedRecord = diaryRecordRepository.findTopByMemberIdAndHaveSmokedIsTrueOrderByDateAsc(member.getId()).orElse(null);
-        if(lastSmokedRecord != null){
-            reductionInLastSmoked = ((double)(lastSmokedRecord.getCigarettesSmoked() - request.getCigarettesSmoked()) / lastSmokedRecord.getCigarettesSmoked()) * 100.0;
-        }else{
+        if (lastSmokedRecord != null) {
+            reductionInLastSmoked = ((double) (lastSmokedRecord.getCigarettesSmoked() - request.getCigarettesSmoked()) / lastSmokedRecord.getCigarettesSmoked()) * 100.0;
+        } else {
             reductionInLastSmoked = reductionPercentage;
         }
         int count = records.size(); // number of member's diary records
@@ -197,7 +194,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         if (Double.isNaN(smokeFreeDayPercentage) || Double.isInfinite(smokeFreeDayPercentage)) {
             smokeFreeDayPercentage = metric.getSmokeFreeDayPercentage();
         }
-        if(Double.isNaN(avgNicotineMgPerDay) || Double.isInfinite(avgNicotineMgPerDay)){
+        if (Double.isNaN(avgNicotineMgPerDay) || Double.isInfinite(avgNicotineMgPerDay)) {
             avgNicotineMgPerDay = metric.getAvgNicotineMgPerDay();
         }
         metric.setStreaks(request.getHaveSmoked() ? 0 : streaksCount);
@@ -251,7 +248,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         addAchievementRequestSteps.setField("steps");
         memberAchievementService.addMemberAchievement(addAchievementRequestSteps).orElse(null);
 
-        if(isOnPlan && request.getHaveSmoked() == true){
+        if (isOnPlan && request.getHaveSmoked() == true) {
             List<ReminderTemplate> smokedTemplates =
                     reminderTemplateRepository.findByReminderType(ReminderType.SMOKED);
 
@@ -475,7 +472,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     @Override
     public List<DiaryRecordDTO> getDiaryRecordsForMember() {
         Member member = memberService.getAuthenticatedMember();
-        List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
+        List<DiaryRecord> records = diaryRecordRepository.findByMemberIdOrderByDateDesc(member.getId());
         return records.stream().map(diaryRecordMapper::toListDiaryRecordDTO).toList();
     }
 
@@ -531,6 +528,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         List<DiaryRecord> records = diaryRecordRepository.findByMemberIdOrderByDateDesc(memberId);
         return records.stream().map(diaryRecordMapper::toListDiaryRecordDTO).toList();
     }
+
     private <T> T pickRandom(List<T> list) {
         int idx = ThreadLocalRandom.current().nextInt(list.size());
         return list.get(idx);
@@ -547,19 +545,43 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     public DiaryRecordDTO updateDiaryRecord(int recordId, DiaryRecordUpdateRequest request) {
         Member member = memberService.getAuthenticatedMember();
         DiaryRecord record = diaryRecordRepository.findById(recordId).orElseThrow(() -> new RuntimeException("Diary record not found"));
-        if(record.getMember().getId() != member.getId()) {
+        Metric metric = metricRepository.findByMemberId(member.getId()).orElseThrow(() -> new RuntimeException("Metric not found"));
+        double oldMoneySpentOnNrt = record.getMoneySpentOnNrt();
+        if (record.getMember().getId() != member.getId()) {
             throw new RuntimeException("You are not authorized to update this record");
         }
-        Metric metric = metricRepository.findByMemberId(member.getId()).orElseThrow(() -> new RuntimeException("Metric not found"));
+        if(request.getCigarettesSmoked() != null && record.isHaveSmoked()){
+            record.setCigarettesSmoked(request.getCigarettesSmoked());
+            //update estimated nicotine intake
+            QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
+            FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
+            BigDecimal amountNicotinePerCigarettesOfMemberForm = currentFormMetric.getAmountOfNicotinePerCigarettes();
+            BigDecimal estimateNicotineIntake = amountNicotinePerCigarettesOfMemberForm.multiply(BigDecimal.valueOf(request.getCigarettesSmoked()));
+            record.setEstimatedNicotineIntake(estimateNicotineIntake);
+            //update reduction percentage
+            int smokeAvgPerDay = currentFormMetric.getSmokeAvgPerDay();
+            double reductionPercentage = 0.0;
+            reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) / smokeAvgPerDay) * 100.0;
+            record.setReductionPercentage(reductionPercentage);
+            //update reductionInLastSmoked in metric
+            DiaryRecord lastSmokedRecord = diaryRecordRepository.findTopByMemberIdAndHaveSmokedIsTrueOrderByDateAsc(member.getId()).orElse(null);
+            double reductionInLastSmoked = 0.0;
+            if (lastSmokedRecord != null) {
+                reductionInLastSmoked = ((double) (lastSmokedRecord.getCigarettesSmoked() - request.getCigarettesSmoked()) / lastSmokedRecord.getCigarettesSmoked()) * 100.0;
+            } else {
+                reductionInLastSmoked = 100.0;
+            }
+            metric.setReductionInLastSmoked(reductionInLastSmoked);
+        }
         record.setNote(request.getNote());
         record.setCravingLevel(request.getCravingLevel());
         record.setMoodLevel(request.getMoodLevel());
         record.setConfidenceLevel(request.getConfidenceLevel());
         record.setAnxietyLevel(request.getAnxietyLevel());
+        record.setMoneySpentOnNrt(request.getMoneySpentOnNrt());
         diaryRecordRepository.save(record);
         //update metric
         List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
-        int count = records.size();
         double newAvgCravingLevel = records.stream().mapToDouble(DiaryRecord::getCravingLevel).average().orElse(0.0);
         double newAvgMoodLevel = records.stream().mapToDouble(DiaryRecord::getMoodLevel).average().orElse(0.0);
         double newAvgConfidenceLevel = records.stream().mapToDouble(DiaryRecord::getConfidenceLevel).average().orElse(0.0);
@@ -568,12 +590,19 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         metric.setAvgMood(newAvgMoodLevel);
         metric.setAvgConfidentLevel(newAvgConfidenceLevel);
         metric.setAvgAnxiety(newAvgAnxietyLevel);
+        DiaryRecord latestRecord = diaryRecordRepository.findTopByMemberIdOrderByDateDesc(member.getId()).orElse(null);
+        if (latestRecord != null && latestRecord.getId() == recordId) {
+            metric.setCurrentAnxietyLevel(request.getAnxietyLevel());
+            metric.setCurrentCravingLevel(request.getCravingLevel());
+            metric.setCurrentConfidenceLevel(request.getConfidenceLevel());
+            metric.setCurrentMoodLevel(request.getMoodLevel());
+        }
         //update money saved in metric if moneySpentOnNrt is changed
-        double oldMoneySpentOnNrt = record.getMoneySpentOnNrt();
-        if(oldMoneySpentOnNrt != request.getMoneySpentOnNrt()){
+        if (oldMoneySpentOnNrt != request.getMoneySpentOnNrt()) {
             BigDecimal difference = BigDecimal.valueOf(oldMoneySpentOnNrt - request.getMoneySpentOnNrt());
             metric.setMoneySaved(metric.getMoneySaved().add(difference));
         }
+
         metricRepository.save(metric);
         return diaryRecordMapper.toDiaryRecordDTO(record);
     }
