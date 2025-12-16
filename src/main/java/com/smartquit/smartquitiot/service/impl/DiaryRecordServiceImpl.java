@@ -162,7 +162,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                 streaksCount = metric.getStreaks() + 1;
             }
         }
-
+        diaryRecord = diaryRecordRepository.save(diaryRecord);
         int smokeFreeDaysCount = 0;
         int totalCigarettesInRecords = 0;
         List<DiaryRecord> records = diaryRecordRepository.findByMemberId(member.getId());
@@ -227,8 +227,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             metric.setSleepDuration(request.getSleepDuration());
         }
         metricRepository.save(metric);
-
-        diaryRecord = diaryRecordRepository.save(diaryRecord);
         //calculate recovery time
         calculateRecoveryTime(calculateAge(member.getDob()), currentQuitPlan.getFtndScore(), request.getHaveSmoked());
 
