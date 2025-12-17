@@ -186,11 +186,11 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
         if (plan == null) {
             throw new RuntimeException("Mission Plan Not Found at getCurrentPhaseAtHomePage tools");
         }
-
         LocalDate currentDate = LocalDate.now();
-        Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS, plan.getId())
-                .orElseThrow(() -> new IllegalArgumentException("get current Phase not found at getCurrentPhaseAtHomePage"));
-
+        Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS, plan.getId()).orElse(null);
+        if(currentPhase == null){
+            currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.FAILED, plan.getId()).get();
+        }
         MissionTodayResponse missionTodayResponse = new MissionTodayResponse();
         List<PhaseDetailMissionResponseDTO> phaseDetailMissionResponseDTOS = new ArrayList<>();
         for (PhaseDetail phaseDetail : currentPhase.getDetails()) {
