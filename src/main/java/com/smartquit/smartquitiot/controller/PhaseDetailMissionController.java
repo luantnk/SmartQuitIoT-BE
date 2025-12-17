@@ -43,4 +43,10 @@ public class PhaseDetailMissionController {
         return ResponseEntity.ok(phaseDetailMissionService.completePhaseDetailMissionAtHomePage(req));
     }
 
+    @GetMapping("/mission-today/{memberId}")
+    @Operation(summary = "API to TEST get list mission today by memberId")
+    public ResponseEntity<?> getListMissionTodayByMemberId(@PathVariable int memberId) {
+        return ResponseEntity.ok(phaseDetailMissionService.getListMissionTodayByMemberId(memberId));
+    }
+
 }
