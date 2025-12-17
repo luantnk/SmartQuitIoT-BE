@@ -438,16 +438,66 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                 });
 
         if (isSmoke) {
-            updateRecoveryTimeIfSmoked(pulseRateRecovery, PULSE_RATE_TO_NORMAL, age, ftndScore);
-            updateRecoveryTimeIfSmoked(oxygenLevelRecovery, OXYGEN_LEVEL_TO_NORMAL, age, ftndScore);
-            updateRecoveryTimeIfSmoked(carbonMonoxideRecovery, CARBON_MONOXIDE_TO_NORMAL, age, ftndScore);
-            updateRecoveryTimeIfSmoked(tasteAndSmellRecovery, TASTE_AND_SMELL_IMPROVEMENT, age, ftndScore);
-            updateRecoveryTimeIfSmoked(nicotineExpelledFromBodyRecovery, NICOTINE_EXPELLED_FROM_BODY, age, ftndScore);
-            updateRecoveryTimeIfSmoked(circulationRecovery, CIRCULATION_AND_LUNG_FUNCTION, age, ftndScore);
-            updateRecoveryTimeIfSmoked(coughingAndBreathingRecovery, COUGHING_AND_BREATHING, age, ftndScore);
-            updateRecoveryTimeIfSmoked(reducedRiskOfHeartDiseaseRecovery, REDUCED_RISK_OF_HEART_DISEASE, age, ftndScore);
-            updateRecoveryTimeIfSmoked(reducedRiskOfHeartAttackRecovery, STROKE_RISK_REDUCTION, age, ftndScore);
-            updateRecoveryTimeIfSmoked(immunityAndLungFunctionRecovery, LUNG_CANCER_RISK_REDUCTION, age, ftndScore);
+            updateRecoveryTimeIfSmoked(pulseRateRecovery, PULSE_RATE_TO_NORMAL, age, ftndScore, BigDecimal.valueOf(80.0));
+            updateRecoveryTimeIfSmoked(oxygenLevelRecovery, OXYGEN_LEVEL_TO_NORMAL, age, ftndScore, BigDecimal.valueOf(90.0));
+            updateRecoveryTimeIfSmoked(carbonMonoxideRecovery, CARBON_MONOXIDE_TO_NORMAL, age, ftndScore, BigDecimal.valueOf(92.0));
+            updateRecoveryTimeIfSmoked(tasteAndSmellRecovery, TASTE_AND_SMELL_IMPROVEMENT, age, ftndScore, BigDecimal.valueOf(96.0));
+            updateRecoveryTimeIfSmoked(nicotineExpelledFromBodyRecovery, NICOTINE_EXPELLED_FROM_BODY, age, ftndScore, BigDecimal.valueOf(95.0));
+            updateRecoveryTimeIfSmoked(circulationRecovery, CIRCULATION_AND_LUNG_FUNCTION, age, ftndScore, BigDecimal.valueOf(85.0));
+            updateRecoveryTimeIfSmoked(coughingAndBreathingRecovery, COUGHING_AND_BREATHING, age, ftndScore, BigDecimal.valueOf(98.0));
+            updateRecoveryTimeIfSmoked(reducedRiskOfHeartDiseaseRecovery, REDUCED_RISK_OF_HEART_DISEASE, age, ftndScore, BigDecimal.valueOf(5.0));
+            updateRecoveryTimeIfSmoked(reducedRiskOfHeartAttackRecovery, STROKE_RISK_REDUCTION, age, ftndScore, BigDecimal.valueOf(5.0));
+            updateRecoveryTimeIfSmoked(immunityAndLungFunctionRecovery, LUNG_CANCER_RISK_REDUCTION, age, ftndScore, BigDecimal.valueOf(12.0));
+        }else{
+            pulseRateRecovery.setRecoveryTime(0);
+            pulseRateRecovery.setTargetTime(LocalDateTime.now());
+            pulseRateRecovery.setValue(BigDecimal.valueOf(100.0));
+            healthRecoveryRepository.save(pulseRateRecovery);
+
+            oxygenLevelRecovery.setRecoveryTime(0);
+            oxygenLevelRecovery.setTargetTime(LocalDateTime.now());
+            oxygenLevelRecovery.setValue(BigDecimal.valueOf(100.0));
+            healthRecoveryRepository.save(oxygenLevelRecovery);
+
+            carbonMonoxideRecovery.setRecoveryTime(0);
+            carbonMonoxideRecovery.setTargetTime(LocalDateTime.now());
+            carbonMonoxideRecovery.setValue(BigDecimal.valueOf(100.0));
+            healthRecoveryRepository.save(carbonMonoxideRecovery);
+
+            tasteAndSmellRecovery.setRecoveryTime(0);
+            tasteAndSmellRecovery.setTargetTime(LocalDateTime.now());
+            tasteAndSmellRecovery.setValue(BigDecimal.valueOf(100.0));
+            healthRecoveryRepository.save(tasteAndSmellRecovery);
+
+            nicotineExpelledFromBodyRecovery.setRecoveryTime(0);
+            nicotineExpelledFromBodyRecovery.setTargetTime(LocalDateTime.now());
+            nicotineExpelledFromBodyRecovery.setValue(BigDecimal.valueOf(100.0));
+            healthRecoveryRepository.save(nicotineExpelledFromBodyRecovery);
+
+            circulationRecovery.setRecoveryTime(0);
+            circulationRecovery.setTargetTime(LocalDateTime.now());
+            circulationRecovery.setValue(BigDecimal.valueOf(100.0));
+            healthRecoveryRepository.save(circulationRecovery);
+
+            coughingAndBreathingRecovery.setRecoveryTime(0);
+            coughingAndBreathingRecovery.setTargetTime(LocalDateTime.now());
+            coughingAndBreathingRecovery.setValue(BigDecimal.valueOf(100.0));
+            healthRecoveryRepository.save(coughingAndBreathingRecovery);
+
+            reducedRiskOfHeartDiseaseRecovery.setRecoveryTime(0);
+            reducedRiskOfHeartDiseaseRecovery.setTargetTime(LocalDateTime.now());
+            reducedRiskOfHeartDiseaseRecovery.setValue(BigDecimal.valueOf(4.0));
+            healthRecoveryRepository.save(reducedRiskOfHeartDiseaseRecovery);
+
+            reducedRiskOfHeartAttackRecovery.setRecoveryTime(0);
+            reducedRiskOfHeartAttackRecovery.setTargetTime(LocalDateTime.now());
+            reducedRiskOfHeartAttackRecovery.setValue(BigDecimal.valueOf(0.0));
+            healthRecoveryRepository.save(reducedRiskOfHeartAttackRecovery);
+
+            immunityAndLungFunctionRecovery.setRecoveryTime(0);
+            immunityAndLungFunctionRecovery.setTargetTime(LocalDateTime.now());
+            immunityAndLungFunctionRecovery.setValue(BigDecimal.valueOf(0.0));
+            healthRecoveryRepository.save(immunityAndLungFunctionRecovery);
         }
 
     }
@@ -455,12 +505,14 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     private void updateRecoveryTimeIfSmoked(HealthRecovery recovery,
                                             int baseTimeInMinutes,
                                             int age,
-                                            int ftndScore
+                                            int ftndScore,
+                                            BigDecimal newValue
     ) {
         var estimateRecoveryTimeInMinutes = calculateTimeToNormal(baseTimeInMinutes, age, ftndScore);
         recovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
         LocalDateTime newTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
         recovery.setTargetTime(newTargetTime);
+        recovery.setValue(newValue);
         healthRecoveryRepository.save(recovery);
     }
 
