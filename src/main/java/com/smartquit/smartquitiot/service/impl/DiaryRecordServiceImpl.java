@@ -366,6 +366,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.CIRCULATION);
                     newRecovery.setMember(member);
+                    newRecovery.setValue(isSmoke ? BigDecimal.valueOf(85.0) : BigDecimal.valueOf(100.0));
                     var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(CIRCULATION_AND_LUNG_FUNCTION, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
@@ -380,6 +381,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.BREATHING);
                     newRecovery.setMember(member);
+                    newRecovery.setValue(isSmoke ? BigDecimal.valueOf(98.0) : BigDecimal.valueOf(100.0));
                     var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(COUGHING_AND_BREATHING, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
@@ -394,6 +396,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.REDUCED_RISK_OF_HEART_DISEASE);
                     newRecovery.setMember(member);
+                    newRecovery.setValue(isSmoke ? BigDecimal.valueOf(5.0) : BigDecimal.valueOf(4.0));
                     var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(REDUCED_RISK_OF_HEART_DISEASE, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
@@ -408,6 +411,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.DECREASED_RISK_OF_HEART_ATTACK);
                     newRecovery.setMember(member);
+                    newRecovery.setValue(isSmoke ? BigDecimal.valueOf(5.0) : BigDecimal.valueOf(0.0));
                     var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(STROKE_RISK_REDUCTION, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
@@ -422,6 +426,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                     HealthRecovery newRecovery = new HealthRecovery();
                     newRecovery.setName(HealthRecoveryDataName.IMMUNITY_AND_LUNG_FUNCTION);
                     newRecovery.setMember(member);
+                    newRecovery.setValue(isSmoke ? BigDecimal.valueOf(12.0) : BigDecimal.valueOf(0.0));
                     var estimateRecoveryTimeInMinutes = isSmoke ? calculateTimeToNormal(LUNG_CANCER_RISK_REDUCTION, age, ftndScore) : 0;
                     newRecovery.setTimeTriggered(LocalDateTime.now());
                     newRecovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
