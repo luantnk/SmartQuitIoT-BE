@@ -89,7 +89,9 @@ public class SecurityConfig {
             Map.entry("/mission/{id}", HttpMethod.GET),
             Map.entry("/mission/{id}", HttpMethod.DELETE),
             Map.entry("/mission", HttpMethod.POST),
-            Map.entry("/mission/{id}", HttpMethod.PUT)
+            Map.entry("/mission/{id}", HttpMethod.PUT),
+            Map.entry("/reminder/all", HttpMethod.GET),
+            Map.entry("/reminder/update/{id}", HttpMethod.PUT)
     );
 
     @Bean
