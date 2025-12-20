@@ -6,6 +6,7 @@ import com.smartquit.smartquitiot.dto.request.CompleteMissionRequest;
 import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.*;
+import com.smartquit.smartquitiot.mapper.PhaseDetailMissionMapper;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
 import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.AccountService;
@@ -46,6 +47,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     private final MetricRepository metricRepository;
     private final MemberAchievementService memberAchievementService;
     private final NotificationService notificationService;
+    private final PhaseDetailMissionMapper phaseDetailMissionMapper;
 
 
     @Override
@@ -178,7 +180,7 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     }
 
     @Override
-    public MissionTodayResponse getListMissionTodayByMemberId(int memberId) {
+    public List<ChatbotMissionResponse> getListMissionTodayByMemberId(int memberId) {
         QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(memberId, QuitPlanStatus.CREATED);
         if (plan == null) {
             plan = quitPlanRepository.findByMember_IdAndStatus(memberId, QuitPlanStatus.IN_PROGRESS);
@@ -193,24 +195,14 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
         }
         MissionTodayResponse missionTodayResponse = new MissionTodayResponse();
         List<PhaseDetailMissionResponseDTO> phaseDetailMissionResponseDTOS = new ArrayList<>();
+        List<PhaseDetailMission> todayMissionsResponse = new ArrayList<>();
+
         for (PhaseDetail phaseDetail : currentPhase.getDetails()) {
             if (phaseDetail.getDate() != null && phaseDetail.getDate().isEqual(currentDate)) {
-                for (PhaseDetailMission mission : phaseDetail.getPhaseDetailMissions()) {
-                    PhaseDetailMissionResponseDTO phaseDetailMissionResponseDTO = new PhaseDetailMissionResponseDTO();
-                    phaseDetailMissionResponseDTO.setId(mission.getId());
-                    phaseDetailMissionResponseDTO.setStatus(mission.getStatus());
-                    phaseDetailMissionResponseDTO.setName(mission.getName());
-                    phaseDetailMissionResponseDTO.setDescription(mission.getDescription());
-                    phaseDetailMissionResponseDTO.setCode(mission.getCode());
-                    phaseDetailMissionResponseDTO.setCompletedAt(mission.getCompletedAt());
-                    phaseDetailMissionResponseDTOS.add(phaseDetailMissionResponseDTO);
-                }
+                todayMissionsResponse.addAll(phaseDetail.getPhaseDetailMissions());
             }
         }
-        missionTodayResponse.setPhaseDetailMissionResponseDTOS(phaseDetailMissionResponseDTOS);
-        missionTodayResponse.setPhaseId(currentPhase.getId());
-
-        return missionTodayResponse;
+        return todayMissionsResponse.stream().map(phaseDetailMissionMapper::toChatbotMissionResponse).toList();
     }
 
     // api này ko có dùng

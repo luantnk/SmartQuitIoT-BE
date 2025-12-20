@@ -1,8 +1,8 @@
 package com.smartquit.smartquitiot.toolcalling;
 
+import com.smartquit.smartquitiot.dto.response.ChatbotMissionResponse;
 import com.smartquit.smartquitiot.dto.response.DiaryRecordDTO;
 import com.smartquit.smartquitiot.dto.response.MemberDTO;
-import com.smartquit.smartquitiot.dto.response.MissionTodayResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.entity.DiaryRecord;
 import com.smartquit.smartquitiot.entity.HealthRecovery;
@@ -94,7 +94,7 @@ public class ChatbotTools {
     }
 
     @Tool(name = "getMissionsTodayByMemberId", description = "Retrieve today's missions for the member by their ID.")
-    public MissionTodayResponse getMissionsTodayByMemberId(@ToolParam(description = "The unique identifier of the member") Integer memberId) {
+    public List<ChatbotMissionResponse> getMissionsTodayByMemberId(@ToolParam(description = "The unique identifier of the member") Integer memberId) {
         return phaseDetailMissionService.getListMissionTodayByMemberId(memberId);
     }
 }
