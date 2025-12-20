@@ -67,9 +67,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             throw new RuntimeException("You have been enter today record");
         }
 
-//        if (request.getDate().isAfter(LocalDate.now())) {
-//            throw new RuntimeException("You can not enter record in the future day");
-//        }
+        if (request.getDate().isAfter(LocalDate.now())) {
+            throw new RuntimeException("You can not enter record in the future day");
+        }
         LocalDate startDate = currentQuitPlan.getStartDate();
         LocalDate recordDate = request.getDate();
         //money member spent for cigarettes package
