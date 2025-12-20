@@ -67,9 +67,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             throw new RuntimeException("You have been enter today record");
         }
 
-        if (request.getDate().isAfter(LocalDate.now())) {
-            throw new RuntimeException("You can not enter record in the future day");
-        }
+//        if (request.getDate().isAfter(LocalDate.now())) {
+//            throw new RuntimeException("You can not enter record in the future day");
+//        }
         LocalDate startDate = currentQuitPlan.getStartDate();
         LocalDate recordDate = request.getDate();
         //money member spent for cigarettes package
@@ -181,12 +181,12 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             reductionInLastSmoked = reductionPercentage;
         }
         int count = records.size(); // number of member's diary records
-        double newAvgCravingLevel = metric.getAvgCravingLevel() + (request.getCravingLevel() - metric.getAvgCravingLevel()) / (count + 1);
-        double newAvgMoodLevel = metric.getAvgMood() + (request.getMoodLevel() - metric.getAvgMood()) / (count + 1);
-        double newAvgConfidenceLevel = metric.getAvgConfidentLevel() + (request.getConfidenceLevel() - metric.getAvgConfidentLevel()) / (count + 1);
-        double newAvgAnxietyLevel = metric.getAvgAnxiety() + (request.getAnxietyLevel() - metric.getAvgAnxiety()) / (count + 1);
+        double newAvgCravingLevel = metric.getAvgCravingLevel() + (request.getCravingLevel() - metric.getAvgCravingLevel()) / (count);
+        double newAvgMoodLevel = metric.getAvgMood() + (request.getMoodLevel() - metric.getAvgMood()) / (count);
+        double newAvgConfidenceLevel = metric.getAvgConfidentLevel() + (request.getConfidenceLevel() - metric.getAvgConfidentLevel()) / (count);
+        double newAvgAnxietyLevel = metric.getAvgAnxiety() + (request.getAnxietyLevel() - metric.getAvgAnxiety()) / (count);
         double avgCigarettesPerDay = (double) totalCigarettesInRecords / count;
-        double avgNicotineMgPerDay = (estimateNicotineIntake.doubleValue() + (metric.getAvgNicotineMgPerDay() * count)) / (count + 1);
+        double avgNicotineMgPerDay = (amountNicotinePerCigarettesOfMemberForm.doubleValue() * totalCigarettesInRecords) / count;
         if (Double.isNaN(avgCigarettesPerDay) || Double.isInfinite(avgCigarettesPerDay)) {
             avgCigarettesPerDay = metric.getAvgCigarettesPerDay();
         }
