@@ -59,6 +59,41 @@ public class QuitPlanMapper {
         return resp;
     }
 
+    public QuitPlanToolResponse toQuitPlanToolResponse(QuitPlan plan, Phase phase) {
+        if (plan == null) return null;
+
+        QuitPlanToolResponse resp = new QuitPlanToolResponse();
+        resp.setId(plan.getId());
+        resp.setName(plan.getName());
+        resp.setStatus(plan.getStatus());
+        resp.setStartDate(plan.getStartDate());
+        resp.setEndDate(plan.getEndDate());
+        resp.setUseNRT(plan.isUseNRT());
+        resp.setFtndScore(plan.getFtndScore());
+        resp.setCreatedAt(plan.getCreatedAt());
+        resp.setActive(plan.isActive());
+        resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
+        resp.setCurrentPhaseDTO(toPhaseDTOForTool(phase));
+        return resp;
+    }
+
+    public PhaseDTO toPhaseDTOForTool(Phase phase) {
+        if (phase == null) return null;
+        PhaseDTO dto = new PhaseDTO();
+        dto.setId(phase.getId());
+        dto.setName(phase.getName());
+        dto.setDurationDay(phase.getDurationDays());
+        dto.setReason(phase.getReason());
+        dto.setStartDate(phase.getStartDate());
+        dto.setEndDate(phase.getEndDate());
+        dto.setCondition(phase.getCondition());
+        dto.setTotalMissions(phase.getTotalMissions());
+        dto.setCompletedMissions(phase.getCompletedMissions());
+        dto.setStatus(phase.getStatus());
+        dto.setCompletedAt(phase.getCompletedAt());
+        return dto;
+    }
+
     private FormMetricDTO toFormMetricDTO(FormMetric metric) {
         if (metric == null) return null;
 

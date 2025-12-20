@@ -24,7 +24,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -180,29 +182,51 @@ public class PhaseDetailMissionServiceImpl implements PhaseDetailMissionService 
     }
 
     @Override
-    public List<ChatbotMissionResponse> getListMissionTodayByMemberId(int memberId) {
-        QuitPlan plan = quitPlanRepository.findByMember_IdAndStatus(memberId, QuitPlanStatus.CREATED);
-        if (plan == null) {
-            plan = quitPlanRepository.findByMember_IdAndStatus(memberId, QuitPlanStatus.IN_PROGRESS);
-        }
+    public MissionsInPhaseWrapperResponse  getAllMissionsInCurrentPhaseByMemberId(int memberId) {
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(memberId);
         if (plan == null) {
             throw new RuntimeException("Mission Plan Not Found at getCurrentPhaseAtHomePage tools");
         }
-        LocalDate currentDate = LocalDate.now();
-        Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS, plan.getId()).orElse(null);
-        if(currentPhase == null){
-            currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.FAILED, plan.getId()).get();
-        }
-        MissionTodayResponse missionTodayResponse = new MissionTodayResponse();
-        List<PhaseDetailMissionResponseDTO> phaseDetailMissionResponseDTOS = new ArrayList<>();
-        List<PhaseDetailMission> todayMissionsResponse = new ArrayList<>();
 
-        for (PhaseDetail phaseDetail : currentPhase.getDetails()) {
-            if (phaseDetail.getDate() != null && phaseDetail.getDate().isEqual(currentDate)) {
-                todayMissionsResponse.addAll(phaseDetail.getPhaseDetailMissions());
-            }
+        Phase currentPhase = phaseRepository
+                .findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS, plan.getId())
+                .orElseGet(() ->
+                        phaseRepository
+                                .findByStatusAndQuitPlan_Id(PhaseStatus.FAILED, plan.getId())
+                                .orElseThrow(() ->
+                                        new IllegalArgumentException(
+                                                "No IN_PROGRESS or FAILED phase found for quit plan " + plan.getId()
+                                        )
+                                )
+                );
+
+        LocalDate today = LocalDate.now();
+
+        List<PhaseDetailMission> missions =
+                phaseDetailMissionRepository.findAllMissionsInPhase(currentPhase.getId());
+
+        Map<Integer, MissionInPhaseResponse> grouped = new LinkedHashMap<>();
+
+        for (PhaseDetailMission m : missions) {
+            PhaseDetail d = m.getPhaseDetail();
+
+            MissionInPhaseResponse bucket = grouped.computeIfAbsent(d.getId(), k -> {
+                MissionInPhaseResponse r = new MissionInPhaseResponse();
+                r.setName(d.getName());
+                r.setDate(d.getDate());
+                r.setPhaseDetailMissionResponseDTOS(new ArrayList<>());
+                return r;
+            });
+
+            bucket.getPhaseDetailMissionResponseDTOS().add(phaseDetailMissionMapper.toDto(m));
         }
-        return todayMissionsResponse.stream().map(phaseDetailMissionMapper::toChatbotMissionResponse).toList();
+        MissionsInPhaseWrapperResponse resp = new MissionsInPhaseWrapperResponse();
+        resp.setCurrentDate(today);
+        resp.setPhaseId(currentPhase.getId());
+        resp.setName(currentPhase.getName());
+        resp.setStatus(currentPhase.getStatus());
+        resp.setItems(new ArrayList<>(grouped.values()));
+        return resp;
     }
 
     // api này ko có dùng
