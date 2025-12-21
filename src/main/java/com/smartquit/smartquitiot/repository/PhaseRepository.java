@@ -10,5 +10,7 @@ public interface PhaseRepository extends JpaRepository<Phase, Integer> {
     Optional<Phase> findByQuitPlan_IdAndName(Integer quitPlanId, String name);
 
     Optional<Phase> findByStatusAndQuitPlan_Id(PhaseStatus status,  Integer quitPlanId);
+    Optional<Phase> findByStatusAndQuitPlan_IdAndRedoFalse(PhaseStatus status,  Integer quitPlanId);
+
     Optional<Phase> findByIdAndQuitPlan_Id (Integer phaseId,Integer quitPlanId);
 }

@@ -22,6 +22,7 @@ public class QuitPlanMapper {
         resp.setUseNRT(plan.isUseNRT());
         resp.setFtndScore(plan.getFtndScore());
         resp.setFormMetricDTO(toFormMetricDTO(plan.getFormMetric()));
+        resp.setActive(plan.isActive());
 
         currentMetricDTO.setAvgCravingLevel(plan.getMember().getMetric().getAvgCravingLevel());
         currentMetricDTO.setAvgCigarettesPerDay(plan.getMember().getMetric().getAvgCigarettesPerDay());
