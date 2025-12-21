@@ -57,7 +57,7 @@ public class PhaseServiceImpl implements PhaseService {
         LocalDate currentDate = LocalDate.now();
         Phase currentPhase = phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS,plan.getId())
                 .orElseGet(() -> {
-                    return phaseRepository.findByStatusAndQuitPlan_Id(PhaseStatus.FAILED,plan.getId()).stream()
+                    return phaseRepository.findByStatusAndQuitPlan_IdAndRedoFalse(PhaseStatus.FAILED,plan.getId()).stream()
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "No current actionable phase found (in-progress or failed-keep)"));
