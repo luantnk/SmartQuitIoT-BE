@@ -181,12 +181,12 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             reductionInLastSmoked = reductionPercentage;
         }
         int count = records.size(); // number of member's diary records
-        double newAvgCravingLevel = metric.getAvgCravingLevel() + (request.getCravingLevel() - metric.getAvgCravingLevel()) / (count + 1);
-        double newAvgMoodLevel = metric.getAvgMood() + (request.getMoodLevel() - metric.getAvgMood()) / (count + 1);
-        double newAvgConfidenceLevel = metric.getAvgConfidentLevel() + (request.getConfidenceLevel() - metric.getAvgConfidentLevel()) / (count + 1);
-        double newAvgAnxietyLevel = metric.getAvgAnxiety() + (request.getAnxietyLevel() - metric.getAvgAnxiety()) / (count + 1);
+        double newAvgCravingLevel = records.stream().mapToDouble(DiaryRecord::getCravingLevel).average().orElse(0.0);
+        double newAvgMoodLevel = records.stream().mapToDouble(DiaryRecord::getMoodLevel).average().orElse(0.0);
+        double newAvgConfidenceLevel = records.stream().mapToDouble(DiaryRecord::getConfidenceLevel).average().orElse(0.0);
+        double newAvgAnxietyLevel = records.stream().mapToDouble(DiaryRecord::getAnxietyLevel).average().orElse(0.0);
         double avgCigarettesPerDay = (double) totalCigarettesInRecords / count;
-        double avgNicotineMgPerDay = (estimateNicotineIntake.doubleValue() + (metric.getAvgNicotineMgPerDay() * count)) / (count + 1);
+        double avgNicotineMgPerDay = (amountNicotinePerCigarettesOfMemberForm.doubleValue() * totalCigarettesInRecords) / count;
         if (Double.isNaN(avgCigarettesPerDay) || Double.isInfinite(avgCigarettesPerDay)) {
             avgCigarettesPerDay = metric.getAvgCigarettesPerDay();
         }
