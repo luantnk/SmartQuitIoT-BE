@@ -170,7 +170,7 @@ public class ChatbotTools {
                 .findByStatusAndQuitPlan_Id(PhaseStatus.IN_PROGRESS, plan.getId())
                 .orElseGet(() ->
                         phaseRepository
-                                .findByStatusAndQuitPlan_Id(PhaseStatus.FAILED, plan.getId())
+                                .findByStatusAndQuitPlan_IdAndRedoFalse(PhaseStatus.FAILED, plan.getId())
                                 .orElseThrow(() ->
                                         new IllegalArgumentException(
                                                 "No IN_PROGRESS or FAILED phase found for quit plan " + plan.getId()
