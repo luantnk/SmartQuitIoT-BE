@@ -82,7 +82,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         long dayBetween = 1;
         var pricePerCigarettes = BigDecimal.ZERO;
         var moneyForSmokedPerDay = BigDecimal.ZERO;
-        var currentMoneySaved = BigDecimal.ZERO;
         double reductionPercentage = 0.0;
 
         if (recordDate.isEqual(startDate) || recordDate.isAfter(startDate)) {
@@ -90,7 +89,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         }
         pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
         moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
-        currentMoneySaved = moneyForSmokedPerDay.multiply(BigDecimal.valueOf(dayBetween));
         reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) / smokeAvgPerDay) * 100.0;
         //Number of consumption day
         int avgDayToSmokeAll = (int) Math.ceil(_avgDayToSmokeAll);
@@ -162,6 +160,14 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                 streaksCount = metric.getStreaks() + 1;
             }
         }
+        double reductionInLastSmoked = 0.0;
+        DiaryRecord lastSmokedRecord = diaryRecordRepository.findTopByMemberIdAndHaveSmokedIsTrueOrderByDateDesc(member.getId()).orElse(null);
+        if (lastSmokedRecord != null) {
+            System.out.println("Last smoked record cigarettes id: " + lastSmokedRecord.getId());
+            reductionInLastSmoked = ((double) (lastSmokedRecord.getCigarettesSmoked() - request.getCigarettesSmoked()) / lastSmokedRecord.getCigarettesSmoked()) * 100.0;
+        } else {
+            reductionInLastSmoked = reductionPercentage;
+        }
         diaryRecord = diaryRecordRepository.save(diaryRecord);
         int smokeFreeDaysCount = 0;
         int totalCigarettesInRecords = 0;
@@ -172,13 +178,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
                 smokeFreeDaysCount += 1;
             }
             totalCigarettesInRecords += record.getCigarettesSmoked();
-        }
-        double reductionInLastSmoked = 0.0;
-        DiaryRecord lastSmokedRecord = diaryRecordRepository.findTopByMemberIdAndHaveSmokedIsTrueOrderByDateAsc(member.getId()).orElse(null);
-        if (lastSmokedRecord != null) {
-            reductionInLastSmoked = ((double) (lastSmokedRecord.getCigarettesSmoked() - request.getCigarettesSmoked()) / lastSmokedRecord.getCigarettesSmoked()) * 100.0;
-        } else {
-            reductionInLastSmoked = reductionPercentage;
         }
         int count = records.size(); // number of member's diary records
         double newAvgCravingLevel = records.stream().mapToDouble(DiaryRecord::getCravingLevel).average().orElse(0.0);
@@ -208,7 +207,17 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         metric.setCurrentConfidenceLevel(request.getConfidenceLevel());
         metric.setCurrentMoodLevel(request.getMoodLevel());
         metric.setAnnualSaved(annualSaved);
-        metric.setMoneySaved(currentMoneySaved.subtract(BigDecimal.valueOf(request.getMoneySpentOnNrt())).subtract(pricePerCigarettes.multiply(BigDecimal.valueOf(request.getCigarettesSmoked()))));
+        int totalCigarettesSmoked = 0;
+        int noSmokedDayCount = 0;
+        double nrtTotalSpent = records.stream().mapToDouble(DiaryRecord::getMoneySpentOnNrt).sum();
+        for (DiaryRecord record : records){
+            totalCigarettesSmoked += record.getCigarettesSmoked();
+            if (!record.isHaveSmoked()){
+                noSmokedDayCount +=1;
+            }
+        }
+        long moneySaved = (noSmokedDayCount * moneyForSmokedPerDay.longValue()) - (totalCigarettesSmoked * pricePerCigarettes.longValue());
+        metric.setMoneySaved(BigDecimal.valueOf(moneySaved - nrtTotalSpent));
         metric.setAvgCigarettesPerDay(avgCigarettesPerDay);
         metric.setReductionPercentage(reductionPercentage);
         metric.setSmokeFreeDayPercentage(smokeFreeDayPercentage);
@@ -596,11 +605,21 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         return diaryRecordRepository.findByDateAndMemberId(today, member.getId()).isPresent();
     }
 
+    @Transactional
     @Override
     public DiaryRecordDTO updateDiaryRecord(int recordId, DiaryRecordUpdateRequest request) {
         Member member = memberService.getAuthenticatedMember();
         DiaryRecord record = diaryRecordRepository.findById(recordId).orElseThrow(() -> new RuntimeException("Diary record not found"));
         Metric metric = metricRepository.findByMemberId(member.getId()).orElseThrow(() -> new RuntimeException("Metric not found"));
+        QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
+        FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
+        var moneyForSmokedPerDay = BigDecimal.ZERO;
+        BigDecimal moneyPerPackage = currentFormMetric.getMoneyPerPackage();
+        int cigarettesPerPackage = currentFormMetric.getCigarettesPerPackage();
+        var pricePerCigarettes = BigDecimal.ZERO;
+        int smokeAvgPerDay = currentFormMetric.getSmokeAvgPerDay();
+        pricePerCigarettes = moneyPerPackage.divide(BigDecimal.valueOf(cigarettesPerPackage), 1, BigDecimal.ROUND_HALF_UP);
+        moneyForSmokedPerDay = pricePerCigarettes.multiply(BigDecimal.valueOf(smokeAvgPerDay));
         double oldMoneySpentOnNrt = record.getMoneySpentOnNrt();
         if (record.getMember().getId() != member.getId()) {
             throw new RuntimeException("You are not authorized to update this record");
@@ -608,18 +627,15 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         if(request.getCigarettesSmoked() != null && record.isHaveSmoked()){
             record.setCigarettesSmoked(request.getCigarettesSmoked());
             //update estimated nicotine intake
-            QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
-            FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
             BigDecimal amountNicotinePerCigarettesOfMemberForm = currentFormMetric.getAmountOfNicotinePerCigarettes();
             BigDecimal estimateNicotineIntake = amountNicotinePerCigarettesOfMemberForm.multiply(BigDecimal.valueOf(request.getCigarettesSmoked()));
             record.setEstimatedNicotineIntake(estimateNicotineIntake);
             //update reduction percentage
-            int smokeAvgPerDay = currentFormMetric.getSmokeAvgPerDay();
             double reductionPercentage = 0.0;
             reductionPercentage = ((double) (smokeAvgPerDay - request.getCigarettesSmoked()) / smokeAvgPerDay) * 100.0;
             record.setReductionPercentage(reductionPercentage);
             //update reductionInLastSmoked in metric
-            DiaryRecord lastSmokedRecord = diaryRecordRepository.findTopByMemberIdAndHaveSmokedIsTrueOrderByDateAsc(member.getId()).orElse(null);
+            DiaryRecord lastSmokedRecord = diaryRecordRepository.findTopByMemberIdAndHaveSmokedIsTrueOrderByDateDesc(member.getId()).orElse(null);
             double reductionInLastSmoked = 0.0;
             if (lastSmokedRecord != null) {
                 reductionInLastSmoked = ((double) (lastSmokedRecord.getCigarettesSmoked() - request.getCigarettesSmoked()) / lastSmokedRecord.getCigarettesSmoked()) * 100.0;
@@ -653,10 +669,18 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             metric.setCurrentMoodLevel(request.getMoodLevel());
         }
         //update money saved in metric if moneySpentOnNrt is changed
-        if (oldMoneySpentOnNrt != request.getMoneySpentOnNrt()) {
-            BigDecimal difference = BigDecimal.valueOf(oldMoneySpentOnNrt - request.getMoneySpentOnNrt());
-            metric.setMoneySaved(metric.getMoneySaved().add(difference));
+        int totalCigarettesSmoked = 0;
+        int noSmokedDayCount = 0;
+        double nrtTotalSpent = records.stream().mapToDouble(DiaryRecord::getMoneySpentOnNrt).sum();
+        for (DiaryRecord r : records){
+            totalCigarettesSmoked += r.getCigarettesSmoked();
+            if (!r.isHaveSmoked()){
+                noSmokedDayCount +=1;
+            }
         }
+        long moneySaved = (noSmokedDayCount * moneyForSmokedPerDay.longValue()) - (totalCigarettesSmoked * pricePerCigarettes.longValue());
+        metric.setMoneySaved(BigDecimal.valueOf(moneySaved - nrtTotalSpent));
+
 
         metricRepository.save(metric);
         return diaryRecordMapper.toDiaryRecordDTO(record);
