@@ -1,19 +1,19 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql
+  mariadb:
+    image: mariadb:12
+    container_name: mariadb
     restart: always
     environment:
       TZ: Asia/Ho_Chi_Minh
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     networks:
       - smartquit-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,24 +24,22 @@ services:
     container_name: smartquitiot-app
     restart: always
     depends_on:
-      mysql:
+      mariadb:
         condition: service_healthy
     ports:
       - "19000:8080"
     environment:
       TZ: Asia/Ho_Chi_Minh
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Ho_Chi_Minh
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartquitiot?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/smartquitiot?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASS}
-
       SIGNER_KEY: ${SIGNER_KEY}
       REFRESH_TOKEN_KEY: ${REFRESH_TOKEN_KEY}
       OPEN_API_KEY: ${OPEN_API_KEY}
       YOUR_WEB_CLIENT_ID: ${YOUR_WEB_CLIENT_ID}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
-
       PAYOS_API_KEY: ${PAYOS_API_KEY}
       PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY}
       PAYOS_CLIENT_ID: ${PAYOS_CLIENT_ID}
@@ -55,4 +53,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
+  mariadb_data:

@@ -1,65 +1,65 @@
-name: SmartQuitIoT CI/CD
-
-on:
-  push:
-    branches: [ main ]   
-
-jobs:
-  build-push:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Build & Push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: hailinh03/smartquitiot:latest
-
-  deploy:
-    runs-on: self-hosted            # runner trên VPS
-    needs: build-push
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Write .env for compose
-        working-directory: ${{ secrets.DEPLOY_DIR }}
-        run: |
-          cat > .env << 'EOF'
-          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-          MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASS=${{ secrets.DB_PASS }}
-          SIGNER_KEY=${{ secrets.SIGNER_KEY }}
-          REFRESH_TOKEN_KEY=${{ secrets.REFRESH_TOKEN_KEY }}
-          OPEN_API_KEY=${{ secrets.OPEN_API_KEY }}
-          YOUR_WEB_CLIENT_ID=${{ secrets.YOUR_WEB_CLIENT_ID }}
-          EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }}
-          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
-          PAYOS_API_KEY=${{ secrets.PAYOS_API_KEY }}
-          PAYOS_CHECKSUM_KEY=${{ secrets.PAYOS_CHECKSUM_KEY }}
-          PAYOS_CLIENT_ID=${{ secrets.PAYOS_CLIENT_ID }}
-          AGORA_APPID=${{ secrets.AGORA_APPID }}
-          AGORA_APPCERTIFICATE=${{ secrets.AGORA_APPCERTIFICATE }}
-          EOF
-          chmod 600 .env
-
-      - name: Pull & Up
-        working-directory: ${{ secrets.DEPLOY_DIR }}
-        run: |
-          docker compose pull
-          docker compose up -d --remove-orphans
-          docker compose ps
+# name: SmartQuitIoT CI/CD
+#
+# on:
+#   push:
+#     branches: [ main ]
+#
+# jobs:
+#   build-push:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#
+#       - name: Set up Buildx
+#         uses: docker/setup-buildx-action@v3
+#
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v3
+#         with:
+#           username: ${{ secrets.DOCKERHUB_USERNAME }}
+#           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+#
+#       - name: Build & Push image
+#         uses: docker/build-push-action@v6
+#         with:
+#           context: .
+#           file: ./Dockerfile
+#           push: true
+#           tags: hailinh03/smartquitiot:latest
+#
+#   deploy:
+#     runs-on: self-hosted            # runner trên VPS
+#     needs: build-push
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#
+#       - name: Write .env for compose
+#         working-directory: ${{ secrets.DEPLOY_DIR }}
+#         run: |
+#           cat > .env << 'EOF'
+#           DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+#           MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+#           DB_USER=${{ secrets.DB_USER }}
+#           DB_PASS=${{ secrets.DB_PASS }}
+#           SIGNER_KEY=${{ secrets.SIGNER_KEY }}
+#           REFRESH_TOKEN_KEY=${{ secrets.REFRESH_TOKEN_KEY }}
+#           OPEN_API_KEY=${{ secrets.OPEN_API_KEY }}
+#           YOUR_WEB_CLIENT_ID=${{ secrets.YOUR_WEB_CLIENT_ID }}
+#           EMAIL_USERNAME=${{ secrets.EMAIL_USERNAME }}
+#           EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+#           PAYOS_API_KEY=${{ secrets.PAYOS_API_KEY }}
+#           PAYOS_CHECKSUM_KEY=${{ secrets.PAYOS_CHECKSUM_KEY }}
+#           PAYOS_CLIENT_ID=${{ secrets.PAYOS_CLIENT_ID }}
+#           AGORA_APPID=${{ secrets.AGORA_APPID }}
+#           AGORA_APPCERTIFICATE=${{ secrets.AGORA_APPCERTIFICATE }}
+#           EOF
+#           chmod 600 .env
+#
+#       - name: Pull & Up
+#         working-directory: ${{ secrets.DEPLOY_DIR }}
+#         run: |
+#           docker compose pull
+#           docker compose up -d --remove-orphans
+#           docker compose ps
