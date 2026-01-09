@@ -8,12 +8,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/missions")
 @RequiredArgsConstructor
@@ -30,7 +32,8 @@ public class MissionController {
                                                            @RequestParam(required = false) String search,
                                                            @RequestParam(required = false) String status,
                                                            @RequestParam(required = false) String phase) {
-        return ResponseEntity.ok(missionService.getAllMissions(page,size,search,status,phase));
+        log.debug("ADMIN: Fetching missions page: {}, size: {}, search: '{}', phase: {}", page, size, search, phase);
+        return ResponseEntity.ok(missionService.getAllMissions(page, size, search, status, phase));
     }
 
     @GetMapping("/{id}")
@@ -38,6 +41,7 @@ public class MissionController {
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "This end point for admin get detail a mission")
     public ResponseEntity<MissionDTO> getDetailsById(@PathVariable int id){
+        log.debug("ADMIN: Requesting details for mission ID: {}", id);
         return ResponseEntity.ok(missionService.getDetails(id));
     }
 
@@ -46,7 +50,10 @@ public class MissionController {
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "This end point for admin delete mission")
     public ResponseEntity<MissionDTO> delete(@PathVariable int id){
-        return ResponseEntity.ok(missionService.deleteMission(id));
+        log.warn("ADMIN ACTION: Deleting mission ID: {}", id); // Using warn for deletions
+        MissionDTO deletedMission = missionService.deleteMission(id);
+        log.info("Mission ID: {} successfully deleted", id);
+        return ResponseEntity.ok(deletedMission);
     }
 
     @PostMapping
@@ -54,17 +61,21 @@ public class MissionController {
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Create new mission", description = "Create a new mission with validation for unique code")
     public ResponseEntity<MissionDTO> createMission(@Valid @RequestBody CreateMissionRequest request) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(missionService.createMission(request));
+        log.info("ADMIN ACTION: Creating new mission: {}", request.getName());
+        MissionDTO createdMission = missionService.createMission(request);
+        log.info("Mission created successfully with assigned ID: {}", createdMission.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdMission);
     }
-
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @Operation(summary = "Update mission", description = "Update an existing mission with validation for unique code")
     public ResponseEntity<MissionDTO> updateMission(@PathVariable int id,
-                                           @Valid @RequestBody UpdateMissionRequest request) {
-            MissionDTO updatedMission = missionService.updateMission(id, request);
-            return ResponseEntity.ok(updatedMission);
+                                                    @Valid @RequestBody UpdateMissionRequest request) {
+        log.info("ADMIN ACTION: Updating mission ID: {}", id);
+        MissionDTO updatedMission = missionService.updateMission(id, request);
+        log.info("Mission ID: {} successfully updated", id);
+        return ResponseEntity.ok(updatedMission);
     }
 }
