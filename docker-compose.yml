@@ -1,7 +1,7 @@
 services:
   mariadb:
     image: mariadb:12.1.2
-    container_name: mariadb
+    container_name: smartquitiot-mariadb
     restart: always
     environment:
       TZ: Asia/Ho_Chi_Minh
@@ -10,7 +10,7 @@ services:
       MARIADB_USER: ${DB_USER}
       MARIADB_PASSWORD: ${DB_PASS}
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
@@ -23,7 +23,8 @@ services:
       start_period: 15s
 
   backend:
-    image: ${DOCKERHUB_USERNAME}/smartquitiot:latest
+    build: .
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/smartquitiot:latest
     container_name: smartquitiot-app
     restart: always
     depends_on:
@@ -34,7 +35,7 @@ services:
       rabbitmq:
         condition: service_healthy
     ports:
-      - "19000:8080"
+      - "8080:8080"
     environment:
 
       # Database configurations
@@ -51,6 +52,8 @@ services:
       # Gemini key configuration
       OPEN_API_KEY: ${OPEN_API_KEY}
       YOUR_WEB_CLIENT_ID: ${YOUR_WEB_CLIENT_ID}
+
+      # Brevo configuration
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
 
@@ -80,18 +83,19 @@ services:
       BREVO_USERNAME: ${BREVO_USERNAME}
       BREVO_KEY: ${BREVO_KEY}
 
-
-
     networks:
       - smartquit-network
 
   redis:
-    image: 'redis:alpine'
+    image: 'redis:8.4.0'
+    container_name: smartquitiot-redis
     command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
       - '6379:6379'
     volumes:
       - redis_data:/data
+    networks:
+      - smartquit-network
     healthcheck:
       test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 10s
@@ -101,7 +105,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:4.2.2-management
-    container_name: rabbitmq
+    container_name: smartquitiot-rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -111,6 +115,8 @@ services:
       RABBITMQ_ERLANG_COOKIE: ${RABBIT_COOKIE}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - smartquit-network
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
       interval: 10s
