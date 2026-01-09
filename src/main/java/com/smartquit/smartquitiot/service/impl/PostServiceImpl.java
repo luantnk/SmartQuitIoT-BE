@@ -91,8 +91,7 @@ public class PostServiceImpl implements PostService {
             }).toList();
         } else {
             log.info("Searching posts in ES with query: {}", query);
-            List<PostDocument> searchResults = postSearchRepository
-                    .findByTitleContainingOrDescriptionContainingOrContentContaining(query, query, query);
+            List<PostDocument> searchResults = postSearchRepository.searchByKeyword(query);
             return searchResults.stream()
                     .map(this::mapDocumentToSummaryDTO)
                     .toList();
@@ -240,7 +239,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    @Transactional // Transactional for DB read
+    @Transactional
     public void syncAllPosts() {
         log.info("Starting synchronization of all posts to Elasticsearch...");
         List<Post> allPosts = postRepository.findAll();
