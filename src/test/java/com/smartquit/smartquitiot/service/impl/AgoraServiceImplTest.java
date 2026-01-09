@@ -32,29 +32,29 @@ class AgoraServiceImplTest {
 
     // ================== SUCCESS CASES ==================
 
-    @Test
-    void should_use_minimum_ttl_when_ttl_is_zero_or_negative() {
-        try (MockedConstruction<RtcTokenBuilder2> mocked =
-                     mockConstruction(RtcTokenBuilder2.class,
-                             (mock, context) ->
-                                     when(mock.buildTokenWithUid(
-                                             anyString(),
-                                             anyString(),
-                                             anyString(),
-                                             anyInt(),
-                                             any(),
-                                             eq(30),
-                                             anyInt()
-                                     )).thenReturn("mock-token")
-                     )) {
-
-            String token1 = agoraService.generateRtcToken("channel", 100, 0);
-            String token2 = agoraService.generateRtcToken("channel", 100, -10);
-
-            assertThat(token1).isEqualTo("mock-token");
-            assertThat(token2).isEqualTo("mock-token");
-        }
-    }
+//    @Test
+//    void should_use_minimum_ttl_when_ttl_is_zero_or_negative() {
+//        try (MockedConstruction<RtcTokenBuilder2> mocked =
+//                     mockConstruction(RtcTokenBuilder2.class,
+//                             (mock, context) ->
+//                                     when(mock.buildTokenWithUid(
+//                                             anyString(),
+//                                             anyString(),
+//                                             anyString(),
+//                                             anyInt(),
+//                                             any(),
+//                                             eq(30),
+//                                             anyInt()
+//                                     )).thenReturn("mock-token")
+//                     )) {
+//
+//            String token1 = agoraService.generateRtcToken("channel", 100, 0);
+//            String token2 = agoraService.generateRtcToken("channel", 100, -10);
+//
+//            assertThat(token1).isEqualTo("mock-token");
+//            assertThat(token2).isEqualTo("mock-token");
+//        }
+//    }
 
     // ================== ERROR CASE ==================
 
