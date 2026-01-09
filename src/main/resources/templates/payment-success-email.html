@@ -1,37 +1,93 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 30px;">
-<div style="max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 30px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <img src="cid:logoImage" alt="SmartQuit Logo" style="width: 120px; height: auto;" />
-    </div>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful</title>
+    <style>
+        @media only screen and (max-width: 600px) {
+            .content-table { width: 100% !important; }
+            .content-padding { padding: 20px !important; }
+            .details-table td { display: block; width: 100%; text-align: left; padding-bottom: 5px; }
+            .details-label { padding-bottom: 0 !important; color: #90A4AE !important; font-size: 12px !important; }
+            .details-value { padding-top: 0 !important; font-size: 16px !important; }
+        }
+    </style>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #F4F7F6; -webkit-font-smoothing: antialiased;">
 
-    <h2 style="color: #00D09E; text-align: center;">Payment Successful!</h2>
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F4F7F6;">
+    <tr>
+        <td align="center" style="padding: 40px 10px;">
 
-    <p>Dear <b th:text="${name}">Customer</b>,</p>
+            <table class="content-table" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; max-width: 600px;">
 
-    <p>We’re excited to inform you that your payment for the membership plan
-        <b th:text="${packageName}"></b> has been successfully processed.</p>
+                <tr>
+                    <td align="center" style="padding: 40px 0 10px 0;">
+                        <img th:src="|cid:logoImage|" alt="SmartQuitIoT Logo" style="width: 120px; height: auto; display: block;"/>
+                    </td>
+                </tr>
 
-    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <tr style="border-bottom: 1px solid #ddd;">
-            <td style="padding: 8px 0;">Order Code:</td>
-            <td style="padding: 8px 0; font-weight: bold;" th:text="${orderCode}"></td>
-        </tr>
-        <tr>
-            <td style="padding: 8px 0;">Amount Paid:</td>
-            <td style="padding: 8px 0; font-weight: bold;" th:text="${amount + ' VND'}"></td>
-        </tr>
-    </table>
+                <tr>
+                    <td align="center" style="padding: 0 40px;">
+                        <div style="height: 60px; width: 60px; background-color: #E0F2F1; border-radius: 50%; display: inline-block; line-height: 60px; margin-bottom: 15px;">
+                            <span style="color: #00D09E; font-size: 30px; font-weight: bold;">&#10003;</span>
+                        </div>
+                        <h2 style="color: #00D09E; font-size: 24px; margin: 0 0 10px 0; font-weight: 700;">Payment Successful!</h2>
+                    </td>
+                </tr>
 
-    <p>Thank you for choosing <b>SmartQuit</b>. Your membership is now active — enjoy your premium benefits!</p>
+                <tr>
+                    <td class="content-padding" style="padding: 20px 40px 40px 40px; text-align: center;">
+                        <p style="color: #546E7A; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                            Dear <b style="color: #263238;" th:text="${name}">Customer</b>,
+                        </p>
+                        <p style="color: #546E7A; font-size: 16px; line-height: 1.6; margin-top: 0;">
+                            We’re excited to inform you that your payment for the membership plan below has been <strong style="color: #00D09E;">successfully processed</strong>.
+                        </p>
 
-    <p style="margin-top: 30px;">Best regards,<br/>
-        <b>The SmartQuit Team</b></p>
+                        <div style="background-color: #FAFAFA; border: 1px solid #EEEEEE; border-radius: 12px; padding: 20px; margin: 25px 0; text-align: left;">
+                            <table class="details-table" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td class="details-label" style="padding: 8px 0; color: #78909C; font-size: 14px; width: 40%;">Membership Plan</td>
+                                    <td class="details-value" style="padding: 8px 0; color: #263238; font-size: 15px; font-weight: 600;" th:text="${packageName}">Pro Plan</td>
+                                </tr>
+                                <tr>
+                                    <td class="details-label" style="padding: 8px 0; color: #78909C; font-size: 14px; border-top: 1px dashed #E0E0E0;">Order Code</td>
+                                    <td class="details-value" style="padding: 8px 0; color: #263238; font-size: 15px; font-weight: 600; border-top: 1px dashed #E0E0E0; font-family: 'Courier New', monospace;" th:text="${orderCode}">#123456</td>
+                                </tr>
+                                <tr>
+                                    <td class="details-label" style="padding: 8px 0; color: #78909C; font-size: 14px; border-top: 1px dashed #E0E0E0;">Amount Paid</td>
+                                    <td class="details-value" style="padding: 8px 0; color: #00D09E; font-size: 18px; font-weight: 700; border-top: 1px dashed #E0E0E0;" th:text="${amount + ' VND'}">50,000 VND</td>
+                                </tr>
+                            </table>
+                        </div>
 
-    <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #888;">
-        <p>© 2025 SmartQuit. All rights reserved.</p>
-    </div>
-</div>
+                        <p style="color: #546E7A; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
+                            Thank you for choosing <b>SmartQuitIoT</b>. Your membership is now active — enjoy your premium benefits!
+                        </p>
+
+                        <p style="color: #546E7A; font-size: 15px; margin-bottom: 0;">
+                            Best regards,
+                        </p>
+                        <p style="color: #263238; font-size: 15px; margin-top: 5px; font-weight: 600;">
+                            The SmartQuitIoT Team
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" style="padding: 20px; background-color: #FAFAFA; border-top: 1px solid #EEEEEE; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                        <p style="color: #B0BEC5; font-size: 12px; margin: 0;">
+                            &copy; 2025 SmartQuitIoT. All rights reserved.<br>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+
+        </td>
+    </tr>
+</table>
+
 </body>
 </html>
