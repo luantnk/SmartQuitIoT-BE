@@ -14,7 +14,7 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
-      - smartquit-network
+      - smartquitiot-network
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -35,7 +35,7 @@ services:
       rabbitmq:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
 
       # Database configurations
@@ -84,7 +84,7 @@ services:
       BREVO_KEY: ${BREVO_KEY}
 
     networks:
-      - smartquit-network
+      - smartquitiot-network
 
   redis:
     image: 'redis:8.4.0'
@@ -95,7 +95,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - smartquit-network
+      - smartquitiot-network
     healthcheck:
       test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 10s
@@ -116,7 +116,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - smartquit-network
+      - smartquitiot-network
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
       interval: 10s
@@ -136,7 +136,7 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
     networks:
-      - smartquit-network
+      - smartquitiot-network
     healthcheck:
       test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'" ]
       interval: 20s
@@ -144,8 +144,9 @@ services:
       retries: 5
 
 networks:
-  smartquit-network:
-    driver: bridge
+    smartquitiot-network:
+      name: smartquitiot-network
+      driver: bridge
 
 volumes:
   mariadb_data:
