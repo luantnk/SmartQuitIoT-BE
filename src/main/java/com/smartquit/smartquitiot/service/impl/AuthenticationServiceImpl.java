@@ -10,6 +10,7 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.smartquit.smartquitiot.dto.request.AuthenticationRequest;
+import com.smartquit.smartquitiot.dto.request.LogoutRequest;
 import com.smartquit.smartquitiot.dto.request.RefreshTokenRequest;
 import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
 import com.smartquit.smartquitiot.entity.Account;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -43,6 +45,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RedisServiceImpl redisService;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -60,8 +63,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     @Value("${google.client-id}")
     private String googleClientId;
-
-
 
     @Override
     public AuthenticationResponse login(AuthenticationRequest request, boolean isSystem) {
@@ -98,8 +99,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (claims.getExpirationTime().before(new Date())) {
             throw new RuntimeException("Refresh token has expired");
         }
-        String subject = claims.getSubject(); //Token's subject is account email
-
+        String subject = claims.getSubject();
         Account account = accountRepository.findByEmail(subject)
                 .orElseThrow(() -> new RuntimeException("Account not found for this token"));
         String newAccessToken = generateAccessToken(account);
@@ -147,6 +147,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    @Override
+    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+        try {
+            SignedJWT signToken = verifyAndParseToken(request.getToken(), secretKey);
+            String jit = signToken.getJWTClaimsSet().getJWTID();
+            Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+            long currentTime = System.currentTimeMillis();
+            long remainingTime = expiryTime.getTime() - currentTime;
+            if (remainingTime > 0) {
+                // Use RedisService here
+                redisService.save(jit, "revoked", remainingTime, TimeUnit.MILLISECONDS);
+                log.info("Token with JTI {} has been revoked (blacklisted)", jit);
+            }
+        } catch (RuntimeException e) {
+            log.error("Logout failed reason: " + e.getMessage());
+            log.warn("Token already invalid or expired, no need to blacklist");
+        }
+    }
+
     private Account createNewGoogleAccount(String email, String firstName, String lastName, String pictureUrl) {
         Member newMember = new Member();
         newMember.setFirstName(firstName);
@@ -166,41 +185,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return accountRepository.save(newAccount);
     }
 
-   /* private String generateAccessToken(Account account) {
+    private String generateAccessToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+        JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
                 .subject(account.getEmail())
                 .issuer("SmartQuitIoT")
                 .issueTime(new Date())
-                .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.MINUTES).toEpochMilli()))
-                .claim("scope", account.getRole().name())
+                .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.HOURS).toEpochMilli()))
+                .jwtID(UUID.randomUUID().toString())
+                .claim("scope", account.getRole() != null ? account.getRole().name() : Role.MEMBER.name())
                 .claim("username", account.getUsername())
-                .claim("accountId", account.getId())
-                .claim("memberId", account.getMember().getId())
-                .build();
+                .claim("accountId", account.getId());
+
+        if (account.getMember() != null) {
+            claimsBuilder.claim("memberId", account.getMember().getId());
+        }
+        JWTClaimsSet claimsSet = claimsBuilder.build();
         return createSignedJWT(header, claimsSet, secretKey);
-    }*/
-   private String generateAccessToken(Account account) {
-       JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
-
-       JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder()
-               .subject(account.getEmail())
-               .issuer("SmartQuitIoT")
-               .issueTime(new Date())
-               .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.HOURS).toEpochMilli()))
-               .claim("scope", account.getRole() != null ? account.getRole().name() : Role.MEMBER.name())
-               .claim("username", account.getUsername())
-               .claim("accountId", account.getId());
-
-       // Nếu account có liên kết Member thì thêm memberId vào claim
-       if (account.getMember() != null) {
-           claimsBuilder.claim("memberId", account.getMember().getId());
-       } else {
-       }
-
-       JWTClaimsSet claimsSet = claimsBuilder.build();
-       return createSignedJWT(header, claimsSet, secretKey);
-   }
+    }
 
 
     private String generateRefreshToken(Account account) {
@@ -229,10 +231,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private SignedJWT verifyAndParseToken(String token, String key) throws ParseException, JOSEException {
         SignedJWT signedJWT = SignedJWT.parse(token);
         JWSVerifier verifier = new MACVerifier(key.getBytes(StandardCharsets.UTF_8));
-
         if (!signedJWT.verify(verifier)) {
             throw new RuntimeException("Invalid token signature");
         }
+
+        // Use RedisService to check blacklist
+        String jit = signedJWT.getJWTClaimsSet().getJWTID();
+        if (jit != null && redisService.exists(jit)) {
+            throw new RuntimeException("Token has been revoked (Logged out)");
+        }
+
         return signedJWT;
     }
 }

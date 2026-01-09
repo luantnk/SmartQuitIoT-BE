@@ -3,6 +3,7 @@ package com.smartquit.smartquitiot.controller;
 import com.nimbusds.jose.JOSEException;
 import com.smartquit.smartquitiot.dto.request.AuthenticationRequest;
 import com.smartquit.smartquitiot.dto.request.GoogleLoginRequest;
+import com.smartquit.smartquitiot.dto.request.LogoutRequest;
 import com.smartquit.smartquitiot.dto.request.RefreshTokenRequest;
 import com.smartquit.smartquitiot.dto.response.AuthenticationResponse;
 import com.smartquit.smartquitiot.service.AuthenticationService;
@@ -62,5 +63,11 @@ public class AuthenticationController {
         AuthenticationResponse response = authenticationService.loginWithGoogle(request.getIdToken());
         log.info("Google login successful");
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        authenticationService.logout(request);
+        return ResponseEntity.ok().build();
     }
 }
