@@ -3,6 +3,7 @@ package com.smartquit.smartquitiot.repository;
 import com.smartquit.smartquitiot.entity.Post;
 import com.smartquit.smartquitiot.enums.PostStatus;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -73,4 +73,12 @@ public class PostController {
         List<PostSummaryDTO> posts = postService.getAllMyPosts();
         return ResponseEntity.ok(posts);
     }
+
+    @PostMapping("/sync")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Sync DB to Elasticsearch", description = "Manually triggers a migration of all old SQL data into Elasticsearch index")
+    public ResponseEntity<?> syncAllPosts() {
+        postService.syncAllPosts();
+        return ResponseEntity.ok("Synchronization started successfully.");
+    }
 }
