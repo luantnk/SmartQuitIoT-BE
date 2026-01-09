@@ -101,4 +101,13 @@ public class NewsController {
 
         return ResponseEntity.ok(newsPage);
     }
+
+
+    @PostMapping("/sync")
+    @SecurityRequirement(name = "Bearer Authentication")
+    @Operation(summary = "Sync DB to Elasticsearch", description = "Manually triggers a migration of all old News data into Elasticsearch index")
+    public ResponseEntity<?> syncAllNews() {
+        newsService.syncAllNews();
+        return ResponseEntity.ok("News synchronization started successfully.");
+    }
 }

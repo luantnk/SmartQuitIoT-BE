@@ -22,4 +22,6 @@ public interface NewsService {
     void deleteNews(int id);
 
     Page<NewsDTO> getAllNewsWithFilters(NewsStatus status, String title, Pageable pageable);
+
+    void syncAllNews();
 }
