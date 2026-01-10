@@ -18,7 +18,7 @@ public class NewsDTO {
     String title;
     String content;
     String status;
-    LocalDateTime createdAt;
+    String createdAt;
     String thumbnailUrl;
     List<NewsMediaDTO> media;
 }

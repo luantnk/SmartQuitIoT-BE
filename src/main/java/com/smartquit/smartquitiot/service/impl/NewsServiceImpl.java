@@ -14,6 +14,8 @@ import com.smartquit.smartquitiot.repository.NewsSearchRepository;
 import com.smartquit.smartquitiot.service.NewsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +39,6 @@ public class NewsServiceImpl implements NewsService {
 
     private static final Set<String> VIDEO_EXTENSIONS = Set.of(".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv");
 
-
     private NewsDocument mapToDocument(News news) {
         return NewsDocument.builder()
                 .id(news.getId())
@@ -60,11 +61,9 @@ public class NewsServiceImpl implements NewsService {
         } catch (Exception e) {
             dto.setStatus(String.valueOf(NewsStatus.DRAFT));
         }
-        dto.setCreatedAt(doc.getCreatedAt());
+        dto.setCreatedAt(String.valueOf(doc.getCreatedAt()));
         return dto;
     }
-
-
 
     @Override
     public List<NewsDTO> getLatestNews(int limit) {
@@ -101,7 +100,9 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    @Cacheable(value = "news_details", key = "#id")
     public NewsDTO getNewsDetail(int id) {
+        log.info("------- DB HIT: Fetching News Detail from Database for ID: {} (Redis Miss) -------", id);
         News news = newsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("News not found with id: " + id));
         return newsMapper.toNewsDTO(news);
@@ -137,7 +138,9 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "news_details", key = "#id")
     public NewsDTO updateNews(int id, CreateNewsRequest updateRequest) {
+        log.info("------- CACHE EVICT: Updating News ID: {} (Removing from Redis) -------", id);
         validateNewsRequest(updateRequest);
         News news = newsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("News not found with id: " + id));
@@ -159,13 +162,15 @@ public class NewsServiceImpl implements NewsService {
         } catch (Exception e) {
             log.error("Failed to sync updated news to Elasticsearch: {}", e.getMessage());
         }
-
         return newsMapper.toNewsDTO(updatedNews);
     }
 
+
     @Override
     @Transactional
+    @CacheEvict(value = "news_details", key = "#id")
     public void deleteNews(int id) {
+        log.info("------- CACHE EVICT: Deleting News ID: {} (Removing from Redis) -------", id);
         News news = newsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("News not found with id: " + id));
         news.setStatus(NewsStatus.DELETED);
@@ -195,7 +200,6 @@ public class NewsServiceImpl implements NewsService {
         newsSearchRepository.saveAll(documents);
         log.info("Successfully synced {} news items to Elasticsearch", documents.size());
     }
-
 
     private void validateNewsRequest(CreateNewsRequest request) {
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {

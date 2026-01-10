@@ -20,7 +20,9 @@ public class NewsMapper {
         dto.setTitle(news.getTitle());
         dto.setContent(news.getContent());
         dto.setStatus(news.getStatus().name());
-        dto.setCreatedAt(news.getCreatedAt());
+        if (news.getCreatedAt() != null) {
+            dto.setCreatedAt(news.getCreatedAt().toString());
+        }
         dto.setThumbnailUrl(news.getThumbnailUrl());
         dto.setMedia(newsMediaMapper.toNewsMediaDTO(news.getNewsMedia()));
         return dto;
