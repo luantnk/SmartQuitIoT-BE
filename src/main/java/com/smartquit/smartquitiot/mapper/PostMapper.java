@@ -38,8 +38,8 @@ public class PostMapper {
         dto.setContent(post.getContent());
         dto.setDescription(post.getDescription());
         dto.setThumbnail(post.getThumbnail());
-        dto.setCreatedAt(post.getCreatedAt());
-        dto.setUpdatedAt(post.getUpdatedAt());
+        dto.setCreatedAt(post.getCreatedAt() != null ? post.getCreatedAt().toString() : null);
+        dto.setUpdatedAt(post.getUpdatedAt() != null ? post.getUpdatedAt().toString() : null);
         dto.setCommentCount(commentCount);
 
         dto.setAccount(accountMapper.toAccountPostDTO(post.getAccount()));
@@ -102,9 +102,8 @@ public class PostMapper {
         dto.setDescription(post.getDescription());
         dto.setContent(post.getContent());
         dto.setThumbnail(post.getThumbnail());
-        dto.setCreatedAt(post.getCreatedAt());
-        dto.setUpdatedAt(post.getUpdatedAt());
-
+        dto.setCreatedAt(post.getCreatedAt() != null ? post.getCreatedAt().toString() : null);
+        dto.setUpdatedAt(post.getUpdatedAt() != null ? post.getUpdatedAt().toString() : null);
         // Account info
         if (post.getAccount() != null) {
             AccountMapper accountMapper = new AccountMapper();

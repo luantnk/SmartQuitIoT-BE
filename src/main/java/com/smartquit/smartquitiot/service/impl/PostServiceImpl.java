@@ -19,6 +19,8 @@ import com.smartquit.smartquitiot.service.PostService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -100,7 +102,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
+    @Cacheable(value = "post_details", key = "#postId")
     public PostDetailDTO getPostDetail(Integer postId) {
+        log.info("------- DB HIT: Fetching Post Detail from Database for ID: {} (Redis Miss) -------", postId);
         Post post = postRepository.findPostWithMediaAndAccount(postId);
         if (post == null) {
             throw new RuntimeException("Post not found with id " + postId);
@@ -109,7 +113,6 @@ public class PostServiceImpl implements PostService {
         for (Comment c : rootComments) {
             loadRepliesRecursively(c);
         }
-
         post.getComments().clear();
         post.getComments().addAll(rootComments);
         int commentCount = commentRepository.countByPostId(post.getId());
@@ -166,8 +169,6 @@ public class PostServiceImpl implements PostService {
         } catch (Exception e) {
             log.error("Failed to sync new post to Elasticsearch: {}", e.getMessage());
         }
-
-        // Achievements Logic
         if (current.getRole().equals(Role.MEMBER)) {
             metricRepository.findByMemberId(current.getMember().getId()).ifPresent(metric -> {
                 metric.setPost_count(metric.getPost_count() + 1);
@@ -185,7 +186,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "post_details", key = "#postId")
     public PostDetailDTO updatePost(Integer postId, PostUpdateRequest request) {
+        log.info("------- CACHE EVICT: Updating Post ID: {} (Removing from Redis) -------", postId);
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
         if (StringUtils.hasText(request.getTitle())) post.setTitle(request.getTitle());
@@ -196,7 +199,6 @@ public class PostServiceImpl implements PostService {
         if (request.getMedia() != null) {
             post.getMedia().clear();
             postMediaRepository.deleteAll(post.getMedia());
-
             List<PostMedia> newMediaList = request.getMedia().stream()
                     .filter(m -> StringUtils.hasText(m.getMediaUrl()))
                     .map(m -> {
@@ -227,7 +229,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "post_details", key = "#postId")
     public void deletePost(Integer postId) {
+        log.info("------- CACHE EVICT: Deleting Post ID: {} (Removing from Redis) -------", postId);
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
         postRepository.delete(post);

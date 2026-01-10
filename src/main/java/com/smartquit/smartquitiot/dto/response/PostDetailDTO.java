@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,8 +20,8 @@ public class PostDetailDTO {
     private String content;
     private String description;
     private String thumbnail;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String createdAt;
+    private String updatedAt;
     private AccountDTO account;
     private List<PostMediaDTO> media;
     private List<CommentDTO> comments;
