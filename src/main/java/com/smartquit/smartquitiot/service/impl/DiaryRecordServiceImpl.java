@@ -15,6 +15,9 @@ import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +43,7 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
 
     private final int PULSE_RATE_TO_NORMAL = 20; //minutes
     private final int OXYGEN_LEVEL_TO_NORMAL = 480; //minutes => 8 hours
-    private final int CARBON_MONOXIDE_TO_NORMAL = 720;
-    ; //minutes => 12 hours
+    private final int CARBON_MONOXIDE_TO_NORMAL = 720; //minutes => 12 hours
     private final int TASTE_AND_SMELL_IMPROVEMENT = 1440; //minutes => 1 day
     private final int NICOTINE_EXPELLED_FROM_BODY = 4320; //minutes => 3 days
     private final int CIRCULATION_AND_LUNG_FUNCTION = 20160; //minutes => 14 days
@@ -57,7 +59,13 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "member_diary_history", allEntries = true),
+            @CacheEvict(value = "member_charts", allEntries = true)
+    })
     public GlobalResponse<DiaryRecordDTO> logDiaryRecord(DiaryRecordRequest request) {
+
+        log.info("------- WRITING DATA: Clearing Cache for Charts and History -------");
         Member member = memberService.getAuthenticatedMember();
         QuitPlan currentQuitPlan = quitPlanRepository.findTopByMemberIdOrderByCreatedAtDesc(member.getId());
         FormMetric currentFormMetric = currentQuitPlan.getFormMetric();
@@ -290,9 +298,6 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         return GlobalResponse.ok("Diary record logged successfully", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
     }
 
-    /*
-     * Calculate recovery time on WHO data: https://www.who.int/news-room/questions-and-answers/item/tobacco-health-benefits-of-smoking-cessation
-     * */
     private void calculateRecoveryTime(int age, int ftndScore, boolean isSmoke) {
         Member member = memberService.getAuthenticatedMember();
         HealthRecovery pulseRateRecovery = healthRecoveryRepository.findByNameAndMemberId(HealthRecoveryDataName.PULSE_RATE, member.getId())
@@ -508,15 +513,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
             immunityAndLungFunctionRecovery.setValue(BigDecimal.valueOf(0.0));
             healthRecoveryRepository.save(immunityAndLungFunctionRecovery);
         }
-
     }
 
-    private void updateRecoveryTimeIfSmoked(HealthRecovery recovery,
-                                            int baseTimeInMinutes,
-                                            int age,
-                                            int ftndScore,
-                                            BigDecimal newValue
-    ) {
+    private void updateRecoveryTimeIfSmoked(HealthRecovery recovery, int baseTimeInMinutes, int age, int ftndScore, BigDecimal newValue) {
         var estimateRecoveryTimeInMinutes = calculateTimeToNormal(baseTimeInMinutes, age, ftndScore);
         recovery.setRecoveryTime(estimateRecoveryTimeInMinutes);
         LocalDateTime newTargetTime = LocalDateTime.now().plusMinutes((long) estimateRecoveryTimeInMinutes);
@@ -536,12 +535,13 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     @Override
     public List<DiaryRecordDTO> getDiaryRecordsForMember() {
         Member member = memberService.getAuthenticatedMember();
-        List<DiaryRecord> records = diaryRecordRepository.findByMemberIdOrderByDateDesc(member.getId());
-        return records.stream().map(diaryRecordMapper::toListDiaryRecordDTO).toList();
+        return getDiaryRecordsHistoryByMemberId(member.getId());
     }
 
     @Override
+    @Cacheable(value = "diary_record", key = "#id")
     public DiaryRecordDTO getDiaryRecordById(Integer id) {
+        log.info("------- DB HIT: Fetching Diary Record ID: {} (Redis Miss) -------", id);
         DiaryRecord record = diaryRecordRepository.findById(id).orElseThrow(() -> new RuntimeException("Diary record not found"));
         return diaryRecordMapper.toDiaryRecordDTO(record);
     }
@@ -553,42 +553,46 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
     }
 
     @Override
+    @Cacheable(value = "member_charts", key = "#memberId")
     public Map<String, Object> getDiaryRecordsChartsByMemberId(int memberId) {
+        log.info("------- DB HIT: Calculating Charts for Member ID: {} (Redis Miss) -------", memberId);
         List<DiaryRecord> records = diaryRecordRepository.findByMemberId(memberId);
         Map<String, Object> chartsData = new HashMap<>();
         chartsData.put("confidenceLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
+                "date", record.getDate().toString(), // <--- CONVERTED TO STRING
                 "confidenceLevel", record.getConfidenceLevel()
         )).toList());
         chartsData.put("moodLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
+                "date", record.getDate().toString(), // <--- CONVERTED TO STRING
                 "moodLevel", record.getMoodLevel()
         )).toList());
         chartsData.put("anxietyLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
+                "date", record.getDate().toString(), // <--- CONVERTED TO STRING
                 "anxietyLevel", record.getAnxietyLevel()
         )).toList());
         chartsData.put("cravingLevel", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
+                "date", record.getDate().toString(), // <--- CONVERTED TO STRING
                 "cravingLevel", record.getCravingLevel()
         )).toList());
         chartsData.put("estimatedNicotineIntake", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
+                "date", record.getDate().toString(), // <--- CONVERTED TO STRING
                 "estimatedNicotineIntake", record.getEstimatedNicotineIntake()
         )).toList());
         chartsData.put("reductionPercentage", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
+                "date", record.getDate().toString(), // <--- CONVERTED TO STRING
                 "reductionPercentage", record.getReductionPercentage()
         )).toList());
         chartsData.put("cigarettesSmoked", records.stream().map(record -> Map.of(
-                "date", record.getDate(),
+                "date", record.getDate().toString(), // <--- CONVERTED TO STRING
                 "cigarettesSmoked", record.getCigarettesSmoked()
         )).toList());
         return chartsData;
     }
 
     @Override
+    @Cacheable(value = "member_diary_history", key = "#memberId")
     public List<DiaryRecordDTO> getDiaryRecordsHistoryByMemberId(int memberId) {
+        log.info("------- DB HIT: Fetching History List for Member ID: {} (Redis Miss) -------", memberId);
         List<DiaryRecord> records = diaryRecordRepository.findByMemberIdOrderByDateDesc(memberId);
         return records.stream().map(diaryRecordMapper::toListDiaryRecordDTO).toList();
     }
@@ -607,7 +611,14 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "diary_record", key = "#recordId"),
+            @CacheEvict(value = "member_diary_history", allEntries = true),
+            @CacheEvict(value = "member_charts", allEntries = true)
+    })
     public DiaryRecordDTO updateDiaryRecord(int recordId, DiaryRecordUpdateRequest request) {
+        log.info("------- UPDATE: Updating Record ID {} and Clearing Caches -------", recordId);
+
         Member member = memberService.getAuthenticatedMember();
         DiaryRecord record = diaryRecordRepository.findById(recordId).orElseThrow(() -> new RuntimeException("Diary record not found"));
         Metric metric = metricRepository.findByMemberId(member.getId()).orElseThrow(() -> new RuntimeException("Metric not found"));

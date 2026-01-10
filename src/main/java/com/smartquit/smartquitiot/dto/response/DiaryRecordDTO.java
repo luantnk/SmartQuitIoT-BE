@@ -17,7 +17,7 @@ import java.util.List;
 public class DiaryRecordDTO {
 
     Integer id;
-    LocalDate date;
+    String date;
     Boolean haveSmoked;
     Integer cigarettesSmoked;
     List<String> triggers;

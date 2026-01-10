@@ -12,7 +12,9 @@ public class DiaryRecordMapper {
             return null;
         DiaryRecordDTO diaryRecordDTO = new DiaryRecordDTO();
         diaryRecordDTO.setId(diaryRecord.getId());
-        diaryRecordDTO.setDate(diaryRecord.getDate());
+        if (diaryRecord.getDate() != null) {
+            diaryRecordDTO.setDate(diaryRecord.getDate().toString());
+        }
         diaryRecordDTO.setHaveSmoked(diaryRecord.isHaveSmoked());
         diaryRecordDTO.setCigarettesSmoked(diaryRecord.getCigarettesSmoked());
         diaryRecordDTO.setTriggers(diaryRecord.getTriggers());
@@ -41,7 +43,9 @@ public class DiaryRecordMapper {
             return null;
         DiaryRecordDTO diaryRecordDTO = new DiaryRecordDTO();
         diaryRecordDTO.setId(diaryRecord.getId());
-        diaryRecordDTO.setDate(diaryRecord.getDate());
+        if (diaryRecord.getDate() != null) {
+            diaryRecordDTO.setDate(diaryRecord.getDate().toString());
+        }
         diaryRecordDTO.setHaveSmoked(diaryRecord.isHaveSmoked());
         diaryRecordDTO.setEstimatedNicotineIntake(diaryRecord.getEstimatedNicotineIntake());
         diaryRecordDTO.setReductionPercentage(diaryRecord.getReductionPercentage());
