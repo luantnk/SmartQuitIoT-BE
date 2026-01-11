@@ -113,9 +113,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> {
+                    authorize.requestMatchers(
+                            "/api/actuator/**",
+                            "/actuator/**",
+                            "/api/swagger-ui/**",
+                            "/api/v3/api-docs/**",
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**"
+                    ).permitAll();
                     SECURED_URLS.forEach(entry -> authorize.requestMatchers(entry.getValue(), entry.getKey()).authenticated());
                     authorize.anyRequest().permitAll();
                 });
+
         http.oauth2ResourceServer(
                 server -> server
                         .jwt(
@@ -123,37 +132,20 @@ public class SecurityConfig {
                                         .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                         .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
-                        );
+        );
 
         http.cors(cors -> cors.configurationSource(request -> {
             CorsConfiguration corsConfiguration = new CorsConfiguration();
-            corsConfiguration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
-            corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
+            List<String> origins = List.of(allowedOrigins.split(","));
+            corsConfiguration.setAllowedOrigins(origins);
+            corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
             corsConfiguration.setAllowedHeaders(List.of("*"));
+            corsConfiguration.setAllowCredentials(true);
             return corsConfiguration;
         }));
-//        http.cors(cors -> cors.configurationSource(request -> {
-//            CorsConfiguration corsConfiguration = new CorsConfiguration();
-//            // split & trim same biến allowedOrigins
-//            List<String> patterns = Arrays.stream(allowedOrigins.split(","))
-//                    .map(String::trim)
-//                    .filter(s -> !s.isEmpty())
-//                    .collect(Collectors.toList());
-//            // if empty, set dev defaults or throw
-//            if (patterns.isEmpty()) {
-//                patterns = List.of("http://localhost:5173");
-//            }
-//            corsConfiguration.setAllowedOriginPatterns(patterns);
-//            corsConfiguration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
-//            corsConfiguration.setAllowedHeaders(List.of("*"));
-//            corsConfiguration.setAllowCredentials(true);
-//            return corsConfiguration;
-//        }));
-
 
         return http.build();
     }
-
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
