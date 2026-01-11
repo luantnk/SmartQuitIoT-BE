@@ -12,6 +12,8 @@ import com.smartquit.smartquitiot.entity.Metric;
 import com.smartquit.smartquitiot.enums.AccountType;
 import com.smartquit.smartquitiot.enums.AppointmentStatus;
 import com.smartquit.smartquitiot.enums.Role;
+import com.smartquit.smartquitiot.event.EmailMessageDTO;
+import com.smartquit.smartquitiot.event.EmailProducer;
 import com.smartquit.smartquitiot.mapper.CoachMapper;
 import com.smartquit.smartquitiot.mapper.MemberMapper;
 import com.smartquit.smartquitiot.repository.AccountRepository;
@@ -19,7 +21,6 @@ import com.smartquit.smartquitiot.repository.AppointmentRepository;
 import com.smartquit.smartquitiot.repository.CoachRepository;
 import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.service.AccountService;
-import com.smartquit.smartquitiot.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +47,9 @@ public class AccountServiceImpl implements AccountService {
     private final MemberMapper memberMapper;
     private final CoachRepository coachRepository;
     private final CoachMapper coachMapper;
-    private final EmailService emailService;
+    // Refactored: Use EmailProducer instead of EmailService
+    private final EmailProducer emailProducer;
+
     @NonFinal
     @Value("${smartquit.default.avatar.url}")
     // smartquit.default.avatar.url=https://ui-avatars.com/api/?background=00D09E&color=fff&size=250&name=
@@ -213,9 +216,22 @@ public class AccountServiceImpl implements AccountService {
         account.setOtp(otp);
         account.setOtpGeneratedTime(LocalDateTime.now());
         accountRepository.save(account);
+
+        // Refactored: Send Email Event to RabbitMQ
         String subject = "[SmartQuit] Your Password Reset OTP";
         String username = account.getMember().getFirstName();
-        emailService.sendHtmlOtpEmail(email, subject, username, otp);
+
+        Map<String, Object> props = new HashMap<>();
+        props.put("username", username);
+        props.put("otp", otp);
+
+        EmailMessageDTO emailMessage = new EmailMessageDTO(
+                email,
+                subject,
+                "otp",
+                props
+        );
+        emailProducer.sendEmailEvent(emailMessage);
     }
 
     @Override

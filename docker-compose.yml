@@ -43,7 +43,7 @@ services:
       # Database configurations
       TZ: Asia/Ho_Chi_Minh
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Ho_Chi_Minh
-      SPRING_DATASOURCE_URL: jdbc:mariadb://localhost:3306/smartquitiot?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/smartquitiot?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASS}
 
@@ -56,8 +56,8 @@ services:
       YOUR_WEB_CLIENT_ID: ${YOUR_WEB_CLIENT_ID}
 
       # Brevo configuration
-      EMAIL_USERNAME: ${EMAIL_USERNAME}
-      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+#      EMAIL_USERNAME: ${EMAIL_USERNAME}
+#      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
 
       # PayOs configurations
       PAYOS_API_KEY: ${PAYOS_API_KEY}
@@ -77,7 +77,7 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: ${RABBIT_USER}
-      SPRING_RABBITMQ_PASSWORD: ${RABBIT_PASS}
+      SPRING_RABBITMQ_PASSWORD: ${RABBIT_PASSWORD}
 
       # Brevo configurations
       BREVO_HOST: ${BREVO_HOST}
@@ -116,7 +116,7 @@ services:
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
       RABBITMQ_ERLANG_COOKIE: ${RABBIT_COOKIE}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
@@ -147,6 +147,16 @@ services:
       interval: 20s
       timeout: 10s
       retries: 5
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: smartquitiot-mailpit
+    restart: always
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - smartquitiot-network
 
 networks:
     smartquitiot-network:

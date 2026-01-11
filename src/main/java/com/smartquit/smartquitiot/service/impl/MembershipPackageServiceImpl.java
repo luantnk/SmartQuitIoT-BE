@@ -13,13 +13,14 @@ import com.smartquit.smartquitiot.entity.Payment;
 import com.smartquit.smartquitiot.enums.MembershipPackageType;
 import com.smartquit.smartquitiot.enums.MembershipSubscriptionStatus;
 import com.smartquit.smartquitiot.enums.PaymentStatus;
+import com.smartquit.smartquitiot.event.EmailMessageDTO;
+import com.smartquit.smartquitiot.event.EmailProducer;
 import com.smartquit.smartquitiot.mapper.MembershipPackageMapper;
 import com.smartquit.smartquitiot.mapper.MembershipSubscriptionMapper;
 import com.smartquit.smartquitiot.repository.MemberRepository;
 import com.smartquit.smartquitiot.repository.MembershipPackageRepository;
 import com.smartquit.smartquitiot.repository.MembershipSubscriptionRepository;
 import com.smartquit.smartquitiot.repository.PaymentRepository;
-import com.smartquit.smartquitiot.service.EmailService;
 import com.smartquit.smartquitiot.service.MemberService;
 import com.smartquit.smartquitiot.service.MembershipPackageService;
 import com.smartquit.smartquitiot.service.NotificationService;
@@ -33,6 +34,7 @@ import vn.payos.model.v2.paymentRequests.*;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,7 +48,8 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
     private final MembershipPackageRepository membershipPackageRepository;
     private final MembershipPackageMapper membershipPackageMapper;
     private final MemberService memberService;
-    private final EmailService emailService;
+    // Replaced EmailService with EmailProducer for RabbitMQ
+    private final EmailProducer emailProducer;
     private final MembershipSubscriptionRepository membershipSubscriptionRepository;
     private final MemberRepository memberRepository;
     private final PayOS payOS;
@@ -209,25 +212,40 @@ public class MembershipPackageServiceImpl implements MembershipPackageService {
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setSubscription(pendingSubscription);
             paymentRepository.save(payment);
-            emailService.sendPaymentSuccessEmail(
+
+            Map<String, Object> props = new HashMap<>();
+            props.put("name", member.getAccount().getUsername());
+            props.put("packageName", pendingSubscription.getMembershipPackage().getName());
+            props.put("amount", pendingSubscription.getTotalAmount());
+            props.put("orderCode", request.getOrderCode());
+
+            EmailMessageDTO emailMessage = new EmailMessageDTO(
                     member.getAccount().getEmail(),
-                    member.getAccount().getUsername(),
-                    pendingSubscription.getMembershipPackage().getName(),
-                    pendingSubscription.getTotalAmount(),
-                    request.getOrderCode()
+                    "SmartQuit - Payment Confirmation",
+                    "payment-success",
+                    props
             );
+            emailProducer.sendEmailEvent(emailMessage);
+
             notificationService.sendSystemActivityNotification("New Membership Subscription",
                     "Member " + member.getAccount().getUsername() + " has successfully subscribed to " +
                             pendingSubscription.getMembershipPackage().getName() + " package.");
         } else {
             if (request.getStatus().equals(PaymentStatus.CANCELLED)) {
+
                 // Khi hủy payment ko lưu thông tin payment, chỉ gửi email cancel payment
-                emailService.sendPaymentCancelEmail(
+                Map<String, Object> props = new HashMap<>();
+                props.put("name", member.getAccount().getUsername());
+                props.put("packageName", pendingSubscription.getMembershipPackage().getName());
+                props.put("orderCode", request.getOrderCode());
+
+                EmailMessageDTO emailMessage = new EmailMessageDTO(
                         member.getAccount().getEmail(),
-                        member.getAccount().getUsername(),
-                        pendingSubscription.getMembershipPackage().getName(),
-                        request.getOrderCode()
+                        "SmartQuit - Payment Cancelled",
+                        "payment-cancel",
+                        props
                 );
+                emailProducer.sendEmailEvent(emailMessage);
             } else {
                 pendingSubscription.setStatus(MembershipSubscriptionStatus.UNAVAILABLE);
                 membershipSubscriptionRepository.save(pendingSubscription);

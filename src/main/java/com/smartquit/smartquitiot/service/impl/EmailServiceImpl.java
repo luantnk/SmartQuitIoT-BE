@@ -29,13 +29,16 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendHtmlOtpEmail(String to, String subject, String username, String otp) {
+        log.info("DEBUG EMAIL: From=[{}] To=[{}]", fromEmail, to);
         try {
             Context context = new Context();
             context.setVariable("username", username);
             context.setVariable("otp", otp);
             String htmlContent = templateEngine.process("otp-email", context);
             MimeMessage mimeMessage = mailSender.createMimeMessage();
+            String cleanEmail = fromEmail.replace("}", "").replace(";", "").trim();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            helper.setFrom(cleanEmail);
             helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
