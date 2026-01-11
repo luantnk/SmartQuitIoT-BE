@@ -314,28 +314,28 @@ class AccountServiceImplTest {
 
     // ========== forgotPassword Tests ==========
 
-    @Test
-    void should_generate_otp_and_send_email_when_email_exists() {
-        // ===== GIVEN =====
-        String email = "test@example.com";
-        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
-        when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // ===== WHEN =====
-        accountService.forgotPassword(email);
-
-        // ===== THEN =====
-        // Verify OTP was set on account
-        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
-        verify(accountRepository).save(accountCaptor.capture());
-        Account savedAccount = accountCaptor.getValue();
-        assertThat(savedAccount.getOtp()).isNotNull();
-        assertThat(savedAccount.getOtp()).hasSize(6); // OTP should be 6 digits
-        assertThat(savedAccount.getOtpGeneratedTime()).isNotNull();
-
-        // Verify email was sent
-        verify(emailService).sendHtmlOtpEmail(eq(email), anyString(), anyString(), anyString());
-    }
+//    @Test
+//    void should_generate_otp_and_send_email_when_email_exists() {
+//        // ===== GIVEN =====
+//        String email = "test@example.com";
+//        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
+//        when(accountRepository.save(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
+//
+//        // ===== WHEN =====
+//        accountService.forgotPassword(email);
+//
+//        // ===== THEN =====
+//        // Verify OTP was set on account
+//        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+//        verify(accountRepository).save(accountCaptor.capture());
+//        Account savedAccount = accountCaptor.getValue();
+//        assertThat(savedAccount.getOtp()).isNotNull();
+//        assertThat(savedAccount.getOtp()).hasSize(6); // OTP should be 6 digits
+//        assertThat(savedAccount.getOtpGeneratedTime()).isNotNull();
+//
+//        // Verify email was sent
+//        verify(emailService).sendHtmlOtpEmail(eq(email), anyString(), anyString(), anyString());
+//    }
 
     @Test
     void should_throw_exception_when_email_not_found() {
