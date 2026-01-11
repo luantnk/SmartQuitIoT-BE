@@ -5,18 +5,14 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.beans.factory.annotation.Value; // Import thêm cái này
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -28,6 +24,9 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
     @Override
     public void sendHtmlOtpEmail(String to, String subject, String username, String otp) {
         try {
@@ -37,14 +36,15 @@ public class EmailServiceImpl implements EmailService {
             String htmlContent = templateEngine.process("otp-email", context);
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
-            byte[] logoBytes = Files.readAllBytes(Path.of("src/main/resources/images/logo.png"));
-            InputStreamSource logoSource = new ByteArrayResource(logoBytes);
-            helper.addInline("logoImage", logoSource, "image/png");
+            helper.addInline("logoImage", new ClassPathResource("images/logo.png"));
             mailSender.send(mimeMessage);
-        } catch (MessagingException | IOException e) {
+            log.info("OTP email sent to {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send OTP email: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to send HTML email", e);
         }
     }
@@ -61,14 +61,15 @@ public class EmailServiceImpl implements EmailService {
             String htmlContent = templateEngine.process("payment-success-email", context);
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject("SmartQuit - Payment Confirmation for Order #" + orderCode);
             helper.setText(htmlContent, true);
             helper.addInline("logoImage", new ClassPathResource("images/logo.png"));
             mailSender.send(message);
-            log.info("✅ Payment success email sent to {}", to);
+            log.info("Payment success email sent to {}", to);
         } catch (MessagingException e) {
-            log.error("❌ Failed to send payment success email: {}", e.getMessage(), e);
+            log.error("Failed to send payment success email: {}", e.getMessage(), e);
         }
     }
 
@@ -79,22 +80,18 @@ public class EmailServiceImpl implements EmailService {
             context.setVariable("name", name);
             context.setVariable("packageName", packageName);
             context.setVariable("orderCode", orderCode);
-
             String htmlContent = templateEngine.process("payment-cancel-email", context);
-
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject("SmartQuit - Payment Cancelled for Order #" + orderCode);
             helper.setText(htmlContent, true);
             helper.addInline("logoImage", new ClassPathResource("images/logo.png"));
-
             mailSender.send(message);
-            log.info("⚠️ Payment cancellation email sent to {}", to);
+            log.info("Payment cancellation email sent to {}", to);
         } catch (MessagingException e) {
-            log.error("❌ Failed to send payment cancellation email to {}: {}", to, e.getMessage(), e);
+            log.error("Failed to send payment cancellation email to {}: {}", to, e.getMessage(), e);
         }
     }
-
-
 }
