@@ -1,22 +1,17 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.dto.request.AiPredictionRequest;
 import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
-import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
-import com.smartquit.smartquitiot.dto.response.PhaseResponse;
-import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
-import com.smartquit.smartquitiot.dto.response.TimeResponse;
+import com.smartquit.smartquitiot.dto.response.*;
 import com.smartquit.smartquitiot.entity.*;
 import com.smartquit.smartquitiot.enums.MissionPhase;
 import com.smartquit.smartquitiot.enums.NotificationType;
 import com.smartquit.smartquitiot.enums.PhaseStatus;
 import com.smartquit.smartquitiot.enums.QuitPlanStatus;
 import com.smartquit.smartquitiot.mapper.QuitPlanMapper;
-import com.smartquit.smartquitiot.repository.AccountRepository;
-import com.smartquit.smartquitiot.repository.MissionRepository;
-import com.smartquit.smartquitiot.repository.PhaseRepository;
-import com.smartquit.smartquitiot.repository.QuitPlanRepository;
+import com.smartquit.smartquitiot.repository.*;
 import com.smartquit.smartquitiot.service.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +19,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 
 @Slf4j
@@ -49,6 +47,9 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     private final NotificationService  notificationService;
     private final String PHASE_PRE = "Preparation";
     private final int MAX_MISSIONS = 4;
+    private final DiaryRecordRepository diaryRecordRepository;
+    private final RestTemplate restTemplate;
+    private final String AI_SERVICE_URL = "http://localhost:8000/predict-quit-status";
     @Transactional
     @Override
     public PhaseBatchMissionsResponse createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req) {
@@ -312,6 +313,77 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         fm.setTriggered(oldSrc.getTriggered());
 
         return fm;
+    }
+
+    @Override
+    public AiPredictionResponse getPredictionForCurrentPlan() {
+        Account account = accountService.getAuthenticatedAccount();
+        Member member = account.getMember();
+        QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(member.getId());
+
+        if (plan == null) {
+            throw new RuntimeException("No active Quit Plan found to predict!");
+        }
+
+        Optional<DiaryRecord> latestDiaryOpt = diaryRecordRepository.findFirstByMember_IdOrderByDateDesc(member.getId());
+
+        float anxiety = 0f;
+        float craving = 0f;
+        float mood = 0f;
+        float heartRate = 0f;
+        float sleep = 0f;
+
+        if (latestDiaryOpt.isPresent()) {
+            DiaryRecord dr = latestDiaryOpt.get();
+            anxiety = (float) dr.getAnxietyLevel();
+            craving = (float) dr.getCravingLevel();
+            mood = (float) dr.getMoodLevel();
+            heartRate = (float) dr.getHeartRate();
+            sleep = (float) dr.getSleepDuration();
+        }
+
+        FormMetric metric = plan.getFormMetric();
+
+        int age = 0;
+        if (member.getDob() != null) {
+            age = LocalDate.now().getYear() - member.getDob().getYear();
+        }
+
+        float genderCode = (member.getGender() != null && member.getGender().name().equalsIgnoreCase("MALE")) ? 1.0f : 0.0f;
+
+        float progress = 0;
+        if (!plan.getPhases().isEmpty()) {
+            if(plan.getPhases().get(0).getProgress() != null) {
+                progress = plan.getPhases().get(0).getProgress().floatValue();
+            }
+        }
+
+        List<Float> features = Arrays.asList(
+                (float) plan.getFtndScore(),
+                (float) metric.getSmokeAvgPerDay(),
+                (float) metric.getMinutesAfterWakingToSmoke(),
+                (float) age,
+                genderCode,
+                anxiety,    // 0 nếu không có diary
+                craving,    // 0 nếu không có diary
+                mood,       // 0 nếu không có diary
+                heartRate,  // 0 nếu không có diary
+                sleep,      // 0 nếu không có diary
+                progress
+        );
+
+        try {
+            AiPredictionRequest request = new AiPredictionRequest(features);
+            log.info("Calling AI Service with REAL features (0 if missing): {}", features);
+            return restTemplate.postForObject(AI_SERVICE_URL, request, AiPredictionResponse.class);
+        } catch (Exception e) {
+            log.error("Error calling AI Service: ", e);
+            AiPredictionResponse fallback = new AiPredictionResponse();
+            fallback.setSuccessProbability(0);
+            fallback.setRelapseRisk(0);
+            fallback.setRecommendation("AI Service unavailable");
+            return fallback;
+        }
     }
 
 }
