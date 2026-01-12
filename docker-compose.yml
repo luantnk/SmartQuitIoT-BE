@@ -36,6 +36,8 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+      ai-service:
+        condition: service_healthy
     ports:
       - "8081:8080"
     environment:
@@ -87,6 +89,10 @@ services:
 
       # ElasticSearch configurations
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+
+
+      # AI Service configurations
+      AI_SERVICE_URL: "http://smartquitiot-ai:8000"
 
     networks:
       - smartquitiot-network
@@ -164,6 +170,25 @@ services:
     networks:
       - smartquitiot-network
 
+  ai-service:
+      build:
+        context: ../SmartQuitIoT-AI
+        dockerfile: Dockerfile
+      container_name: smartquitiot-ai
+      restart: unless-stopped
+      ports:
+        - "8000:8000"
+      volumes:
+        - ai_model_cache:/root/.cache/huggingface
+      networks:
+        - smartquitiot-network
+      healthcheck:
+        test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+        interval: 10s
+        timeout: 5s
+        retries: 6
+        start_period: 10s
+
 networks:
     smartquitiot-network:
       name: smartquitiot-network
@@ -174,3 +199,4 @@ volumes:
   redis_data:
   rabbitmq_data:
   es_data:
+  ai_model_cache:
