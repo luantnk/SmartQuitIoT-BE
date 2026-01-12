@@ -3,6 +3,7 @@ package com.smartquit.smartquitiot.controller;
 import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
+import com.smartquit.smartquitiot.dto.response.AiPredictionResponse;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.dto.response.TimeResponse;
@@ -102,6 +103,16 @@ public class QuitPlanController {
     public ResponseEntity<QuitPlanResponse> getSpecificQuitPlanById(@PathVariable int id) {
         log.debug("REST request to get specific QuitPlan by ID: {}", id);
         QuitPlanResponse response = quitPlanService.getSpecific(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/prediction")
+    @PreAuthorize("hasRole('MEMBER')")
+    @Operation(summary = "Get AI Prediction for success probability of current plan")
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<AiPredictionResponse> getPlanPrediction() {
+        log.info("REST request to get AI Prediction for current QuitPlan");
+        AiPredictionResponse response = quitPlanService.getPredictionForCurrentPlan();
         return ResponseEntity.ok(response);
     }
 }

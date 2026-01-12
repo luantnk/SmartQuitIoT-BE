@@ -3,6 +3,7 @@ package com.smartquit.smartquitiot.service;
 import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
 import com.smartquit.smartquitiot.dto.request.KeepPhaseOfQuitPlanRequest;
+import com.smartquit.smartquitiot.dto.response.AiPredictionResponse;
 import com.smartquit.smartquitiot.dto.response.PhaseBatchMissionsResponse;
 import com.smartquit.smartquitiot.dto.response.QuitPlanResponse;
 import com.smartquit.smartquitiot.dto.response.TimeResponse;
@@ -18,4 +19,5 @@ public interface QuitPlanService {
     PhaseBatchMissionsResponse createNewQuitPlan(CreateNewQuitPlanRequest req);
     List<QuitPlanResponse> getHistory();
     QuitPlanResponse getSpecific(int id);
+    AiPredictionResponse getPredictionForCurrentPlan();
 }
