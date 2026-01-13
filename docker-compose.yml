@@ -188,6 +188,47 @@ services:
       timeout: 5s
       retries: 6
       start_period: 10s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartquitiot-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - smartquitiot-network
+
+  loki:
+      image: grafana/loki:2.9.2
+      container_name: smartquitiot-loki
+      restart: always
+      ports:
+        - "3100:3100"
+      command: -config.file=/etc/loki/local-config.yaml
+      networks:
+        - smartquitiot-network
+
+  grafana:
+      image: grafana/grafana:latest
+      container_name: smartquitiot-grafana
+      restart: always
+      ports:
+        - "3000:3000"
+      environment:
+        - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      depends_on:
+        - prometheus
+        - loki
+      volumes:
+        - grafana_data:/var/lib/grafana
+      networks:
+        - smartquitiot-network
+
+
 networks:
     smartquitiot-network:
       name: smartquitiot-network
@@ -199,3 +240,4 @@ volumes:
   rabbitmq_data:
   es_data:
   ai_model_cache:
+  grafana_data:
