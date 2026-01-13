@@ -90,6 +90,10 @@ services:
       # ElasticSearch configurations
       SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
 
+      # Mailpit Configuration
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: 1025
+
 
       # AI Service configurations
       AI_SERVICE_URL: "http://smartquitiot-ai:8000"
