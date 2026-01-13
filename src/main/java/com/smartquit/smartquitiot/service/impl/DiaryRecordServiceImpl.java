@@ -298,6 +298,9 @@ public class DiaryRecordServiceImpl implements DiaryRecordService {
         return GlobalResponse.ok("Diary record logged successfully", diaryRecordMapper.toDiaryRecordDTO(diaryRecord));
     }
 
+    /*
+     * Calculate recovery time on WHO data: https://www.who.int/news-room/questions-and-answers/item/tobacco-health-benefits-of-smoking-cessation
+     * */
     private void calculateRecoveryTime(int age, int ftndScore, boolean isSmoke) {
         Member member = memberService.getAuthenticatedMember();
         HealthRecovery pulseRateRecovery = healthRecoveryRepository.findByNameAndMemberId(HealthRecoveryDataName.PULSE_RATE, member.getId())
