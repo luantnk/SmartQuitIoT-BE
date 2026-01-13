@@ -177,7 +177,7 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-chat-memory-repository-jdbc</artifactId>
         </dependency>
-    </dependencies>
+
 
     <dependency>
         <groupId>io.micrometer</groupId>
@@ -188,6 +188,8 @@
         <groupId>com.github.loki4j</groupId>
         <artifactId>loki-logback-appender</artifactId>
         <version>1.5.1</version> </dependency>
+
+    </dependencies>
 
     <dependencyManagement>
         <dependencies>
