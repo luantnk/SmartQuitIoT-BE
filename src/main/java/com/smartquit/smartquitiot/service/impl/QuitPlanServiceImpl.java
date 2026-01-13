@@ -1,5 +1,6 @@
 package com.smartquit.smartquitiot.service.impl;
 
+import com.smartquit.smartquitiot.client.AiServiceClient;
 import com.smartquit.smartquitiot.dto.request.AiPredictionRequest;
 import com.smartquit.smartquitiot.dto.request.CreateNewQuitPlanRequest;
 import com.smartquit.smartquitiot.dto.request.CreateQuitPlanInFirstLoginRequest;
@@ -24,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
@@ -48,8 +50,8 @@ public class QuitPlanServiceImpl implements QuitPlanService {
     private final String PHASE_PRE = "Preparation";
     private final int MAX_MISSIONS = 4;
     private final DiaryRecordRepository diaryRecordRepository;
-    private final RestTemplate restTemplate;
-    private final String AI_SERVICE_URL = "http://localhost:8000/predict-quit-status";
+    private final AiServiceClient aiServiceClient;
+
     @Transactional
     @Override
     public PhaseBatchMissionsResponse createQuitPlanInFirstLogin(CreateQuitPlanInFirstLoginRequest req) {
@@ -320,19 +322,15 @@ public class QuitPlanServiceImpl implements QuitPlanService {
         Account account = accountService.getAuthenticatedAccount();
         Member member = account.getMember();
         QuitPlan plan = quitPlanRepository.findByMember_IdAndIsActiveTrue(member.getId());
-
         if (plan == null) {
             throw new RuntimeException("No active Quit Plan found to predict!");
         }
-
         Optional<DiaryRecord> latestDiaryOpt = diaryRecordRepository.findFirstByMember_IdOrderByDateDesc(member.getId());
-
         float anxiety = 0f;
         float craving = 0f;
         float mood = 0f;
         float heartRate = 0f;
         float sleep = 0f;
-
         if (latestDiaryOpt.isPresent()) {
             DiaryRecord dr = latestDiaryOpt.get();
             anxiety = (float) dr.getAnxietyLevel();
@@ -341,16 +339,12 @@ public class QuitPlanServiceImpl implements QuitPlanService {
             heartRate = (float) dr.getHeartRate();
             sleep = (float) dr.getSleepDuration();
         }
-
         FormMetric metric = plan.getFormMetric();
-
         int age = 0;
         if (member.getDob() != null) {
-            age = LocalDate.now().getYear() - member.getDob().getYear();
+            age = Period.between(member.getDob(), LocalDate.now()).getYears();
         }
-
         float genderCode = (member.getGender() != null && member.getGender().name().equalsIgnoreCase("MALE")) ? 1.0f : 0.0f;
-
         float progress = 0;
         if (!plan.getPhases().isEmpty()) {
             if(plan.getPhases().get(0).getProgress() != null) {
@@ -364,20 +358,20 @@ public class QuitPlanServiceImpl implements QuitPlanService {
                 (float) metric.getMinutesAfterWakingToSmoke(),
                 (float) age,
                 genderCode,
-                anxiety,    // 0 nếu không có diary
-                craving,    // 0 nếu không có diary
-                mood,       // 0 nếu không có diary
-                heartRate,  // 0 nếu không có diary
-                sleep,      // 0 nếu không có diary
+                anxiety,
+                craving,
+                mood,
+                heartRate,
+                sleep,
                 progress
         );
-
         try {
             AiPredictionRequest request = new AiPredictionRequest(features);
-            log.info("Calling AI Service with REAL features (0 if missing): {}", features);
-            return restTemplate.postForObject(AI_SERVICE_URL, request, AiPredictionResponse.class);
+            log.info("Calling AI Service via Feign with features: {}", features);
+            return aiServiceClient.predictQuitStatus(request);
+
         } catch (Exception e) {
-            log.error("Error calling AI Service: ", e);
+            log.error("Error calling AI Service via Feign: ", e);
             AiPredictionResponse fallback = new AiPredictionResponse();
             fallback.setSuccessProbability(0);
             fallback.setRelapseRisk(0);
