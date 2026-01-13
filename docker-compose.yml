@@ -23,9 +23,9 @@ services:
       start_period: 15s
 
   backend:
-    build: .
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/smartquitiot:latest
+    image: ghcr.io/luantnk/smartquitiot-be:latest
     container_name: smartquitiot-app
+    pull_policy: always
     restart: always
     depends_on:
       mariadb:
@@ -171,24 +171,23 @@ services:
       - smartquitiot-network
 
   ai-service:
-      build:
-        context: ../SmartQuitIoT-AI
-        dockerfile: Dockerfile
-      container_name: smartquitiot-ai
-      restart: unless-stopped
-      ports:
-        - "8000:8000"
-      volumes:
-        - ai_model_cache:/root/.cache/huggingface
-      networks:
-        - smartquitiot-network
-      healthcheck:
-        test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
-        interval: 10s
-        timeout: 5s
-        retries: 6
-        start_period: 10s
-
+    image: ghcr.io/luantnk/smartquitiot-ai:latest
+    container_name: smartquitiot-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ai_model_cache:/root/.cache/huggingface
+    networks:
+      - smartquitiot-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
 networks:
     smartquitiot-network:
       name: smartquitiot-network
