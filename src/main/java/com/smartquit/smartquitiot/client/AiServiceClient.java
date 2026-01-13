@@ -1,5 +1,7 @@
 package com.smartquit.smartquitiot.client;
 
+import com.smartquit.smartquitiot.dto.request.AiPredictionRequest;
+import com.smartquit.smartquitiot.dto.response.AiPredictionResponse;
 import com.smartquit.smartquitiot.dto.response.ContentCheckResponseDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,4 +20,7 @@ public interface AiServiceClient {
 
     @PostMapping("/check-video-url")
     ContentCheckResponseDTO checkVideo(@RequestBody Map<String, String> requestBody);
+
+    @PostMapping("/predict-quit-status")
+    AiPredictionResponse predictQuitStatus(@RequestBody AiPredictionRequest request);
 }
